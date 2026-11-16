@@ -1,0 +1,239 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-serif: 'Playfair Display', Georgia, serif;
+  --font-sans: 'Plus Jakarta Sans', Inter, system-ui, sans-serif;
+  --font-cinzel: 'Cinzel', 'Trajan Pro', serif;
+  --font-arabic: 'Tajawal', 'Cairo', 'Segoe UI', Tahoma, sans-serif;
+  --font-arabic-serif: 'Amiri', 'Traditional Arabic', 'Playfair Display', serif;
+  --font-serif-fallback: 'Playfair Display', Georgia, serif;
+  --font-sans-fallback: 'Plus Jakarta Sans', Inter, system-ui, sans-serif;
+  --font-cinzel-fallback: 'Cinzel', serif;
+  
+  --color-obsidian: #080808;
+  --color-gold: #c5a059;
+  --color-gold-accent: #d4af37;
+  --color-ivory: #faf8f5;
+  --color-sand: #ebe2d4;
+  --color-border: #e5e5e5;
+  --color-border-dark: #222222;
+}
+
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  html {
+    color-scheme: light;
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    background-color: #faf8f5;
+    color: #0e0e0e;
+    font-family: var(--font-sans, var(--font-sans-fallback));
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* High-end luxury selection styling */
+  ::selection {
+    background-color: #c5a059;
+    color: #080808;
+  }
+
+  /* Minimalist luxury scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: #080808;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #333333;
+    border-radius: 0px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #c5a059;
+  }
+
+  /* RTL Layout & Typography Support */
+  [dir="rtl"] {
+    font-family: var(--font-arabic), var(--font-sans), sans-serif;
+  }
+
+  [dir="rtl"] .font-serif,
+  [dir="rtl"] .luxury-serif-title {
+    font-family: var(--font-arabic-serif), var(--font-serif), Georgia, serif;
+  }
+
+  /* Reset letter-spacing on Arabic cursive script to prevent glyph disconnection */
+  [dir="rtl"] [class*="tracking-"],
+  [dir="rtl"] .luxury-cinzel-title,
+  [dir="rtl"] .luxury-serif-title {
+    letter-spacing: normal !important;
+  }
+
+  /* Relax tight line-height on Arabic cursive script to prevent ascender/descender collision */
+  [dir="rtl"] .leading-tight {
+    line-height: 1.35 !important;
+  }
+
+  /* Ensure phone numbers and Latin technical codes remain strictly LTR */
+  [dir="rtl"] input[type="tel"],
+  [dir="rtl"] .ltr-protect,
+  [dir="rtl"] a[href^="tel:"] {
+    direction: ltr !important;
+    text-align: right;
+    unicode-bidi: isolate;
+  }
+}
+
+@layer components {
+  /* Luxury container with responsive guttering */
+  .luxury-container {
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
+    max-width: 84rem; /* 1344px */
+  }
+
+  @media (min-width: 768px) {
+    .luxury-container {
+      padding-left: 2rem;
+      padding-right: 2rem;
+    }
+  }
+
+  @media (min-width: 1280px) {
+    .luxury-container {
+      padding-left: 3rem;
+      padding-right: 3rem;
+    }
+  }
+
+  /* Editorial Title Utilities */
+  .luxury-serif-title {
+    font-family: var(--font-serif, var(--font-serif-fallback));
+    letter-spacing: -0.02em;
+    font-weight: 500;
+    text-transform: uppercase;
+  }
+
+  .luxury-cinzel-title {
+    font-family: var(--font-cinzel, var(--font-cinzel-fallback));
+    letter-spacing: 0.15em;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+
+  /* Sharp luxury button presets */
+  .btn-luxury-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #080808;
+    color: #faf8f5;
+    font-family: var(--font-sans, var(--font-sans-fallback));
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    padding: 1rem 2rem;
+    border: 1px solid #080808;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .btn-luxury-primary:hover {
+    background-color: #c5a059;
+    border-color: #c5a059;
+    color: #080808;
+  }
+
+  .btn-luxury-outline {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background-color: transparent;
+    color: #080808;
+    font-family: var(--font-sans, var(--font-sans-fallback));
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    padding: 1rem 2rem;
+    border: 1px solid #080808;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .btn-luxury-outline:hover {
+    background-color: #080808;
+    color: #faf8f5;
+  }
+
+  .btn-luxury-gold {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #c5a059;
+    color: #080808;
+    font-family: var(--font-sans, var(--font-sans-fallback));
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    padding: 1rem 2rem;
+    border: 1px solid #c5a059;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .btn-luxury-gold:hover {
+    background-color: #b08a42;
+    border-color: #b08a42;
+  }
+
+  .btn-luxury-primary:active,
+  .btn-luxury-outline:active,
+  .btn-luxury-gold:active {
+    transform: scale(0.98);
+  }
+
+  /* Thin luxury border divider */
+  .luxury-divider {
+    height: 1px;
+    background-color: #e5e5e5;
+    width: 100%;
+  }
+
+  .luxury-divider-dark {
+    height: 1px;
+    background-color: #222222;
+    width: 100%;
+  }
+}
+
+@layer utilities {
+  .scrollbar-none {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+}

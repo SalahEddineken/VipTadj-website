@@ -1,0 +1,71 @@
+import { WilayaDeliveryConfig } from './types';
+
+export const wilayasFixture: WilayaDeliveryConfig[] = [
+  { code: 1, name: 'Adrar', fee: 900, deskFee: 500, zone: 'sud', estimatedDays: '72h - 96h' },
+  { code: 2, name: 'Chlef', fee: 600, deskFee: 350, zone: 'ouest', estimatedDays: '24h - 48h' },
+  { code: 3, name: 'Laghouat', fee: 600, deskFee: 350, zone: 'hauts-plateaux', estimatedDays: '48h - 72h' },
+  { code: 4, name: 'Oum El Bouaghi', fee: 600, deskFee: 350, zone: 'est', estimatedDays: '48h - 72h' },
+  { code: 5, name: 'Batna', fee: 600, deskFee: 350, zone: 'hauts-plateaux', estimatedDays: '48h - 72h' },
+  { code: 6, name: 'Béjaïa', fee: 600, deskFee: 350, zone: 'est', estimatedDays: '24h - 48h' },
+  { code: 7, name: 'Biskra', fee: 900, deskFee: 500, zone: 'sud', estimatedDays: '48h - 72h' },
+  { code: 8, name: 'Béchar', fee: 900, deskFee: 500, zone: 'sud', estimatedDays: '72h - 96h' },
+  { code: 9, name: 'Blida', fee: 500, deskFee: 300, zone: 'centre', estimatedDays: '24h' },
+  { code: 10, name: 'Bouira', fee: 600, deskFee: 350, zone: 'centre', estimatedDays: '24h - 48h' },
+  { code: 11, name: 'Tamanrasset', fee: 900, deskFee: 600, zone: 'sud', estimatedDays: '96h - 120h' },
+  { code: 12, name: 'Tébessa', fee: 600, deskFee: 350, zone: 'est', estimatedDays: '48h - 72h' },
+  { code: 13, name: 'Tlemcen', fee: 600, deskFee: 350, zone: 'ouest', estimatedDays: '48h - 72h' },
+  { code: 14, name: 'Tiaret', fee: 600, deskFee: 350, zone: 'hauts-plateaux', estimatedDays: '48h - 72h' },
+  { code: 15, name: 'Tizi Ouzou', fee: 600, deskFee: 350, zone: 'centre', estimatedDays: '24h - 48h' },
+  { code: 16, name: 'Alger', fee: 400, deskFee: 250, zone: 'alger', estimatedDays: '24h' },
+  { code: 17, name: 'Djelfa', fee: 600, deskFee: 350, zone: 'hauts-plateaux', estimatedDays: '48h - 72h' },
+  { code: 18, name: 'Jijel', fee: 600, deskFee: 350, zone: 'est', estimatedDays: '48h - 72h' },
+  { code: 19, name: 'Sétif', fee: 600, deskFee: 350, zone: 'hauts-plateaux', estimatedDays: '24h - 48h' },
+  { code: 20, name: 'Saïda', fee: 600, deskFee: 350, zone: 'hauts-plateaux', estimatedDays: '48h - 72h' },
+  { code: 21, name: 'Skikda', fee: 600, deskFee: 350, zone: 'est', estimatedDays: '48h - 72h' },
+  { code: 22, name: 'Sidi Bel Abbès', fee: 600, deskFee: 350, zone: 'ouest', estimatedDays: '48h - 72h' },
+  { code: 23, name: 'Annaba', fee: 600, deskFee: 350, zone: 'est', estimatedDays: '24h - 48h' },
+  { code: 24, name: 'Guelma', fee: 600, deskFee: 350, zone: 'est', estimatedDays: '48h - 72h' },
+  { code: 25, name: 'Constantine', fee: 600, deskFee: 350, zone: 'est', estimatedDays: '24h - 48h' },
+  { code: 26, name: 'Médéa', fee: 600, deskFee: 350, zone: 'centre', estimatedDays: '24h - 48h' },
+  { code: 27, name: 'Mostaganem', fee: 600, deskFee: 350, zone: 'ouest', estimatedDays: '24h - 48h' },
+  { code: 28, name: "M'Sila", fee: 600, deskFee: 350, zone: 'hauts-plateaux', estimatedDays: '48h - 72h' },
+  { code: 29, name: 'Mascara', fee: 600, deskFee: 350, zone: 'ouest', estimatedDays: '48h - 72h' },
+  { code: 30, name: 'Ouargla', fee: 900, deskFee: 500, zone: 'sud', estimatedDays: '48h - 72h' },
+  { code: 31, name: 'Oran', fee: 600, deskFee: 350, zone: 'ouest', estimatedDays: '24h - 48h' },
+  { code: 32, name: 'El Bayadh', fee: 600, deskFee: 350, zone: 'hauts-plateaux', estimatedDays: '72h - 96h' },
+  { code: 33, name: 'Illizi', fee: 900, deskFee: 600, zone: 'sud', estimatedDays: '96h - 120h' },
+  { code: 34, name: 'Bordj Bou Arreridj', fee: 600, deskFee: 350, zone: 'hauts-plateaux', estimatedDays: '24h - 48h' },
+  { code: 35, name: 'Boumerdès', fee: 500, deskFee: 300, zone: 'centre', estimatedDays: '24h' },
+  { code: 36, name: 'El Tarf', fee: 600, deskFee: 350, zone: 'est', estimatedDays: '48h - 72h' },
+  { code: 37, name: 'Tindouf', fee: 900, deskFee: 600, zone: 'sud', estimatedDays: '96h - 120h' },
+  { code: 38, name: 'Tissemsilt', fee: 600, deskFee: 350, zone: 'hauts-plateaux', estimatedDays: '48h - 72h' },
+  { code: 39, name: 'El Oued', fee: 900, deskFee: 500, zone: 'sud', estimatedDays: '48h - 72h' },
+  { code: 40, name: 'Khenchela', fee: 600, deskFee: 350, zone: 'hauts-plateaux', estimatedDays: '48h - 72h' },
+  { code: 41, name: 'Souk Ahras', fee: 600, deskFee: 350, zone: 'est', estimatedDays: '48h - 72h' },
+  { code: 42, name: 'Tipaza', fee: 500, deskFee: 300, zone: 'centre', estimatedDays: '24h' },
+  { code: 43, name: 'Mila', fee: 600, deskFee: 350, zone: 'est', estimatedDays: '48h - 72h' },
+  { code: 44, name: 'Aïn Defla', fee: 600, deskFee: 350, zone: 'centre', estimatedDays: '24h - 48h' },
+  { code: 45, name: 'Naâma', fee: 600, deskFee: 350, zone: 'hauts-plateaux', estimatedDays: '72h - 96h' },
+  { code: 46, name: 'Aïn Témouchent', fee: 600, deskFee: 350, zone: 'ouest', estimatedDays: '48h - 72h' },
+  { code: 47, name: 'Ghardaïa', fee: 900, deskFee: 500, zone: 'sud', estimatedDays: '48h - 72h' },
+  { code: 48, name: 'Relizane', fee: 600, deskFee: 350, zone: 'ouest', estimatedDays: '48h - 72h' },
+  { code: 49, name: 'Timimoun', fee: 900, deskFee: 600, zone: 'sud', estimatedDays: '72h - 96h' },
+  { code: 50, name: 'Bordj Badji Mokhtar', fee: 900, deskFee: 600, zone: 'sud', estimatedDays: '96h - 120h' },
+  { code: 51, name: 'Ouled Djellal', fee: 900, deskFee: 500, zone: 'sud', estimatedDays: '48h - 72h' },
+  { code: 52, name: 'Béni Abbès', fee: 900, deskFee: 600, zone: 'sud', estimatedDays: '72h - 96h' },
+  { code: 53, name: 'In Salah', fee: 900, deskFee: 600, zone: 'sud', estimatedDays: '96h - 120h' },
+  { code: 54, name: 'In Guezzam', fee: 900, deskFee: 600, zone: 'sud', estimatedDays: '96h - 120h' },
+  { code: 55, name: 'Touggourt', fee: 900, deskFee: 500, zone: 'sud', estimatedDays: '48h - 72h' },
+  { code: 56, name: 'Djanet', fee: 900, deskFee: 600, zone: 'sud', estimatedDays: '96h - 120h' },
+  { code: 57, name: "El M'Ghair", fee: 900, deskFee: 500, zone: 'sud', estimatedDays: '48h - 72h' },
+  { code: 58, name: 'El Meniaa', fee: 900, deskFee: 600, zone: 'sud', estimatedDays: '72h - 96h' },
+];
+
+export function getWilayaByCode(code: number): WilayaDeliveryConfig | undefined {
+  return wilayasFixture.find((w) => w.code === code);
+}
+
+export function getWilayaFee(code: number): number {
+  const wilaya = getWilayaByCode(code);
+  return wilaya ? wilaya.fee : 600; // Standard fallback: 600 DA
+}
