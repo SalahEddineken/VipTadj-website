@@ -764,7 +764,7 @@ export const SEED_WILAYAS_DELIVERY: WilayaDeliveryConfig[] = ALGERIAN_WILAYAS.ma
   homeDeliveryFee: w.fee,
   deskDeliveryFee: w.deskFee,
   zone: w.zone,
-  estimatedDays: w.zone === 'alger' ? '24h' : w.zone === 'sud' ? '3 à 5 jours' : '48h à 72h',
+  estimatedDays: w.zone === 'local' ? '24h' : w.zone === 'est' ? '24h à 48h' : w.zone === 'sud' ? '3 à 5 jours' : '48h à 72h',
   isAvailable: true,
 }));
 
@@ -779,7 +779,7 @@ export const DEFAULT_STORE_SETTINGS: StoreSettings = {
   phone: '+213 550 12 34 56',
   email: 'contact@viptadj.dz',
   whatsappNumber: '+213550123456',
-  address: 'Boulevard du 11 Décembre 1960, Val d\'Hydra, Alger, Algérie',
+  address: 'Chelghoum Laïd, Wilaya de Mila (43), Algérie',
   currency: 'DZD',
   currencySymbol: 'DA',
   freeShippingThreshold: 50000,

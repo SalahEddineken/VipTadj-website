@@ -49,7 +49,7 @@ export const ALGERIAN_58_WILAYAS: AlgerianWilaya[] = [
   { code: 40, name: 'Khenchela', nameAr: 'خنشلة', fee: 600, homeDeliveryFee: 600, deskFee: 350, zone: 'hauts-plateaux', estimatedDays: '48h - 72h', isAvailable: true },
   { code: 41, name: 'Souk Ahras', nameAr: 'سوق أهراس', fee: 600, homeDeliveryFee: 600, deskFee: 350, zone: 'est', estimatedDays: '48h - 72h', isAvailable: true },
   { code: 42, name: 'Tipaza', nameAr: 'تيبازة', fee: 500, homeDeliveryFee: 500, deskFee: 300, zone: 'centre', estimatedDays: '24h', isAvailable: true },
-  { code: 43, name: 'Mila', nameAr: 'ميلة', fee: 600, homeDeliveryFee: 600, deskFee: 350, zone: 'est', estimatedDays: '48h - 72h', isAvailable: true },
+  { code: 43, name: 'Mila', nameAr: 'ميلة', fee: 400, homeDeliveryFee: 400, deskFee: 250, zone: 'est', estimatedDays: '24h', isAvailable: true },
   { code: 44, name: 'Aïn Defla', nameAr: 'عين الدفلى', fee: 600, homeDeliveryFee: 600, deskFee: 350, zone: 'centre', estimatedDays: '24h - 48h', isAvailable: true },
   { code: 45, name: 'Naâma', nameAr: 'النعامة', fee: 600, homeDeliveryFee: 600, deskFee: 350, zone: 'hauts-plateaux', estimatedDays: '72h - 96h', isAvailable: true },
   { code: 46, name: 'Aïn Témouchent', nameAr: 'عين تموشنت', fee: 600, homeDeliveryFee: 600, deskFee: 350, zone: 'ouest', estimatedDays: '48h - 72h', isAvailable: true },
