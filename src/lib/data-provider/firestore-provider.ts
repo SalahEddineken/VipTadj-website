@@ -56,6 +56,34 @@ function sanitizeDoc<T>(data: any): T {
   return result as T;
 }
 
+/**
+ * Recursively removes all `undefined` properties from an object or array.
+ * Firebase Firestore throws an error ("Unsupported field value: undefined")
+ * whenever any property in a document payload is `undefined`.
+ */
+export function removeUndefined<T>(data: T): T {
+  if (data === null || data === undefined || typeof data !== 'object') {
+    return data;
+  }
+
+  if (data instanceof Date || data instanceof Timestamp) {
+    return data;
+  }
+
+  if (Array.isArray(data)) {
+    return data.map((item) => removeUndefined(item)) as unknown as T;
+  }
+
+  const result: Record<string, any> = {};
+  for (const [key, val] of Object.entries(data as Record<string, any>)) {
+    if (val !== undefined) {
+      result[key] = removeUndefined(val);
+    }
+  }
+
+  return result as T;
+}
+
 function generateOrderNumber(): string {
   const year = new Date().getFullYear();
   const randomSuffix = Math.floor(1000 + Math.random() * 9000);
@@ -170,7 +198,7 @@ export class FirestoreDataProvider implements IDataStore {
       updatedAt: now,
     };
 
-    await setDoc(newDocRef, newProduct);
+    await setDoc(newDocRef, removeUndefined(newProduct));
     return newProduct;
   }
 
@@ -184,7 +212,7 @@ export class FirestoreDataProvider implements IDataStore {
       updatedAt: now,
     };
 
-    await updateDoc(docRef, updates);
+    await updateDoc(docRef, removeUndefined(updates));
     const updated = await this.getProductById(id);
     if (!updated) {
       throw new Error(`Failed to retrieve product "${id}" after update.`);
@@ -309,7 +337,7 @@ export class FirestoreDataProvider implements IDataStore {
       updatedAt: now,
     };
 
-    await setDoc(newDocRef, newOrder);
+    await setDoc(newDocRef, removeUndefined(newOrder));
     return newOrder;
   }
 
@@ -348,11 +376,11 @@ export class FirestoreDataProvider implements IDataStore {
 
     const updatedHistory = [...(orderData.statusHistory || []), newHistoryItem];
 
-    await updateDoc(docRef, {
+    await updateDoc(docRef, removeUndefined({
       status,
       statusHistory: updatedHistory,
       updatedAt: now,
-    });
+    }));
 
     // If order is cancelled, restore stock for all items
     if (status === 'cancelled' && previousStatus !== 'cancelled' && orderData.items?.length) {
@@ -365,11 +393,11 @@ export class FirestoreDataProvider implements IDataStore {
             const productData = productSnap.data();
             const currentStock = Number(productData.stockQuantity || 0);
             const newStock = currentStock + item.quantity;
-            batch.update(productRef, {
+            batch.update(productRef, removeUndefined({
               stockQuantity: newStock,
               inStock: newStock > 0,
               updatedAt: now,
-            });
+            }));
           }
         } catch (err) {
           console.error(`[VIP TADJ Firestore] Failed to restore stock for product ${item.productId}:`, err);
@@ -395,7 +423,7 @@ export class FirestoreDataProvider implements IDataStore {
     const snap = await getDoc(docRef);
 
     if (!snap.exists()) {
-      await setDoc(docRef, initialSettings);
+      await setDoc(docRef, removeUndefined(initialSettings));
       return initialSettings;
     }
 
@@ -412,7 +440,7 @@ export class FirestoreDataProvider implements IDataStore {
       updatedAt: now,
     };
 
-    await setDoc(docRef, updates, { merge: true });
+    await setDoc(docRef, removeUndefined(updates), { merge: true });
     return this.getSettings();
   }
 
@@ -435,17 +463,17 @@ export class FirestoreDataProvider implements IDataStore {
     // Seed Categories
     for (const cat of initialCategories) {
       const catRef = doc(db, 'categories', cat.id);
-      batch.set(catRef, cat);
+      batch.set(catRef, removeUndefined(cat));
     }
 
     // Seed Settings
     const settingsRef = doc(db, 'settings', 'store');
-    batch.set(settingsRef, initialSettings);
+    batch.set(settingsRef, removeUndefined(initialSettings));
 
     // Seed Products
     for (const prod of initialProducts) {
       const prodRef = doc(db, 'products', prod.id);
-      batch.set(prodRef, prod);
+      batch.set(prodRef, removeUndefined(prod));
     }
 
     await batch.commit();

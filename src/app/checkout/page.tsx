@@ -200,14 +200,19 @@ function CheckoutContent() {
       const shippingDossier: CustomerShippingInfo = {
         fullName: formData.fullName.trim(),
         phone: formData.phone.trim(),
-        secondaryPhone: formData.secondaryPhone.trim() || undefined,
         wilayaCode: formData.wilayaCode!,
         wilaya: selectedWilaya?.name || '',
         commune: formData.commune.trim(),
         address: formData.address.trim(),
         deliveryType: formData.deliveryType,
-        notes: formData.notes.trim() || undefined,
       };
+
+      if (formData.secondaryPhone.trim()) {
+        shippingDossier.secondaryPhone = formData.secondaryPhone.trim();
+      }
+      if (formData.notes.trim()) {
+        shippingDossier.notes = formData.notes.trim();
+      }
 
       const orderPayload = {
         customer: shippingDossier,

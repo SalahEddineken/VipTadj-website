@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDataStore } from '@/lib/data-provider';
-import { CreateOrderInput, OrderItem } from '@/types';
+import { CreateOrderInput, OrderItem, CustomerShippingInfo } from '@/types';
 import { isValidAlgerianPhone } from '@/lib/utils/contactUtils';
 
 export const dynamic = 'force-dynamic';
@@ -143,32 +143,50 @@ export async function POST(req: NextRequest) {
     const finalTotal = Math.max(0, calculatedSubtotal + deliveryFee - discount);
 
     // 4. Assemble clean CreateOrderInput
-    const orderPayload: CreateOrderInput = {
-      customer: {
-        fullName: body.customer.fullName.trim(),
-        phone: body.customer.phone.trim(),
-        secondaryPhone: body.customer.secondaryPhone?.trim() || undefined,
-        wilaya: body.customer.wilaya.trim(),
-        wilayaCode: Number(body.customer.wilayaCode),
-        commune: body.customer.commune.trim(),
-        address: body.customer.address.trim(),
-        notes: body.customer.notes?.trim() || undefined,
-        deliveryType: body.customer.deliveryType === 'desk' ? 'desk' : 'home',
-      },
-      items: body.items.map((it: OrderItem) => ({
+    const cleanCustomer: CustomerShippingInfo = {
+      fullName: body.customer.fullName.trim(),
+      phone: body.customer.phone.trim(),
+      wilaya: body.customer.wilaya.trim(),
+      wilayaCode: Number(body.customer.wilayaCode),
+      commune: body.customer.commune.trim(),
+      address: body.customer.address.trim(),
+      deliveryType: body.customer.deliveryType === 'desk' ? 'desk' : 'home',
+    };
+
+    if (body.customer.secondaryPhone && body.customer.secondaryPhone.trim()) {
+      cleanCustomer.secondaryPhone = body.customer.secondaryPhone.trim();
+    }
+    if (body.customer.notes && body.customer.notes.trim()) {
+      cleanCustomer.notes = body.customer.notes.trim();
+    }
+
+    const cleanItems = body.items.map((it: OrderItem) => {
+      const item: OrderItem = {
         productId: it.productId,
         title: it.title,
         slug: it.slug || '',
         price: it.price,
         quantity: it.quantity,
         selectedSize: it.selectedSize,
-        selectedColor: it.selectedColor || undefined,
         image: it.image,
-      })),
+      };
+      if (it.selectedColor && it.selectedColor.trim()) {
+        item.selectedColor = it.selectedColor.trim();
+      }
+      return item;
+    });
+
+    const orderPayload: CreateOrderInput = {
+      customer: cleanCustomer,
+      items: cleanItems,
       deliveryFee,
       discount,
-      notes: body.notes?.trim() || body.customer.notes?.trim() || undefined,
     };
+
+    const generalNotes = body.notes?.trim() || body.customer.notes?.trim();
+    if (generalNotes) {
+      orderPayload.notes = generalNotes;
+    }
 
     // 5. Atomic Order Creation and Stock Decrement in Data Store
     const createdOrder = await dataStore.createOrder(orderPayload);
