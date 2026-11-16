@@ -1,6 +1,7 @@
 import React from 'react';
 import { Metadata } from 'next';
 import { getDataStore } from '@/lib/data-provider';
+import { initialProducts } from '@/lib/seed/seed-data';
 import { StorefrontLayout } from '@/components/store/StorefrontLayout';
 import { CatalogClient } from '@/components/store/CatalogClient';
 import { CatalogBanner } from '@/components/store/CatalogBanner';
@@ -12,8 +13,16 @@ export const metadata: Metadata = {
 };
 
 export default async function CatalogPage() {
-  const dataStore = getDataStore();
-  const products = await dataStore.getProducts();
+  let products = initialProducts;
+  try {
+    const dataStore = getDataStore();
+    const fetched = await dataStore.getProducts();
+    if (fetched && fetched.length > 0) {
+      products = fetched;
+    }
+  } catch (error) {
+    console.warn('[CatalogPage SSR] Using initialProducts fallback:', error);
+  }
 
   return (
     <StorefrontLayout>

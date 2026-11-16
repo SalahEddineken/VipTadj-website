@@ -294,6 +294,150 @@ export const PRODUCT_TRANSLATIONS: Record<string, Record<Exclude<SupportedLangua
         'منديل جيب فاخر من الحرير الإيطالي الخالص بنقوش البيزلي الهادئة وحواف مبرومة ومخيطة يدوياً لتزيين جيب سترة البدلة بأناقة بالغة.',
     },
   },
+  'prod-costume-trois-pieces-prince': {
+    en: {
+      title: 'Prince of Wales Three-Piece Suit with Tailored Vest',
+      description:
+        'Aristocratic British elegance tailored with Italian fluidity in grey Prince of Wales virgin wool, complemented by a sharp double-breasted vest.',
+    },
+    ar: {
+      title: 'بدلة رجالية ملكية ثلاث قطع بنقشة برنس دي غال وسترة كلاسيكية',
+      description:
+        'أناقة أرستقراطية تجمع بين التقاليد البريطانية والمرونة الإيطالية بصوف نقي رمادي، مع سترة داخلية أنيقة.',
+    },
+  },
+  'prod-blazer-bleu-cobalt': {
+    en: {
+      title: 'Neapolitan Unstructured Cobalt Blue Tailored Blazer',
+      description:
+        'Italian sprezzatura featuring spalla camicia shirt-shoulder construction, patch pockets, and vibrant cobalt blue luxury wool.',
+    },
+    ar: {
+      title: 'سترة بليزر إيطالية أنيقة بلون أزرق كوبالت جذاب',
+      description:
+        'تصميم نابولي أصيل بكتف مريح وجيوب مميزة وقماش صوف راقٍ بلون أزرق مميز.',
+    },
+  },
+  'prod-pardessus-laine-noire': {
+    en: {
+      title: 'Officer Winter Overcoat in Heavy Black Melton Wool',
+      description:
+        'Commanding tailored officer overcoat crafted in naturally water-resistant Melton wool with velvet-lined collar.',
+    },
+    ar: {
+      title: 'معطف شتوي فاخر من الصوف الأسود الثقيل بقصة وقورة',
+      description:
+        'معطف شتوي أنيق ودافئ من الصوف الأسود الفاخر المقاوم للعوامل الجوية مع ياقة مبطنة وأزرار متقنة.',
+    },
+  },
+  'prod-chemise-popeline-bleu-ciel': {
+    en: {
+      title: 'Sky Blue Poplin Dress Shirt with French Cuffs',
+      description:
+        'Sartorial business staple in smooth two-ply cotton poplin with cutaway collar and French cuffs for luxury cufflinks.',
+    },
+    ar: {
+      title: 'قميص رسمي بلون أزرق سماوي وأكمام فرنسية فاخرة',
+      description:
+        'قميص أعمال راقٍ من قطن البوبلين الناعم المريح مع ياقة إيطالية وأكمام مهيأة لأزرار الأكمام الذهبية.',
+    },
+  },
+  'prod-pull-cachemire-col-roule': {
+    en: {
+      title: 'Pure Mongolian Cashmere Turtleneck Sweater in Onyx Black',
+      description:
+        'Knitted in 4-ply Mongolian cashmere gauge 12, offering supreme warmth and refined silhouette beneath tailored blazers.',
+    },
+    ar: {
+      title: 'كنزة بياقة عالية من الكشمير الخالص باللون الأسود الملكي',
+      description:
+        'حياكة راقية من كشمير منغوليا الخالص بأربعة خيوط تمنح الدفء والنعومة الفائقة تحت سترات البدلات الشتوية.',
+    },
+  },
+  'prod-double-boucle-cognac': {
+    en: {
+      title: 'Double Monk Strap Shoes in Hand-Patinated Chestnut Leather',
+      description:
+        'Charismatic double monk strap shoes in hand-burnished Box-Calf leather with brushed golden hardware.',
+    },
+    ar: {
+      title: 'حذاء كلاسيكي ذو إبزيم مزدوج من الجلد الطبيعي المصقول باللون البني',
+      description:
+        'تصميم مميز وأنيق بإبزيمين مطليين بالذهب مع جلد فاخر مصقول يدوياً ولمعان راقٍ.',
+    },
+  },
+  'prod-derbies-marron-vintage': {
+    en: {
+      title: 'Wingtip Brogue Derbies in Hand-Burnished Vintage Brown Leather',
+      description:
+        'Traditional English perforated wingtip brogues on double leather sole with storm welt construction.',
+    },
+    ar: {
+      title: 'حذاء ديربي بنقوش كلاسيكية مخرزة من الجلد البني الفاخر',
+      description:
+        'حذاء رسمي متميز بنقوش كلاسيكية دقيقة ونعل جلدي متين وخياطة يدوية متقنة.',
+    },
+  },
+  'prod-mocassins-glands-bordeaux': {
+    en: {
+      title: 'Tassel Loafers in Deep Burgundy Glazed Calf Leather',
+      description:
+        'Iconic Italian tassel loafers finished in lustrous deep burgundy patina with hand-woven tassels.',
+    },
+    ar: {
+      title: 'حذاء موكاسين بشرابات أنيقة من الجلد الفاخر بلون بورغندي داكن',
+      description:
+        'موكاسين أيقوني مريح وبشرابات جلدية متقونة مع صباغة يدوية بلون نبيذي غني.',
+    },
+  },
+  'prod-sneakers-cuir-minimaliste': {
+    en: {
+      title: 'Luxury Minimalist Sneakers in Pure White Leather with Margom Sole',
+      description:
+        'Contemporary luxury sneakers in butter-soft Italian nappa leather on stitched Italian Margom rubber cupsole.',
+    },
+    ar: {
+      title: 'حذاء رياضي أنيق ومينيمالي من الجلد الأبيض الطبيعي بنعل مارغوم',
+      description:
+        'حذاء رياضي مريح وفخم من جلد النابا الأبيض الخالص مع نعل مطاطي إيطالي مخيط بالكامل.',
+    },
+  },
+  'prod-bottines-jodhpur-noir': {
+    en: {
+      title: 'Formal Jodhpur Boots in Black Box-Calf Leather with Gold Buckle',
+      description:
+        'Sleek ankle-strap Jodhpur boots crafted in French box-calf leather with polished brass buckle.',
+    },
+    ar: {
+      title: 'حذاء كاحل جودبور رسمي من الجلد الأسود الأملس مع إبزيم ذهبي',
+      description:
+        'حذاء كاحل استثنائي وأنيق يلتف بحزام جلدي مع إبزيم ذهبي مصقول ونعل جلدي نحيف.',
+    },
+  },
+  'prod-porte-documents-cuir': {
+    en: {
+      title: 'Executive Leather Briefcase in Deep Burgundy with Gold Lock',
+      description:
+        'Structured bridle leather briefcase with padded laptop compartment and gold-plated combination clasp.',
+    },
+    ar: {
+      title: 'حقيبة وثائق أعمال فاخرة من الجلد الصلب باللون العنابي وقفل ذهبي',
+      description:
+        'حقيبة جلدية للمدراء ورجال الأعمال تتسع للحاسوب المحمول والملفات مع قفل أمان مطلي بالذهب.',
+    },
+  },
+  'prod-portefeuille-nappa': {
+    en: {
+      title: 'Ultra-Slim Italian Nappa Leather Wallet with RFID Shield',
+      description:
+        'Sleek bifold pocket wallet designed to glide smoothly into suit jacket pockets with RFID blocking protection.',
+    },
+    ar: {
+      title: 'محفظة جيب نحيفة جداً من جلد النابا الأسود مع حماية ضد التردد اللاسلكي',
+      description:
+        'محفظة جيب فائقة النحافة مصممة خصيصاً لجيب سترة البدلة الداخلية مع حماية بطاقات مدمجة.',
+    },
+  },
 };
 
 /**
@@ -388,9 +532,19 @@ export const SUBCATEGORY_TRANSLATIONS: Record<string, Record<SupportedLanguage, 
     en: 'Trousers',
     ar: 'سراويل',
   },
+  tricots: {
+    fr: 'Tricots & Maille',
+    en: 'Knitwear',
+    ar: 'ملابس صوفية',
+  },
   // Shoes
   richelieu: {
     fr: 'Richelieu',
+    en: 'Richelieu',
+    ar: 'ريشليو',
+  },
+  richelieus: {
+    fr: 'Richelieus',
     en: 'Richelieu',
     ar: 'ريشليو',
   },
@@ -414,6 +568,16 @@ export const SUBCATEGORY_TRANSLATIONS: Record<string, Record<SupportedLanguage, 
     en: 'Ankle Boots',
     ar: 'أحذية كاحل بوتين',
   },
+  boucles: {
+    fr: 'Double Boucle',
+    en: 'Monk Strap',
+    ar: 'أحذية ذات إبزيم مزدوج',
+  },
+  sneakers: {
+    fr: 'Baskets de Luxe',
+    en: 'Luxury Sneakers',
+    ar: 'أحذية رياضية فاخرة',
+  },
   // Accessories
   cravates: {
     fr: 'Cravates',
@@ -434,6 +598,16 @@ export const SUBCATEGORY_TRANSLATIONS: Record<string, Record<SupportedLanguage, 
     fr: 'Boutons de manchette',
     en: 'Cufflinks',
     ar: 'أزرار أكمام',
+  },
+  'boutons-de-manchette': {
+    fr: 'Boutons de manchette',
+    en: 'Cufflinks',
+    ar: 'أزرار أكمام',
+  },
+  pochettes: {
+    fr: 'Pochettes',
+    en: 'Pocket Squares',
+    ar: 'منديل الجيب',
   },
   maroquinerie: {
     fr: 'Maroquinerie',

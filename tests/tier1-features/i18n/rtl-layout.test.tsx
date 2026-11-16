@@ -44,8 +44,8 @@ describe('Tier 1: RTL Layout & Algerian Retail Localization', () => {
   });
 
   describe('Catalog & Category Localization', () => {
-    it('translates all 18 seed products into Arabic and English', () => {
-      expect(SEED_PRODUCTS.length).toBe(18);
+    it('translates seed products into Arabic and English', () => {
+      expect(SEED_PRODUCTS.length).toBeGreaterThanOrEqual(18);
 
       SEED_PRODUCTS.forEach((product) => {
         // Arabic

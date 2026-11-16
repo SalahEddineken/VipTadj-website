@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import { getDataStore } from '@/lib/data-provider';
 import { ProductForm } from '@/components/admin/ProductForm';
+import { Product } from '@/types';
 
 interface EditProductPageProps {
   params: {
@@ -9,8 +10,13 @@ interface EditProductPageProps {
 }
 
 export default async function EditProductPage({ params }: EditProductPageProps) {
-  const store = getDataStore();
-  const product = await store.getProductById(params.id);
+  let product: Product | null = null;
+  try {
+    const store = getDataStore();
+    product = await store.getProductById(params.id);
+  } catch (error) {
+    console.error('[EditProductPage SSR] Non-fatal error loading product:', error);
+  }
 
   if (!product) {
     notFound();

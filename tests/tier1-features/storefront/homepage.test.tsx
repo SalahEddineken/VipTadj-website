@@ -73,7 +73,7 @@ describe('Tier 1: Storefront — Homepage Editorial Experience (F-SF-02)', () =>
     render(<HomePage />);
 
     expect(screen.getByText(/VIP TADJ Core Infrastructure Status/i)).toBeInTheDocument();
-    const currencyDisplay = screen.getByText((content) => content.includes('38') && content.includes('500') && content.includes('DA'));
-    expect(currencyDisplay).toBeInTheDocument();
+    const currencyDisplays = screen.getAllByText((content) => content.includes('38') && content.includes('500') && content.includes('DA'));
+    expect(currencyDisplays.length).toBeGreaterThan(0);
   });
 });

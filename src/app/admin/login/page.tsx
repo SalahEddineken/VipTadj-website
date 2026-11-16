@@ -2,9 +2,9 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAdminAuth, MOCK_ADMIN_CREDENTIALS } from '@/lib/context/auth-context';
+import { useAdminAuth } from '@/lib/context/auth-context';
 import { useLanguage } from '@/lib/context/language-context';
-import { Lock, Mail, Eye, EyeOff, ShieldAlert, ArrowRight, Check, Crown } from 'lucide-react';
+import { Lock, Mail, Eye, EyeOff, ShieldAlert, ArrowRight, Crown } from 'lucide-react';
 
 export default function AdminLoginPage() {
   const { login, isLoading } = useAdminAuth();
@@ -35,12 +35,6 @@ export default function AdminLoginPage() {
     } else {
       setErrorMessage(result.error || t('admin.login.invalid_credentials', 'Identifiants invalides.'));
     }
-  };
-
-  const fillDemoCredentials = () => {
-    setEmail(MOCK_ADMIN_CREDENTIALS.email);
-    setPassword(MOCK_ADMIN_CREDENTIALS.password);
-    setErrorMessage(null);
   };
 
   return (
@@ -139,36 +133,6 @@ export default function AdminLoginPage() {
               )}
             </button>
           </form>
-
-          {/* Quick Demo Credentials Card */}
-          <div className="mt-6 pt-5 border-t border-gold-500/15">
-            <div className="p-3.5 rounded-sm bg-obsidian-950/70 border border-gold-500/25 space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] font-bold text-gold-400 tracking-wider uppercase">
-                  {t('admin.login.demo_card_title', 'Accès Démonstration & Évaluation')}
-                </span>
-                <span className="text-[9px] px-1.5 py-0.5 rounded-sm bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
-                  {t('admin.login.demo_status_ready', 'Prêt')}
-                </span>
-              </div>
-              <div className="text-[11px] text-obsidian-200 font-mono space-y-0.5">
-                <div>
-                  {t('admin.login.email', 'Email')} : <span className="text-gold-300">{MOCK_ADMIN_CREDENTIALS.email}</span>
-                </div>
-                <div>
-                  {t('admin.login.password', 'Mot de passe')} : <span className="text-gold-300">{MOCK_ADMIN_CREDENTIALS.password}</span>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={fillDemoCredentials}
-                className="w-full py-2 mt-1 rounded-sm bg-gold-500/15 hover:bg-gold-500/25 border border-gold-500/30 text-gold-400 text-xs font-medium transition-colors flex items-center justify-center gap-1.5 min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500"
-              >
-                <Check className="w-3.5 h-3.5" />
-                <span>{t('admin.login.demo_btn', 'Remplir automatiquement')}</span>
-              </button>
-            </div>
-          </div>
         </div>
 
         {/* Security Notice */}

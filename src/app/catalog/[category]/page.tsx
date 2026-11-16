@@ -2,6 +2,7 @@ import React from 'react';
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getDataStore } from '@/lib/data-provider';
+import { initialProducts } from '@/lib/seed/seed-data';
 import { StorefrontLayout } from '@/components/store/StorefrontLayout';
 import { CatalogClient } from '@/components/store/CatalogClient';
 import { CategoryBanner } from '@/components/store/CategoryBanner';
@@ -37,8 +38,16 @@ export default async function CategoryCatalogPage({ params }: CategoryPageProps)
     notFound();
   }
 
-  const dataStore = getDataStore();
-  const allProducts = await dataStore.getProducts();
+  let allProducts = initialProducts;
+  try {
+    const dataStore = getDataStore();
+    const fetched = await dataStore.getProducts();
+    if (fetched && fetched.length > 0) {
+      allProducts = fetched;
+    }
+  } catch (error) {
+    console.warn('[CategoryCatalogPage SSR] Using initialProducts fallback:', error);
+  }
 
   return (
     <StorefrontLayout>

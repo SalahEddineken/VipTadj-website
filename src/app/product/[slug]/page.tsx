@@ -2,6 +2,7 @@ import React from 'react';
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getDataStore } from '@/lib/data-provider';
+import { initialProducts } from '@/lib/seed/seed-data';
 import { StorefrontLayout } from '@/components/store/StorefrontLayout';
 import { ProductDetailPage } from '@/components/store/pdp/ProductDetailPage';
 
@@ -14,8 +15,16 @@ interface DirectProductPageProps {
 export async function generateMetadata({
   params,
 }: DirectProductPageProps): Promise<Metadata> {
-  const dataStore = getDataStore();
-  const product = await dataStore.getProductBySlug(params.slug);
+  let product = null;
+  try {
+    const dataStore = getDataStore();
+    product = await dataStore.getProductBySlug(params.slug);
+  } catch {
+    product = initialProducts.find((p) => p.slug === params.slug) || null;
+  }
+  if (!product) {
+    product = initialProducts.find((p) => p.slug === params.slug) || null;
+  }
 
   if (!product) {
     return {
@@ -32,8 +41,16 @@ export async function generateMetadata({
 export default async function DirectProductDetailPage({
   params,
 }: DirectProductPageProps) {
-  const dataStore = getDataStore();
-  const product = await dataStore.getProductBySlug(params.slug);
+  let product = null;
+  try {
+    const dataStore = getDataStore();
+    product = await dataStore.getProductBySlug(params.slug);
+  } catch {
+    product = initialProducts.find((p) => p.slug === params.slug) || null;
+  }
+  if (!product) {
+    product = initialProducts.find((p) => p.slug === params.slug) || null;
+  }
 
   if (!product) {
     notFound();

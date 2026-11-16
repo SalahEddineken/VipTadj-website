@@ -2,6 +2,7 @@ import React, { Suspense } from 'react';
 import { Metadata } from 'next';
 import { getDataStore } from '@/lib/data-provider';
 import { OrdersManagementClient } from '@/components/admin/OrdersManagementClient';
+import { Order } from '@/types';
 
 export const metadata: Metadata = {
   title: 'Commandes | Administration VIP TADJ',
@@ -18,8 +19,13 @@ interface OrdersPageProps {
 }
 
 export default async function AdminOrdersPage({ searchParams }: OrdersPageProps) {
-  const dataStore = getDataStore();
-  const initialOrders = await dataStore.getOrders();
+  let initialOrders: Order[] = [];
+  try {
+    const dataStore = getDataStore();
+    initialOrders = await dataStore.getOrders();
+  } catch (error) {
+    console.error('[AdminOrdersPage SSR] Non-fatal error loading initial orders:', error);
+  }
 
   return (
     <Suspense

@@ -5,6 +5,7 @@ import { notFound } from 'next/navigation';
 import { getDataStore } from '@/lib/data-provider';
 import { OrderDetailClient } from '@/components/admin/OrderDetailClient';
 import { Package, ArrowLeft } from 'lucide-react';
+import { Order } from '@/types';
 
 interface OrderDetailPageProps {
   params: {
@@ -31,8 +32,13 @@ export async function generateMetadata({ params }: OrderDetailPageProps): Promis
 export const dynamic = 'force-dynamic';
 
 export default async function AdminOrderDetailPage({ params }: OrderDetailPageProps) {
-  const store = getDataStore();
-  const order = await store.getOrderById(params.id);
+  let order: Order | null = null;
+  try {
+    const store = getDataStore();
+    order = await store.getOrderById(params.id);
+  } catch (error) {
+    console.error('[AdminOrderDetailPage SSR] Non-fatal error loading order:', error);
+  }
 
   if (!order) {
     return (

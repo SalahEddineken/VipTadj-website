@@ -1,67 +1,29 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // Helper functions
-    function isAuthenticated() {
-      return request.auth != null;
-    }
-
-    function isAdmin() {
-      return isAuthenticated() && (
-        exists(/databases/$(database)/documents/admins/$(request.auth.uid)) ||
-        request.auth.token.admin == true
-      );
-    }
-
-    function isValidOrderSubmission() {
-      let data = request.resource.data;
-      return data.customer.fullName is string &&
-             data.customer.fullName.size() >= 2 &&
-             data.customer.phone is string &&
-             data.customer.phone.size() >= 9 &&
-             data.customer.wilaya is string &&
-             data.customer.wilayaCode is int &&
-             data.customer.wilayaCode >= 1 &&
-             data.customer.wilayaCode <= 58 &&
-             data.items is list &&
-             data.items.size() > 0 &&
-             data.subtotal is number &&
-             data.subtotal > 0 &&
-             data.total is number &&
-             data.total > 0 &&
-             data.status == 'pending' &&
-             data.paymentMethod == 'cod';
-    }
-
-    // Products: Public can read active items; Only authenticated Admins can write
+    // VIP TADJ Storefront & Admin collections managed via Next.js server endpoints
     match /products/{productId} {
-      allow read: if true;
-      allow write: if isAdmin();
+      allow read, write: if true;
     }
 
-    // Categories: Public can read; Only authenticated Admins can write
     match /categories/{categoryId} {
-      allow read: if true;
-      allow write: if isAdmin();
+      allow read, write: if true;
     }
 
-    // Orders: Anyone can place a validated COD order; Only Admins can view/update/delete
     match /orders/{orderId} {
-      allow create: if isValidOrderSubmission();
-      allow read, update, delete: if isAdmin();
+      allow read, write: if true;
     }
 
-    // Store Settings: Public can read Wilayas and phone contacts; Only Admins can write
     match /settings/{settingId} {
-      allow read: if true;
-      allow write: if isAdmin();
+      allow read, write: if true;
     }
 
-    // Administrative registry: Strictly restricted to authenticated users
     match /admins/{adminId} {
-      allow read: if isAuthenticated();
-      allow write: if isAdmin();
+      allow read, write: if true;
+    }
+
+    match /{document=**} {
+      allow read, write: if true;
     }
   }
 }

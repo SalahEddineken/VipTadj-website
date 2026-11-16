@@ -1,5 +1,6 @@
 import { getDataStore } from '@/lib/data-provider';
 import { ProductsManagementClient } from '@/components/admin/ProductsManagementClient';
+import { Product } from '@/types';
 
 export const metadata = {
   title: 'Gestion du Catalogue | VIP TADJ Administration',
@@ -7,8 +8,13 @@ export const metadata = {
 };
 
 export default async function AdminProductsPage() {
-  const store = getDataStore();
-  const products = await store.getProducts();
+  let products: Product[] = [];
+  try {
+    const store = getDataStore();
+    products = await store.getProducts();
+  } catch (error) {
+    console.error('[AdminProductsPage SSR] Non-fatal error loading products:', error);
+  }
 
   return <ProductsManagementClient initialProducts={products} />;
 }

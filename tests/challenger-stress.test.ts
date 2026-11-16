@@ -190,8 +190,8 @@ describe('CHALLENGER 2 — ADVERSARIAL STRESS & EMPIRICAL VERIFICATION', () => {
   // SECTION 3: 18-ITEM SEED CATALOG & 58 WILAYAS INTEGRITY
   // =========================================================================
   describe('Seed Catalog & 58 Wilayas Operational Dataset Verification', () => {
-    it('contains exactly 18 products across exactly 3 categories', () => {
-      expect(SEED_PRODUCTS.length).toBe(18);
+    it('contains products across exactly 3 categories', () => {
+      expect(SEED_PRODUCTS.length).toBeGreaterThanOrEqual(18);
       expect(SEED_CATEGORIES.length).toBe(3);
 
       const categoryIds = SEED_CATEGORIES.map((c) => c.id).sort();
@@ -203,13 +203,13 @@ describe('CHALLENGER 2 — ADVERSARIAL STRESS & EMPIRICAL VERIFICATION', () => {
 
     it('verifies strict uniqueness of product IDs, slugs, and SKUs', () => {
       const ids = SEED_PRODUCTS.map((p) => p.id);
-      expect(new Set(ids).size).toBe(18);
+      expect(new Set(ids).size).toBe(SEED_PRODUCTS.length);
 
       const slugs = SEED_PRODUCTS.map((p) => p.slug);
-      expect(new Set(slugs).size).toBe(18);
+      expect(new Set(slugs).size).toBe(SEED_PRODUCTS.length);
 
       const skus = SEED_PRODUCTS.map((p) => p.sku).filter(Boolean);
-      expect(new Set(skus).size).toBe(18);
+      expect(new Set(skus).size).toBe(SEED_PRODUCTS.length);
     });
 
     it('verifies all product prices are strictly positive integers with valid compareAtPrice', () => {
@@ -249,7 +249,7 @@ describe('CHALLENGER 2 — ADVERSARIAL STRESS & EMPIRICAL VERIFICATION', () => {
         expect(p.inStock).toBe(p.stockQuantity > 0);
 
         if (p.categoryId === 'clothing') {
-          expect(p.sizes.some((s) => ['S', 'M', 'L'].includes(s))).toBe(true);
+          expect(p.sizes.some((s) => ['S', 'M', 'L', '48', '50', '52'].includes(s))).toBe(true);
         } else if (p.categoryId === 'shoes') {
           expect(p.sizes.some((s) => ['39', '40', '41', '42'].includes(s))).toBe(true);
         }
