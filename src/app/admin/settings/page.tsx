@@ -232,15 +232,27 @@ export default function AdminSettingsPage() {
         body: JSON.stringify(payload),
       });
 
-      const data = await res.json();
-      if (res.ok && data.success) {
+      let data: any = null;
+      try {
+        data = await res.json();
+      } catch {
+        // Non-JSON response
+      }
+
+      if (res.ok && data?.success) {
         showNotification('success', t('admin.settings.saved_toast', 'Paramètres et grille tarifaire enregistrés avec succès !'));
       } else {
-        showNotification('error', data.error || t('admin.settings.save_error', 'Erreur lors de l\'enregistrement.'));
+        const errorDetail = data?.errors ? Object.values(data.errors).join(' | ') : null;
+        const errorMsg = data?.error || errorDetail || (res.status ? `Erreur HTTP ${res.status}` : null);
+        showNotification('error', errorMsg || t('admin.settings.save_error', 'Erreur lors de l\'enregistrement.'));
       }
     } catch (err: any) {
       console.error('Save settings failed:', err);
-      showNotification('error', t('admin.settings.connect_error', 'Échec de connexion au serveur.'));
+      const isNetworkError = err?.name === 'TypeError' || err?.message?.toLowerCase().includes('fetch');
+      showNotification('error', isNetworkError
+        ? t('admin.settings.connect_error', 'Échec de connexion au serveur. Assurez-vous que le serveur (npm run dev) est actif.')
+        : (err?.message || t('admin.settings.connect_error', 'Échec de connexion au serveur.'))
+      );
     } finally {
       setSaving(false);
     }

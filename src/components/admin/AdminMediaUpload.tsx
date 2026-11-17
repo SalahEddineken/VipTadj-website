@@ -131,75 +131,78 @@ export function AdminMediaUpload({
   };
 
   // Process files (from file dialog or drop)
-  const processFiles = async (fileList: FileList | File[]) => {
-    const filesToUpload = Array.from(fileList).filter((f) => f.type.startsWith('image/'));
-    if (filesToUpload.length === 0) return;
+  const processFiles = useCallback(
+    async (fileList: FileList | File[]) => {
+      const filesToUpload = Array.from(fileList).filter((f) => f.type.startsWith('image/'));
+      if (filesToUpload.length === 0) return;
 
-    const remainingSlots = maxImages - images.length;
-    if (remainingSlots <= 0) {
-      alert(`Nombre maximum d'images atteint (${maxImages}).`);
-      return;
-    }
+      const remainingSlots = maxImages - images.length;
+      if (remainingSlots <= 0) {
+        alert(`Nombre maximum d'images atteint (${maxImages}).`);
+        return;
+      }
 
-    const filesToProcess = filesToUpload.slice(0, remainingSlots);
-    setIsUploading(true);
+      const filesToProcess = filesToUpload.slice(0, remainingSlots);
+      setIsUploading(true);
 
-    try {
-      const newImages: ProductImage[] = [];
+      try {
+        const newImages: ProductImage[] = [];
 
-      for (let i = 0; i < filesToProcess.length; i++) {
-        const rawFile = filesToProcess[i];
-        setUploadStatus(
-          filesToProcess.length > 1
-            ? `Traitement et optimisation (${i + 1}/${filesToProcess.length})...`
-            : 'Optimisation de la photo pour affichage haute définition...'
-        );
+        for (let i = 0; i < filesToProcess.length; i++) {
+          const rawFile = filesToProcess[i];
+          setUploadStatus(
+            filesToProcess.length > 1
+              ? `Traitement et optimisation (${i + 1}/${filesToProcess.length})...`
+              : 'Optimisation de la photo pour affichage haute définition...'
+          );
 
-        // Compress large camera photos in the browser (e.g. 12MB down to ~300KB)
-        const compressedFile = await compressImageFile(rawFile, {
-          maxWidth: 1600,
-          maxHeight: 2000,
-          quality: 0.85,
-        });
+          // Compress large camera photos in the browser (e.g. 12MB down to ~300KB)
+          const compressedFile = await compressImageFile(rawFile, {
+            maxWidth: 1600,
+            maxHeight: 2000,
+            quality: 0.85,
+          });
 
-        const formData = new FormData();
-        formData.append('file', compressedFile);
-        formData.append('alt', altInput.trim() || rawFile.name.replace(/\.[^/.]+$/, ''));
-        formData.append('isPrimary', images.length === 0 && i === 0 ? 'true' : 'false');
+          const formData = new FormData();
+          formData.append('file', compressedFile);
+          formData.append('alt', altInput.trim() || rawFile.name.replace(/\.[^/.]+$/, ''));
+          formData.append('isPrimary', images.length === 0 && i === 0 ? 'true' : 'false');
 
-        setUploadStatus(
-          filesToProcess.length > 1
-            ? `Téléversement (${i + 1}/${filesToProcess.length})...`
-            : 'Téléversement en cours sur le serveur VIP TADJ...'
-        );
+          setUploadStatus(
+            filesToProcess.length > 1
+              ? `Téléversement (${i + 1}/${filesToProcess.length})...`
+              : 'Téléversement en cours sur le serveur VIP TADJ...'
+          );
 
-        const res = await fetch('/api/media/upload', {
-          method: 'POST',
-          body: formData,
-        });
+          const res = await fetch('/api/media/upload', {
+            method: 'POST',
+            body: formData,
+          });
 
-        const data = await res.json();
-        if (data.success && data.image) {
-          newImages.push(data.image);
-        } else {
-          console.error('Upload error:', data.error);
-          alert(data.error || `Erreur lors du téléversement de ${rawFile.name}.`);
+          const data = await res.json();
+          if (data.success && data.image) {
+            newImages.push(data.image);
+          } else {
+            console.error('Upload error:', data.error);
+            alert(data.error || `Erreur lors du téléversement de ${rawFile.name}.`);
+          }
         }
-      }
 
-      if (newImages.length > 0) {
-        onChange(enforceSinglePrimary([...images, ...newImages]));
+        if (newImages.length > 0) {
+          onChange(enforceSinglePrimary([...images, ...newImages]));
+        }
+      } catch (err: any) {
+        console.error('Upload failed:', err);
+        alert('Échec de la communication avec le serveur média.');
+      } finally {
+        setIsUploading(false);
+        setUploadStatus(null);
+        if (fileInputRef.current) fileInputRef.current.value = '';
+        if (cameraInputRef.current) cameraInputRef.current.value = '';
       }
-    } catch (err: any) {
-      console.error('Upload failed:', err);
-      alert('Échec de la communication avec le serveur média.');
-    } finally {
-      setIsUploading(false);
-      setUploadStatus(null);
-      if (fileInputRef.current) fileInputRef.current.value = '';
-      if (cameraInputRef.current) cameraInputRef.current.value = '';
-    }
-  };
+    },
+    [maxImages, images, altInput, onChange]
+  );
 
   // Add from File Upload input
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -233,7 +236,7 @@ export function AdminMediaUpload({
         await processFiles(e.dataTransfer.files);
       }
     },
-    [disabled, isUploading, images.length, maxImages]
+    [disabled, isUploading, images.length, maxImages, processFiles]
   );
 
   // Add from Curated Library

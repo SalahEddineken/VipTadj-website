@@ -3,6 +3,8 @@ import { getDataStore } from '@/lib/data-provider';
 import { updateStoreSettingsSchema } from '@/lib/validations/settings';
 import { ALGERIAN_58_WILAYAS } from '@/lib/data/wilayas';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   try {
     const store = getDataStore();

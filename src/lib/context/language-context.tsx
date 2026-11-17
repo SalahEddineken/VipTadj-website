@@ -136,7 +136,7 @@ export function LanguageProvider({
     return () => {
       window.removeEventListener('storage', handleStorage);
     };
-  }, [applyLanguageToDom]);
+  }, [applyLanguageToDom, language]);
 
   const t = useCallback(
     (key: string, fallback?: string) => {

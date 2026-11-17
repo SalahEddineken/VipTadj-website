@@ -24,6 +24,7 @@ const amiri = Amiri({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://viptadj-dz.vercel.app'),
   title: 'VIP TADJ | Haute Élégance Masculine | Alger',
   description:
     "Maison de couture et boutique de prêt-à-porter masculin de luxe en Algérie. Costumes sur-mesure, blazers raffinés, souliers en cuir artisanal et accessoires d'exception. Livraison express 58 Wilayas avec paiement à la livraison (COD).",
@@ -42,7 +43,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'VIP TADJ | Haute Élégance Masculine',
     description: "Boutique de prêt-à-porter masculin d'exception en Algérie.",
-    url: 'https://viptadj.dz',
+    url: 'https://viptadj-dz.vercel.app',
     siteName: 'VIP TADJ',
     locale: 'fr_DZ',
     type: 'website',

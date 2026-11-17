@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { ZoomIn, ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { ProductImage, ProductColor } from '@/types';
 import { normalizeImageUrl } from '@/lib/media/url-normalizer';
@@ -15,14 +15,16 @@ export interface ProductGalleryProps {
 
 export function ProductGallery({ images, title, categoryId, selectedColor }: ProductGalleryProps) {
   const { t } = useLanguage();
-  const safeImages = images && images.length > 0 ? images : [
-    {
-      id: 'default',
-      url: 'https://images.unsplash.com/photo-1594938298603-c8148c4dae35',
-      alt: title,
-      isPrimary: true,
-    },
-  ];
+  const safeImages = useMemo(() => {
+    return images && images.length > 0 ? images : [
+      {
+        id: 'default',
+        url: 'https://images.unsplash.com/photo-1594938298603-c8148c4dae35',
+        alt: title,
+        isPrimary: true,
+      },
+    ];
+  }, [images, title]);
 
   // Primary image starts first
   const primaryIdx = safeImages.findIndex((img) => img.isPrimary);
