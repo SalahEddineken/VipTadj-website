@@ -225,6 +225,7 @@ export class MockDataProvider implements IDataStore {
       total,
       paymentMethod: 'cod',
       status: 'pending',
+      stockDeducted: true,
       statusHistory: [
         {
           status: 'pending',
@@ -236,11 +237,20 @@ export class MockDataProvider implements IDataStore {
       updatedAt: now,
     };
 
-    // Decrement stock for ordered items
+    // Decrement stock for ordered items (both sizeInventory and total stock)
     for (const item of data.items) {
       const product = this.products.find((p) => p.id === item.productId);
       if (product) {
-        product.stockQuantity = Math.max(0, product.stockQuantity - item.quantity);
+        if (product.sizeInventory && item.selectedSize && product.sizeInventory[item.selectedSize] !== undefined) {
+          const currentSizeStock = Number(product.sizeInventory[item.selectedSize] || 0);
+          product.sizeInventory[item.selectedSize] = Math.max(0, currentSizeStock - item.quantity);
+          product.stockQuantity = Object.values(product.sizeInventory).reduce(
+            (acc, val) => acc + Number(val || 0),
+            0
+          );
+        } else {
+          product.stockQuantity = Math.max(0, Number(product.stockQuantity || 0) - item.quantity);
+        }
         product.inStock = product.stockQuantity > 0;
       }
     }
@@ -277,7 +287,16 @@ export class MockDataProvider implements IDataStore {
       for (const item of order.items) {
         const product = this.products.find((p) => p.id === item.productId);
         if (product) {
-          product.stockQuantity += item.quantity;
+          if (product.sizeInventory && item.selectedSize && product.sizeInventory[item.selectedSize] !== undefined) {
+            const currentSizeStock = Number(product.sizeInventory[item.selectedSize] || 0);
+            product.sizeInventory[item.selectedSize] = currentSizeStock + item.quantity;
+            product.stockQuantity = Object.values(product.sizeInventory).reduce(
+              (acc, val) => acc + Number(val || 0),
+              0
+            );
+          } else {
+            product.stockQuantity = Number(product.stockQuantity || 0) + item.quantity;
+          }
           product.inStock = product.stockQuantity > 0;
         }
       }

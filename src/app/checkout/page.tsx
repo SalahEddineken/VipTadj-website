@@ -179,6 +179,13 @@ function CheckoutContent() {
       );
     }
 
+    const stockViolationItem = items.find(
+      (it) => typeof it.maxStock === 'number' && it.maxStock >= 0 && it.quantity > it.maxStock
+    );
+    if (stockViolationItem) {
+      newErrors.general = `Stock insuffisant pour "${stockViolationItem.title}" en taille ${stockViolationItem.selectedSize}. Stock disponible : ${stockViolationItem.maxStock}.`;
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -598,6 +605,11 @@ function CheckoutContent() {
                           <span>
                             {t('checkout.summary.qty_label', 'Qté :')} {item.quantity}
                           </span>
+                          {typeof item.maxStock === 'number' && item.quantity > item.maxStock && (
+                            <span className="text-red-600 font-medium">
+                              (Stock max : {item.maxStock})
+                            </span>
+                          )}
                         </div>
                       </div>
                       <p className="text-xs font-semibold text-charcoal-900 text-start">

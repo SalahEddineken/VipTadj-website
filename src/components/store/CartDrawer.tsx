@@ -224,7 +224,7 @@ export function CartDrawer({ isOpen: controlledIsOpen, onClose: controlledOnClos
                                 item.selectedColor
                               )
                             }
-                            disabled={item.quantity >= 99}
+                            disabled={item.quantity >= (typeof item.maxStock === 'number' ? item.maxStock : 99)}
                             aria-label={t('cart.item.qty_increase', 'Augmenter la quantité')}
                             className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center hover:bg-sand-100 text-obsidian-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500"
                           >

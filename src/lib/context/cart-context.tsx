@@ -153,14 +153,20 @@ export function CartProvider({
       if (existingIdx >= 0) {
         nextItems = prevItems.map((it, idx) => {
           if (idx === existingIdx) {
+            const allowedMax =
+              typeof (item.maxStock ?? it.maxStock) === 'number'
+                ? (item.maxStock ?? it.maxStock)!
+                : 99;
             return {
               ...it,
-              quantity: Math.min(99, it.quantity + safeQty),
+              maxStock: allowedMax,
+              quantity: Math.min(allowedMax, it.quantity + safeQty),
             };
           }
           return it;
         });
       } else {
+        const allowedMax = typeof item.maxStock === 'number' ? item.maxStock : 99;
         nextItems = [
           ...prevItems,
           {
@@ -168,7 +174,8 @@ export function CartProvider({
             id: lineId,
             selectedSize: size,
             selectedColor: color,
-            quantity: safeQty,
+            quantity: Math.min(allowedMax, safeQty),
+            maxStock: allowedMax,
           },
         ];
       }
@@ -208,6 +215,8 @@ export function CartProvider({
               (!selectedColor || it.selectedColor === selectedColor);
 
             if (matchesId || matchesProductAndSize) {
+              const allowedMax = typeof it.maxStock === 'number' ? it.maxStock : 99;
+              const clamped = Math.min(allowedMax, Math.floor(newQuantity));
               return { ...it, quantity: clamped };
             }
             return it;

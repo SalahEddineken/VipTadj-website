@@ -126,6 +126,7 @@ export interface OrderItem {
   selectedSize: string;    // e.g. "50", "42", "L"
   selectedColor?: string;
   image: string;           // Image thumbnail URL
+  maxStock?: number;       // Maximum available stock at selection time
 }
 
 export interface CustomerShippingInfo {
@@ -168,6 +169,7 @@ export interface Order {
     trackingUrl?: string;
   };
   adminNotes?: string;
+  stockDeducted?: boolean; // True if inventory has been decremented for this order
   createdAt: string;       // ISO-8601 string
   updatedAt: string;       // ISO-8601 string
 }

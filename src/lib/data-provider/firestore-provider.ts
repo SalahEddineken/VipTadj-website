@@ -326,6 +326,7 @@ export class FirestoreDataProvider implements IDataStore {
       total,
       paymentMethod: 'cod',
       status: 'pending',
+      stockDeducted: true,
       statusHistory: [
         {
           status: 'pending',
@@ -337,7 +338,46 @@ export class FirestoreDataProvider implements IDataStore {
       updatedAt: now,
     };
 
-    await setDoc(newDocRef, removeUndefined(newOrder));
+    const batch = writeBatch(db);
+    batch.set(newDocRef, removeUndefined(newOrder));
+
+    // Atomically decrement stock for ordered items in Firestore
+    for (const item of data.items) {
+      try {
+        const productRef = doc(db, 'products', item.productId);
+        const productSnap = await getDoc(productRef);
+        if (productSnap.exists()) {
+          const productData = productSnap.data();
+          const currentTotal = Number(productData.stockQuantity || 0);
+          const updates: Record<string, any> = {
+            updatedAt: now,
+          };
+
+          if (productData.sizeInventory && item.selectedSize && productData.sizeInventory[item.selectedSize] !== undefined) {
+            const currentSizeInv = { ...productData.sizeInventory };
+            const currentSizeStock = Number(currentSizeInv[item.selectedSize] || 0);
+            currentSizeInv[item.selectedSize] = Math.max(0, currentSizeStock - item.quantity);
+            const calculatedTotal = Object.values(currentSizeInv).reduce(
+              (acc: number, val: any) => acc + Number(val || 0),
+              0
+            );
+            updates.sizeInventory = currentSizeInv;
+            updates.stockQuantity = calculatedTotal;
+            updates.inStock = calculatedTotal > 0;
+          } else {
+            const newTotal = Math.max(0, currentTotal - item.quantity);
+            updates.stockQuantity = newTotal;
+            updates.inStock = newTotal > 0;
+          }
+
+          batch.update(productRef, removeUndefined(updates));
+        }
+      } catch (err) {
+        console.error(`[VIP TADJ Firestore] Failed to decrement stock for product ${item.productId}:`, err);
+      }
+    }
+
+    await batch.commit();
     return newOrder;
   }
 
@@ -392,12 +432,28 @@ export class FirestoreDataProvider implements IDataStore {
           if (productSnap.exists()) {
             const productData = productSnap.data();
             const currentStock = Number(productData.stockQuantity || 0);
-            const newStock = currentStock + item.quantity;
-            batch.update(productRef, removeUndefined({
-              stockQuantity: newStock,
-              inStock: newStock > 0,
+            const updates: Record<string, any> = {
               updatedAt: now,
-            }));
+            };
+
+            if (productData.sizeInventory && item.selectedSize && productData.sizeInventory[item.selectedSize] !== undefined) {
+              const currentSizeInv = { ...productData.sizeInventory };
+              const currentSizeStock = Number(currentSizeInv[item.selectedSize] || 0);
+              currentSizeInv[item.selectedSize] = currentSizeStock + item.quantity;
+              const calculatedTotal = Object.values(currentSizeInv).reduce(
+                (acc: number, val: any) => acc + Number(val || 0),
+                0
+              );
+              updates.sizeInventory = currentSizeInv;
+              updates.stockQuantity = calculatedTotal;
+              updates.inStock = calculatedTotal > 0;
+            } else {
+              const newStock = currentStock + item.quantity;
+              updates.stockQuantity = newStock;
+              updates.inStock = newStock > 0;
+            }
+
+            batch.update(productRef, removeUndefined(updates));
           }
         } catch (err) {
           console.error(`[VIP TADJ Firestore] Failed to restore stock for product ${item.productId}:`, err);

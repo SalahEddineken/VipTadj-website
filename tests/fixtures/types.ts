@@ -24,6 +24,7 @@ export interface Product {
   subcategory: string; // 'costumes' | 'blazers' | 'chemises' | 'richelieu' | 'mocassins' | 'montres' | etc.
   images: ProductImage[];
   sizes: string[];
+  sizeInventory?: Record<string, number>;
   stockQuantity: number;
   inStock: boolean;
   isFeatured: boolean;
@@ -42,6 +43,7 @@ export interface OrderItem {
   quantity: number;
   selectedSize: string;
   image: string;
+  maxStock?: number;
 }
 
 export interface CustomerShippingInfo {
@@ -72,6 +74,7 @@ export interface Order {
   paymentMethod: 'cod';
   status: OrderStatus;
   statusHistory: OrderStatusHistoryItem[];
+  stockDeducted?: boolean;
   createdAt: string;
   updatedAt: string;
 }

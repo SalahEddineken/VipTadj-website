@@ -22,6 +22,8 @@ import {
   Shirt,
   Footprints,
   Watch,
+  X,
+  Link2,
 } from 'lucide-react';
 import { Product, ProductCategoryType, ProductImage, ProductColor } from '@/types';
 import { formatDZD } from '@/lib/utils/formatDZD';
@@ -127,6 +129,7 @@ export function ProductForm({ mode, initialData }: ProductFormProps) {
   const [colors, setColors] = useState<ProductColor[]>(initialData?.colors || []);
   const [uploadingColorIdx, setUploadingColorIdx] = useState<number | null>(null);
   const [targetColorIdxForUpload, setTargetColorIdxForUpload] = useState<number | null>(null);
+  const [urlInputOpenIdx, setUrlInputOpenIdx] = useState<number | null>(null);
   const colorFileInputRef = useRef<HTMLInputElement>(null);
 
   const handleColorFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -866,9 +869,24 @@ export function ProductForm({ mode, initialData }: ProductFormProps) {
             type="button"
             onClick={() => {
               setColors([
-                { name: 'Noir Profond', hex: '#111111', inStock: true },
-                { name: 'Bleu Nuit', hex: '#1B2A4A', inStock: true },
-                { name: 'Gris Anthracite', hex: '#36454F', inStock: true },
+                {
+                  name: 'Noir Profond',
+                  hex: '#111111',
+                  inStock: true,
+                  imageUrl: images[0]?.url || '',
+                },
+                {
+                  name: 'Bleu Nuit',
+                  hex: '#1B2A4A',
+                  inStock: true,
+                  imageUrl: images[1]?.url || '',
+                },
+                {
+                  name: 'Gris Anthracite',
+                  hex: '#36454F',
+                  inStock: true,
+                  imageUrl: images[2]?.url || '',
+                },
               ]);
             }}
             className="px-2.5 py-1 text-[11px] rounded bg-obsidian-900 border border-gold-500/20 text-gold-300 hover:bg-obsidian-800 transition-colors"
@@ -895,41 +913,75 @@ export function ProductForm({ mode, initialData }: ProductFormProps) {
             {colors.map((colorItem, cIdx) => (
               <div
                 key={cIdx}
-                className="p-3.5 rounded-xl bg-obsidian-900/60 border border-gold-500/15 flex flex-col md:flex-row gap-3 items-start md:items-center justify-between"
+                className="p-3.5 rounded-xl bg-obsidian-900/60 border border-gold-500/15 flex flex-col gap-2.5"
               >
-                <div className="flex items-center gap-3 w-full md:w-auto">
-                  {/* Color picker */}
-                  <div className="relative flex items-center">
-                    <input
-                      type="color"
-                      value={colorItem.hex}
-                      onChange={(e) => {
-                        const next = [...colors];
-                        next[cIdx].hex = e.target.value;
-                        setColors(next);
-                      }}
-                      className="w-9 h-9 rounded-full cursor-pointer bg-transparent border-0 p-0"
-                    />
-                  </div>
+                {/* Header Row: Color swatch, Name, Stock toggle, Delete */}
+                <div className="flex items-center justify-between gap-2.5 w-full">
+                  <div className="flex items-center gap-2.5 flex-1 min-w-0">
+                    {/* Visual Color Swatch */}
+                    <div
+                      className="w-7 h-7 rounded-md border border-gold-500/40 overflow-hidden shrink-0 shadow-sm relative cursor-pointer"
+                      style={{ backgroundColor: colorItem.hex }}
+                      title={`Couleur : ${colorItem.hex} (Cliquer pour changer)`}
+                    >
+                      <input
+                        type="color"
+                        value={colorItem.hex}
+                        onChange={(e) => {
+                          const next = [...colors];
+                          next[cIdx].hex = e.target.value;
+                          setColors(next);
+                        }}
+                        className="opacity-0 absolute inset-0 w-full h-full cursor-pointer"
+                      />
+                    </div>
 
-                  {/* Name input */}
-                  <div className="flex-1 md:w-48">
+                    {/* Name input */}
                     <input
                       type="text"
                       value={colorItem.name}
-                      placeholder="Nom (ex: Noir Ébène)"
+                      placeholder="Nom du coloris (ex: Noir Profond)"
                       onChange={(e) => {
                         const next = [...colors];
                         next[cIdx].name = e.target.value;
                         setColors(next);
                       }}
-                      className="w-full px-2.5 py-1.5 text-xs rounded bg-obsidian-950 border border-gold-500/20 text-ivory placeholder-obsidian-500 focus:outline-none focus:border-gold-500"
+                      className="flex-1 min-w-[120px] px-2.5 py-1.5 text-xs rounded bg-obsidian-950 border border-gold-500/20 text-ivory placeholder-obsidian-500 focus:outline-none focus:border-gold-500"
                     />
+                  </div>
+
+                  <div className="flex items-center gap-3 shrink-0">
+                    <label className="flex items-center gap-1.5 text-xs text-obsidian-300 cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={colorItem.inStock}
+                        onChange={(e) => {
+                          const next = [...colors];
+                          next[cIdx].inStock = e.target.checked;
+                          setColors(next);
+                        }}
+                        className="w-3.5 h-3.5 accent-gold-500 rounded"
+                      />
+                      <span className="text-[11px] hidden sm:inline">En stock</span>
+                    </label>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setColors(colors.filter((_, idx) => idx !== cIdx));
+                      }}
+                      className="p-1.5 rounded hover:bg-rose-500/10 text-obsidian-400 hover:text-rose-400 transition-colors"
+                      aria-label={`Supprimer ${colorItem.name}`}
+                      title="Supprimer ce coloris"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
                   </div>
                 </div>
 
-                {/* Image upload / selection / link */}
-                <div className="flex-1 w-full md:w-auto flex items-center gap-2">
+                {/* Photo Association Row */}
+                <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 pt-2 border-t border-gold-500/10 w-full">
+                  {/* Thumbnail preview if an image is assigned */}
                   {colorItem.imageUrl && (
                     <div className="w-8 h-8 rounded border border-gold-500/40 overflow-hidden shrink-0 bg-obsidian-950">
                       <img
@@ -940,17 +992,35 @@ export function ProductForm({ mode, initialData }: ProductFormProps) {
                     </div>
                   )}
 
-                  <input
-                    type="text"
-                    value={colorItem.imageUrl || ''}
-                    placeholder="URL ou téléversez une photo ci-contre"
-                    onChange={(e) => {
-                      const next = [...colors];
-                      next[cIdx].imageUrl = e.target.value;
-                      setColors(next);
-                    }}
-                    className="flex-1 min-w-[140px] px-2.5 py-1.5 text-xs rounded bg-obsidian-950 border border-gold-500/20 text-ivory placeholder-obsidian-500 focus:outline-none focus:border-gold-500 font-mono"
-                  />
+                  {/* Dropdown to pick from existing gallery images */}
+                  {images.length > 0 ? (
+                    <select
+                      value={colorItem.imageUrl || ''}
+                      onChange={(e) => {
+                        const next = [...colors];
+                        next[cIdx].imageUrl = e.target.value;
+                        setColors(next);
+                      }}
+                      className="flex-1 min-w-[140px] px-2 py-1.5 text-xs rounded bg-obsidian-950 border border-gold-500/20 text-ivory focus:outline-none focus:border-gold-500 truncate"
+                      title="Associer une photo de la galerie à ce coloris"
+                    >
+                      <option value="">
+                        {colorItem.imageUrl ? '-- Retirer la photo --' : 'Sélectionner une photo de la galerie...'}
+                      </option>
+                      {images.map((img, iIdx) => (
+                        <option key={img.id || iIdx} value={img.url}>
+                          Photo #{iIdx + 1} {img.isPrimary ? '★' : ''} {img.alt ? `- ${img.alt.slice(0, 25)}` : ''}
+                        </option>
+                      ))}
+                      {colorItem.imageUrl && !images.some((img) => img.url === colorItem.imageUrl) && (
+                        <option value={colorItem.imageUrl}>Photo personnalisée (Téléversée / Externe)</option>
+                      )}
+                    </select>
+                  ) : (
+                    <span className="text-[11px] text-obsidian-400 flex-1 truncate">
+                      {colorItem.imageUrl ? 'Photo personnalisée liée' : 'Aucune photo dans la galerie (Section 5)'}
+                    </span>
+                  )}
 
                   {/* Button to choose from PC / Mobile */}
                   <button
@@ -961,7 +1031,7 @@ export function ProductForm({ mode, initialData }: ProductFormProps) {
                     }}
                     disabled={uploadingColorIdx === cIdx}
                     className="px-2.5 py-1.5 rounded bg-obsidian-950 hover:bg-gold-500/20 border border-gold-500/30 text-gold-400 text-xs flex items-center gap-1.5 shrink-0 transition-colors cursor-pointer"
-                    title="Choisir ou prendre une photo pour ce coloris depuis PC ou Téléphone"
+                    title="Téléverser une photo pour ce coloris depuis PC ou Mobile"
                   >
                     {uploadingColorIdx === cIdx ? (
                       <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -971,55 +1041,63 @@ export function ProductForm({ mode, initialData }: ProductFormProps) {
                     <span>Photo</span>
                   </button>
 
-                  {/* Dropdown to pick from existing gallery images */}
-                  {images.length > 0 && (
-                    <select
+                  {/* Direct URL toggle button */}
+                  <button
+                    type="button"
+                    onClick={() => setUrlInputOpenIdx(urlInputOpenIdx === cIdx ? null : cIdx)}
+                    className={cn(
+                      'p-1.5 rounded border text-xs flex items-center justify-center shrink-0 transition-colors',
+                      urlInputOpenIdx === cIdx
+                        ? 'bg-gold-500/20 border-gold-500 text-gold-400'
+                        : 'bg-obsidian-950 border-gold-500/20 text-obsidian-400 hover:text-gold-300'
+                    )}
+                    title="Saisir ou modifier l'URL manuellement"
+                    aria-label="Saisir une URL"
+                  >
+                    <Link2 className="w-3.5 h-3.5" />
+                  </button>
+
+                  {/* Remove photo button if an image is assigned */}
+                  {colorItem.imageUrl && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const next = [...colors];
+                        next[cIdx].imageUrl = '';
+                        setColors(next);
+                      }}
+                      className="p-1.5 rounded hover:bg-rose-500/10 text-obsidian-400 hover:text-rose-400 transition-colors shrink-0"
+                      title="Détacher la photo de ce coloris"
+                      aria-label="Détacher la photo"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+
+                {/* Optional manual URL input (revealed only if user clicks the Link button) */}
+                {urlInputOpenIdx === cIdx && (
+                  <div className="flex items-center gap-1.5 pt-1">
+                    <input
+                      type="text"
                       value={colorItem.imageUrl || ''}
+                      placeholder="URL directe de l'image (https://...)"
                       onChange={(e) => {
                         const next = [...colors];
                         next[cIdx].imageUrl = e.target.value;
                         setColors(next);
                       }}
-                      className="px-2 py-1.5 text-xs rounded bg-obsidian-950 border border-gold-500/20 text-ivory focus:outline-none focus:border-gold-500 max-w-[130px] truncate shrink-0"
-                      title="Choisir parmi les photos déjà ajoutées au produit"
-                    >
-                      <option value="">Galerie...</option>
-                      {images.map((img, iIdx) => (
-                        <option key={img.id || iIdx} value={img.url}>
-                          #{iIdx + 1} {img.isPrimary ? '★' : ''} {img.alt.substring(0, 15)}
-                        </option>
-                      ))}
-                    </select>
-                  )}
-                </div>
-
-                {/* In stock toggle & Delete */}
-                <div className="flex items-center gap-3 w-full md:w-auto justify-between md:justify-end">
-                  <label className="flex items-center gap-1.5 text-xs text-obsidian-300 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={colorItem.inStock}
-                      onChange={(e) => {
-                        const next = [...colors];
-                        next[cIdx].inStock = e.target.checked;
-                        setColors(next);
-                      }}
-                      className="w-3.5 h-3.5 accent-gold-500 rounded"
+                      className="flex-1 px-2.5 py-1 text-xs rounded bg-obsidian-950 border border-gold-500/30 text-ivory placeholder-obsidian-500 focus:outline-none focus:border-gold-500 font-mono"
                     />
-                    <span>En stock</span>
-                  </label>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setColors(colors.filter((_, idx) => idx !== cIdx));
-                    }}
-                    className="p-2.5 min-w-[44px] min-h-[44px] inline-flex items-center justify-center text-obsidian-300 hover:text-red-400 transition-colors"
-                    aria-label={`Supprimer ${colorItem.name}`}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
+                    <button
+                      type="button"
+                      onClick={() => setUrlInputOpenIdx(null)}
+                      className="px-2 py-1 text-[10px] rounded bg-obsidian-950 border border-gold-500/20 text-obsidian-300 hover:text-ivory"
+                    >
+                      Fermer
+                    </button>
+                  </div>
+                )}
               </div>
             ))}
           </div>

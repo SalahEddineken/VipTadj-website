@@ -98,7 +98,7 @@ export async function POST(req: NextRequest) {
 
     const dataStore = getDataStore();
 
-    // 2. Real-time Inventory Verification (rejects out-of-stock items)
+    // 2. Real-time Inventory Verification (rejects out-of-stock items & size shortages)
     for (const item of body.items) {
       const product = await dataStore.getProductById(item.productId);
       if (!product) {
@@ -118,6 +118,22 @@ export async function POST(req: NextRequest) {
           },
           { status: 409 }
         );
+      }
+
+      // Check specific size inventory if available
+      if (product.sizeInventory && item.selectedSize && product.sizeInventory[item.selectedSize] !== undefined) {
+        const sizeStock = Number(product.sizeInventory[item.selectedSize] || 0);
+        if (sizeStock < item.quantity) {
+          return NextResponse.json(
+            {
+              success: false,
+              code: 'OUT_OF_STOCK',
+              error: `Stock insuffisant pour "${item.title}" en taille ${item.selectedSize}. Exemplaires restants: ${sizeStock}.`,
+              availableStock: sizeStock,
+            },
+            { status: 409 }
+          );
+        }
       }
     }
 

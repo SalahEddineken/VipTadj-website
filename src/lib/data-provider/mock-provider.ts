@@ -405,6 +405,7 @@ export class MockSeedDataProvider implements IDataStore {
       total,
       paymentMethod: 'cod',
       status: 'pending',
+      stockDeducted: true,
       statusHistory: [
         {
           status: 'pending',
@@ -416,11 +417,20 @@ export class MockSeedDataProvider implements IDataStore {
       updatedAt: now,
     };
 
-    // Atomically decrement stock for ordered items
+    // Atomically decrement stock for ordered items (both sizeInventory and total stock)
     for (const item of data.items) {
       const product = this.products.find((p) => p.id === item.productId);
       if (product) {
-        product.stockQuantity = Math.max(0, product.stockQuantity - item.quantity);
+        if (product.sizeInventory && item.selectedSize && product.sizeInventory[item.selectedSize] !== undefined) {
+          const currentSizeStock = Number(product.sizeInventory[item.selectedSize] || 0);
+          product.sizeInventory[item.selectedSize] = Math.max(0, currentSizeStock - item.quantity);
+          product.stockQuantity = Object.values(product.sizeInventory).reduce(
+            (acc, val) => acc + Number(val || 0),
+            0
+          );
+        } else {
+          product.stockQuantity = Math.max(0, Number(product.stockQuantity || 0) - item.quantity);
+        }
         product.inStock = product.stockQuantity > 0;
       }
     }
@@ -476,19 +486,28 @@ export class MockSeedDataProvider implements IDataStore {
       updatedAt: now,
     };
 
-    this.orders[index] = updated;
-    savePersistedOrders(this.orders);
-
-    // If order is cancelled, restore stock for all items
+    // If order is cancelled, restore stock for all items (both sizeInventory and total stock)
     if (status === 'cancelled' && previousStatus !== 'cancelled') {
       for (const item of order.items) {
         const product = this.products.find((p) => p.id === item.productId);
         if (product) {
-          product.stockQuantity += item.quantity;
+          if (product.sizeInventory && item.selectedSize && product.sizeInventory[item.selectedSize] !== undefined) {
+            const currentSizeStock = Number(product.sizeInventory[item.selectedSize] || 0);
+            product.sizeInventory[item.selectedSize] = currentSizeStock + item.quantity;
+            product.stockQuantity = Object.values(product.sizeInventory).reduce(
+              (acc, val) => acc + Number(val || 0),
+              0
+            );
+          } else {
+            product.stockQuantity = Number(product.stockQuantity || 0) + item.quantity;
+          }
           product.inStock = product.stockQuantity > 0;
         }
       }
     }
+
+    this.orders[index] = updated;
+    savePersistedOrders(this.orders);
 
     return clone(updated);
   }
