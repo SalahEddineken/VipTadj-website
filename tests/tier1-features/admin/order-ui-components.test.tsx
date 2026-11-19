@@ -32,7 +32,9 @@ describe('Admin Orders UI Components (F-ORD-01 & F-ORD-02)', () => {
     it('applies luxury styling tokens and size classes', () => {
       const { container } = render(<OrderStatusBadge status="pending" size="lg" />);
       const badge = container.querySelector('span');
-      expect(badge?.className).toContain('text-amber-400');
+      expect(badge?.className).toContain('bg-amber-50');
+      expect(badge?.className).toContain('text-amber-800');
+      expect(badge?.className).toContain('border-amber-200');
       expect(badge?.className).toContain('text-sm');
     });
   });

@@ -8,6 +8,7 @@ import {
   CatalogFilterState,
   DEFAULT_FILTER_STATE,
   filterProducts,
+  isProductVisibleInShop,
   CatalogSortOption,
   resolveCategoryId,
 } from '@/lib/utils/catalogUtils';
@@ -71,7 +72,34 @@ function CatalogClientInner({
   });
 
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
+  const [isDesktopFilterOpen, setIsDesktopFilterOpen] = useState(true);
   const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
+
+  const categories = useMemo(
+    () => [
+      { id: 'all', label: t('catalog.filter.all_creations', 'Toutes les Créations') },
+      { id: 'clothing', label: t('category.clothing', 'Vêtements') },
+      { id: 'shoes', label: t('category.shoes', 'Chaussures & Souliers') },
+      { id: 'accessories', label: t('category.accessories', 'Accessoires & Maroquinerie') },
+    ],
+    [t]
+  );
+
+  const resolvedCategory =
+    filters.category === 'all'
+      ? 'all'
+      : resolveCategoryId(filters.category) || filters.category;
+
+  const activeFilterCount = useMemo(() => {
+    let count = 0;
+    if (filters.searchQuery) count += 1;
+    if (filters.category !== 'all' && !isCategoryLocked) count += 1;
+    if (filters.subcategory !== 'all') count += 1;
+    if (filters.selectedSizes.length > 0) count += filters.selectedSizes.length;
+    if (filters.inStockOnly) count += 1;
+    if (filters.minPrice > 0 || filters.maxPrice < 150000) count += 1;
+    return count;
+  }, [filters, isCategoryLocked]);
 
   // 1. Sync searchParams from URL (e.g. Header nav links, Footer links, browser Back/Forward) into state
   useEffect(() => {
@@ -174,19 +202,20 @@ function CatalogClientInner({
 
   // Filter products pure client-side
   const filteredProducts = useMemo(() => {
-    return filterProducts(initialProducts, filters);
-  }, [initialProducts, filters]);
+    return filterProducts(initialProducts, filters, language);
+  }, [initialProducts, filters, language]);
 
-  // Compute available sizes across the current category
+  // Compute available sizes across the current category (visible active products only)
   const availableSizes = useMemo(() => {
     const sizeSet = new Set<string>();
     const pool =
       filters.category === 'all'
-        ? initialProducts
+        ? initialProducts.filter(isProductVisibleInShop)
         : initialProducts.filter(
           (p) =>
-            p.categoryId === resolveCategoryId(filters.category) ||
-            p.categorySlug === filters.category
+            isProductVisibleInShop(p) &&
+            (p.categoryId === resolveCategoryId(filters.category) ||
+             p.categorySlug === filters.category)
         );
     pool.forEach((p) => {
       if (Array.isArray(p.sizes)) {
@@ -210,14 +239,39 @@ function CatalogClientInner({
         </div>
 
         <div className="flex items-center justify-between md:justify-end gap-3">
+          {/* Desktop Filter Toggle */}
+          <button
+            type="button"
+            onClick={() => setIsDesktopFilterOpen((prev) => !prev)}
+            className="hidden lg:flex items-center gap-2 px-4 py-2.5 min-h-[44px] bg-white border border-sand-300 text-xs font-semibold uppercase tracking-wider text-obsidian-900 hover:border-gold-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 transition-colors rounded-sm"
+            aria-expanded={isDesktopFilterOpen}
+          >
+            <SlidersHorizontal className="w-4 h-4 text-gold-700" />
+            <span>
+              {isDesktopFilterOpen
+                ? t('catalog.filter.hide_desktop', 'Masquer les filtres')
+                : t('catalog.filter.show_desktop', 'Afficher les filtres')}
+            </span>
+            {activeFilterCount > 0 && (
+              <span className="w-5 h-5 rounded-full bg-gold-600 text-obsidian-950 font-bold text-[10px] flex items-center justify-center">
+                {activeFilterCount}
+              </span>
+            )}
+          </button>
+
           {/* Mobile Filter Toggle */}
           <button
             type="button"
             onClick={() => setIsMobileFilterOpen(true)}
-            className="lg:hidden flex items-center gap-2 px-4 py-2.5 min-h-[44px] bg-white border border-sand-300 text-xs font-semibold uppercase tracking-wider text-obsidian-900 hover:border-gold-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 transition-colors"
+            className="lg:hidden flex items-center gap-2 px-4 py-2.5 min-h-[44px] bg-white border border-sand-300 text-xs font-semibold uppercase tracking-wider text-obsidian-900 hover:border-gold-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 transition-colors rounded-sm"
           >
             <SlidersHorizontal className="w-4 h-4 text-gold-700" />
             <span>{t('catalog.filter.title', 'Filtres')}</span>
+            {activeFilterCount > 0 && (
+              <span className="w-5 h-5 rounded-full bg-gold-600 text-obsidian-950 font-bold text-[10px] flex items-center justify-center">
+                {activeFilterCount}
+              </span>
+            )}
           </button>
 
           {/* Sort Dropdown */}
@@ -227,6 +281,40 @@ function CatalogClientInner({
           />
         </div>
       </div>
+
+      {/* Casual Quick Category Pill Navigation */}
+      {!isCategoryLocked && (
+        <div className="py-4 border-b border-sand-200">
+          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
+            <span className="text-xs uppercase tracking-wider text-sand-800 font-semibold me-1 hidden sm:inline">
+              {t('catalog.filter.quick_categories', 'Rayons :')}
+            </span>
+            {categories.map((cat) => {
+              const isActive = resolvedCategory === cat.id;
+              return (
+                <button
+                  key={cat.id}
+                  type="button"
+                  aria-pressed={isActive}
+                  onClick={() =>
+                    handleFilterChange({
+                      category: cat.id,
+                      subcategory: 'all',
+                    })
+                  }
+                  className={`px-4 py-2 rounded-full text-xs font-medium uppercase tracking-wider whitespace-nowrap transition-all flex items-center gap-1.5 ${
+                    isActive
+                      ? 'bg-obsidian-950 text-ivory border border-obsidian-950 shadow-sm'
+                      : 'bg-white hover:bg-sand-100 text-obsidian-800 border border-sand-300'
+                  }`}
+                >
+                  <span>{cat.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Active Filter Badges */}
       <ActiveFilterBadges
@@ -249,10 +337,16 @@ function CatalogClientInner({
       {/* Result Count and Grid Layout */}
       <div className="flex items-center justify-between pt-2 pb-6 text-xs text-neutral-600 font-sans">
         <span className="uppercase tracking-wider">
-          {filteredProducts.length}{' '}
-          {filteredProducts.length > 1
-            ? t('catalog.results_count_plural', 'Créations')
-            : t('catalog.results_count_single', 'Création')}
+          {filteredProducts.length === 0 ? (
+            t('catalog.results_count_zero', '0 création d\'exception')
+          ) : (
+            <>
+              {filteredProducts.length}{' '}
+              {filteredProducts.length > 1
+                ? t('catalog.results_count_plural', 'Créations')
+                : t('catalog.results_count_single', 'Création')}
+            </>
+          )}
         </span>
       </div>
 
@@ -266,6 +360,7 @@ function CatalogClientInner({
           onCloseMobile={() => setIsMobileFilterOpen(false)}
           isCategoryLocked={isCategoryLocked}
           availableSizes={availableSizes}
+          isDesktopVisible={isDesktopFilterOpen}
         />
 
         {/* Product Grid or Zero Results */}
@@ -274,7 +369,7 @@ function CatalogClientInner({
             <ProductGrid
               products={filteredProducts}
               onQuickView={(p) => setQuickViewProduct(p)}
-              columns={3}
+              columns={isDesktopFilterOpen ? 3 : 4}
             />
           ) : (
             <ZeroResults
@@ -291,6 +386,8 @@ function CatalogClientInner({
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-obsidian-950/80 backdrop-blur-sm animate-in fade-in duration-200"
           role="dialog"
           aria-modal="true"
+          aria-label={`${t('catalog.quick_view', 'Aperçu Rapide')} - ${qvProduct.title}`}
+          aria-labelledby="quick-view-modal-title"
           onClick={(e) => {
             if (e.target === e.currentTarget) {
               setQuickViewProduct(null);
@@ -311,7 +408,7 @@ function CatalogClientInner({
                 <img
                   src={normalizeImageUrl(
                     quickViewProduct.images?.[0]?.url || '',
-                    { width: 800, quality: 85 }
+                    { width: 800, quality: 85, fallbackCategory: quickViewProduct.categoryId, language }
                   )}
                   alt={qvProduct.title}
                   className="w-full h-full object-cover"
@@ -323,7 +420,7 @@ function CatalogClientInner({
                   {' • '}
                   {(quickViewProduct.subcategory ? getLocalizedSubcategory(quickViewProduct.subcategory, language) : null) || quickViewProduct.subcategory}
                 </p>
-                <h3 className="luxury-serif-title text-2xl text-obsidian-950 text-start">
+                <h3 id="quick-view-modal-title" className="luxury-serif-title text-2xl text-obsidian-950 text-start">
                   {qvProduct.title}
                 </h3>
                 <div className="flex items-baseline gap-3">

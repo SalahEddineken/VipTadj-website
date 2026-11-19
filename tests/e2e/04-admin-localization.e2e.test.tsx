@@ -91,8 +91,8 @@ describe('E2E Test Suite 04: Admin Portal Localization & State Machine (Tier 1)'
       assertZeroFrenchLeakage(container, 'ar');
 
       // Check for email and password inputs
-      expect(screen.getByRole('textbox', { name: /email|بريد/i })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /connexion|دخول|تسجيل الدخول/i })).toBeInTheDocument();
+      expect(screen.getByRole('textbox', { name: /البريد الإلكتروني/ })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /الدخول إلى لوحة التحكم/ })).toBeInTheDocument();
     });
   });
 
@@ -199,7 +199,7 @@ describe('E2E Test Suite 04: Admin Portal Localization & State Machine (Tier 1)'
     });
 
     it('displays empty orders queue message when no orders match criteria', () => {
-      renderWithProviders(
+      const { container } = renderWithProviders(
         <OrdersManagementClient initialOrders={[]} />,
         {
           language: 'ar',
@@ -207,8 +207,12 @@ describe('E2E Test Suite 04: Admin Portal Localization & State Machine (Tier 1)'
         }
       );
 
-      // Should indicate empty order queue
-      expect(screen.getAllByText(/aucune commande|لا توجد طلبات/i).length).toBeGreaterThan(0);
+      assertArabicRTLDocument();
+      assertZeroFrenchLeakage(container, 'ar');
+
+      // Should indicate empty order queue strictly in Arabic
+      expect(screen.getByText(ar['admin.orders.empty_title'])).toBeInTheDocument();
+      expect(screen.getByText(ar['admin.orders.empty_desc'])).toBeInTheDocument();
     });
   });
 });

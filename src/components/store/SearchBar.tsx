@@ -22,7 +22,7 @@ export function SearchBar({
     placeholder ||
     t(
       'catalog.search.placeholder',
-      'Rechercher par modèle, matière (laine, cuir, soie, cachemire)...'
+      'Rechercher un produit...'
     );
 
   return (

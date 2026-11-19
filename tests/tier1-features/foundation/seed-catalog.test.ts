@@ -90,13 +90,13 @@ describe('Tier 1: Foundation — Realistic Seed Catalog & Seed Runner (F-FOUND-0
   // ==========================================
   // Test 6: Default Store Settings Seeding
   // ==========================================
-  it('seeds default store settings with all 58 Wilaya shipping tariffs and threshold', async () => {
+  it('seeds default store settings with all 68 Wilaya shipping tariffs and threshold', async () => {
     await runCatalogSeed(mockProvider, true);
     const settings = await mockProvider.getSettings();
 
     expect(settings.storeName).toBe('VIP TADJ');
     expect(settings.freeShippingThreshold).toBe(DEFAULT_STORE_SETTINGS.freeShippingThreshold);
-    expect(Object.keys(settings.wilayaShippingFees)).toHaveLength(58);
+    expect(Object.keys(settings.wilayaShippingFees)).toHaveLength(68);
     // Alger delivery fee checks
     expect(settings.wilayaShippingFees[16].homeFee).toBe(400);
     expect(settings.wilayaShippingFees[16].deskFee).toBe(250);

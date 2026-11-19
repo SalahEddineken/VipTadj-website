@@ -33,6 +33,21 @@ import { VALID_ORDER_STATUSES } from '@/lib/utils/orderStateMachine';
 import { IDataStore } from './interface';
 import { getDb } from '@/lib/firebase/client';
 import { initialProducts, initialCategories, initialSettings } from '@/lib/seed/seed-data';
+import {
+  PRODUCT_TRANSLATIONS,
+  SUBCATEGORY_TRANSLATIONS,
+} from '@/lib/i18n/catalog-translations';
+import { getWilayaByCode } from '@/lib/data/wilayas';
+import { findCommune } from '@/lib/data/communes';
+
+function normalizeProviderSearch(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[\u064B-\u065F\u0670]/g, '')
+    .replace(/[أإآٱ]/g, 'ا')
+    .replace(/ى/g, 'ي')
+    .replace(/ة/g, 'ه');
+}
 
 /**
  * Sanitizes Firestore objects to plain JSON and converts Firestore Timestamps to ISO strings.
@@ -126,6 +141,12 @@ export class FirestoreDataProvider implements IDataStore {
     if (filter?.inStock !== undefined) {
       constraints.push(where('inStock', '==', filter.inStock));
     }
+    if (filter?.status !== undefined) {
+      constraints.push(where('status', '==', filter.status));
+    }
+    if (filter?.isActive !== undefined) {
+      constraints.push(where('isActive', '==', filter.isActive));
+    }
 
     if (filter?.sortBy) {
       switch (filter.sortBy) {
@@ -156,13 +177,37 @@ export class FirestoreDataProvider implements IDataStore {
     }));
 
     if (filter?.search?.trim()) {
-      const term = filter.search.toLowerCase().trim();
-      items = items.filter(
-        (p) =>
-          p.title?.toLowerCase().includes(term) ||
-          p.description?.toLowerCase().includes(term) ||
-          p.subcategory?.toLowerCase().includes(term)
-      );
+      const term = normalizeProviderSearch(filter.search.trim());
+      items = items.filter((p) => {
+        const prodTrans = PRODUCT_TRANSLATIONS[p.id];
+        const subTrans = p.subcategory
+          ? SUBCATEGORY_TRANSLATIONS[p.subcategory.toLowerCase().trim()]
+          : undefined;
+
+        const fields: (string | undefined)[] = [
+          p.title,
+          p.description,
+          p.subcategory,
+          p.titleAr,
+          p.titleEn,
+          p.descriptionAr,
+          p.descriptionEn,
+          p.subtitleAr,
+          p.subtitleEn,
+          p.materialsAr,
+          p.materialsEn,
+          ...(Array.isArray(p.tags) ? p.tags : []),
+          prodTrans?.en?.title,
+          prodTrans?.en?.description,
+          prodTrans?.ar?.title,
+          prodTrans?.ar?.description,
+          subTrans?.fr,
+          subTrans?.en,
+          subTrans?.ar,
+        ];
+
+        return fields.some((f) => f && normalizeProviderSearch(f).includes(term));
+      });
     }
 
     return items;
@@ -275,14 +320,29 @@ export class FirestoreDataProvider implements IDataStore {
     }));
 
     if (filter?.search?.trim()) {
-      const term = filter.search.toLowerCase().trim();
-      orders = orders.filter(
-        (o) =>
-          o.orderNumber?.toLowerCase().includes(term) ||
-          o.customer?.fullName?.toLowerCase().includes(term) ||
-          o.customer?.phone?.includes(term) ||
-          o.customer?.wilaya?.toLowerCase().includes(term)
-      );
+      const term = normalizeProviderSearch(filter.search.trim());
+      orders = orders.filter((o) => {
+        const wilayaObj = o.customer?.wilayaCode
+          ? getWilayaByCode(o.customer.wilayaCode)
+          : undefined;
+        const communeObj =
+          o.customer?.wilayaCode && o.customer?.commune
+            ? findCommune(o.customer.wilayaCode, o.customer.commune)
+            : undefined;
+        const fields: (string | undefined)[] = [
+          o.orderNumber,
+          o.customer?.fullName,
+          o.customer?.phone,
+          o.customer?.secondaryPhone,
+          o.customer?.wilaya,
+          o.customer?.commune,
+          wilayaObj?.name,
+          wilayaObj?.nameAr,
+          communeObj?.name,
+          communeObj?.nameAr,
+        ];
+        return fields.some((f) => f && normalizeProviderSearch(f).includes(term));
+      });
     }
 
     return orders;
@@ -386,7 +446,8 @@ export class FirestoreDataProvider implements IDataStore {
     status: OrderStatus,
     note?: string,
     updatedBy?: string,
-    cancellationReason?: CancellationReason | string
+    cancellationReason?: CancellationReason | string,
+    logistics?: { courier?: string; trackingCode?: string }
   ): Promise<Order> {
     if (!VALID_ORDER_STATUSES.includes(status)) {
       throw new Error(
@@ -405,6 +466,8 @@ export class FirestoreDataProvider implements IDataStore {
     const orderData = sanitizeDoc<Order>(snap.data());
     const previousStatus = orderData.status;
     const now = new Date().toISOString();
+    const courierName = logistics?.courier?.trim() || undefined;
+    const trackingCode = logistics?.trackingCode?.trim() || undefined;
 
     const newHistoryItem: OrderStatusHistoryItem = {
       status,
@@ -412,12 +475,23 @@ export class FirestoreDataProvider implements IDataStore {
       note,
       updatedBy,
       ...(cancellationReason ? { cancellationReason: cancellationReason as CancellationReason } : {}),
+      ...(courierName ? { courier: courierName } : {}),
+      ...(trackingCode ? { trackingCode } : {}),
     };
 
     const updatedHistory = [...(orderData.statusHistory || []), newHistoryItem];
+    const updatedCourier =
+      courierName || trackingCode
+        ? {
+            ...(orderData.courier || {}),
+            name: courierName || orderData.courier?.name || 'Yalidine Express',
+            ...(trackingCode ? { trackingCode } : {}),
+          }
+        : orderData.courier;
 
     await updateDoc(docRef, removeUndefined({
       status,
+      ...(updatedCourier ? { courier: updatedCourier } : {}),
       statusHistory: updatedHistory,
       updatedAt: now,
     }));
@@ -466,6 +540,7 @@ export class FirestoreDataProvider implements IDataStore {
       ...orderData,
       id: snap.id,
       status,
+      ...(updatedCourier ? { courier: updatedCourier } : {}),
       statusHistory: updatedHistory,
       updatedAt: now,
     };
@@ -496,7 +571,12 @@ export class FirestoreDataProvider implements IDataStore {
       updatedAt: now,
     };
 
-    await setDoc(docRef, removeUndefined(updates), { merge: true });
+    const snap = await getDoc(docRef);
+    if (snap.exists()) {
+      await updateDoc(docRef, removeUndefined(updates));
+    } else {
+      await setDoc(docRef, removeUndefined({ ...initialSettings, ...updates }));
+    }
     return this.getSettings();
   }
 

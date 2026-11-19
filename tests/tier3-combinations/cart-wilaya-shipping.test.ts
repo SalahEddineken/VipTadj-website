@@ -26,37 +26,37 @@ describe('Tier 3: Combinations — Cart Subtotal & 58 Wilaya Delivery Matrix (ca
     expect(subtotal).toBe(8500);
 
     // Test across distinct regional zones:
-    // 1. Alger (Zone Alger, Code 16) -> 400 DA
+    // 1. Alger (Zone Alger, Code 16) -> 700 DA
     const feeAlger = calculateDeliveryFee(subtotal, 16, threshold);
-    expect(feeAlger).toBe(400);
-    expect(calculateTotal(subtotal, feeAlger)).toBe(8900);
+    expect(feeAlger).toBe(700);
+    expect(calculateTotal(subtotal, feeAlger)).toBe(9200);
 
-    // 2. Blida (Zone Centre, Code 9) -> 500 DA
+    // 2. Blida (Zone Centre, Code 9) -> 800 DA
     const feeBlida = calculateDeliveryFee(subtotal, 9, threshold);
-    expect(feeBlida).toBe(500);
-    expect(calculateTotal(subtotal, feeBlida)).toBe(9000);
+    expect(feeBlida).toBe(800);
+    expect(calculateTotal(subtotal, feeBlida)).toBe(9300);
 
-    // 3. Oran (Zone Ouest, Code 31) -> 600 DA
+    // 3. Oran (Zone Ouest, Code 31) -> 800 DA
     const feeOran = calculateDeliveryFee(subtotal, 31, threshold);
-    expect(feeOran).toBe(600);
-    expect(calculateTotal(subtotal, feeOran)).toBe(9100);
+    expect(feeOran).toBe(800);
+    expect(calculateTotal(subtotal, feeOran)).toBe(9300);
 
-    // 4. Constantine (Zone Est, Code 25) -> 600 DA
+    // 4. Constantine (Zone Est, Code 25) -> 700 DA
     const feeConstantine = calculateDeliveryFee(subtotal, 25, threshold);
-    expect(feeConstantine).toBe(600);
-    expect(calculateTotal(subtotal, feeConstantine)).toBe(9100);
+    expect(feeConstantine).toBe(700);
+    expect(calculateTotal(subtotal, feeConstantine)).toBe(9200);
 
-    // 5. Sétif (Zone Hauts-Plateaux, Code 19) -> 600 DA
+    // 5. Sétif (Zone Hauts-Plateaux, Code 19) -> 700 DA
     const feeSetif = calculateDeliveryFee(subtotal, 19, threshold);
-    expect(feeSetif).toBe(600);
-    expect(calculateTotal(subtotal, feeSetif)).toBe(9100);
+    expect(feeSetif).toBe(700);
+    expect(calculateTotal(subtotal, feeSetif)).toBe(9200);
 
-    // 6. Adrar & Tamanrasset (Zone Sud, Codes 1 & 11) -> 900 DA
+    // 6. Adrar & Tamanrasset (Zone Sud, Codes 1 & 11) -> 1650 DA
     const feeAdrar = calculateDeliveryFee(subtotal, 1, threshold);
     const feeTam = calculateDeliveryFee(subtotal, 11, threshold);
-    expect(feeAdrar).toBe(900);
-    expect(feeTam).toBe(900);
-    expect(calculateTotal(subtotal, feeAdrar)).toBe(9400);
+    expect(feeAdrar).toBe(1650);
+    expect(feeTam).toBe(1650);
+    expect(calculateTotal(subtotal, feeAdrar)).toBe(10150);
   });
 
   // ==========================================
@@ -80,14 +80,14 @@ describe('Tier 3: Combinations — Cart Subtotal & 58 Wilaya Delivery Matrix (ca
   // ==========================================
   it('dynamically drops delivery fee from standard rate to 0 DA when cart quantity crosses threshold', () => {
     const unitPrice = 8500;
-    const wilayaCode = 31; // Oran (600 DA standard fee)
+    const wilayaCode = 31; // Oran (800 DA standard fee)
 
-    // Step 1: 1 unit = 8,500 DA -> pays 600 DA delivery
+    // Step 1: 1 unit = 8,500 DA -> pays 800 DA delivery
     let items = [{ price: unitPrice, quantity: 1 }];
     let subtotal = calculateSubtotal(items);
     let fee = calculateDeliveryFee(subtotal, wilayaCode, threshold);
-    expect(fee).toBe(600);
-    expect(calculateTotal(subtotal, fee)).toBe(9100);
+    expect(fee).toBe(800);
+    expect(calculateTotal(subtotal, fee)).toBe(9300);
 
     // Step 2: Customer increments quantity to 2 -> 17,000 DA -> Free delivery!
     items = [{ price: unitPrice, quantity: 2 }];
@@ -100,8 +100,8 @@ describe('Tier 3: Combinations — Cart Subtotal & 58 Wilaya Delivery Matrix (ca
     items = [{ price: unitPrice, quantity: 1 }];
     subtotal = calculateSubtotal(items);
     fee = calculateDeliveryFee(subtotal, wilayaCode, threshold);
-    expect(fee).toBe(600);
-    expect(calculateTotal(subtotal, fee)).toBe(9100);
+    expect(fee).toBe(800);
+    expect(calculateTotal(subtotal, fee)).toBe(9300);
   });
 
   // ==========================================
@@ -115,17 +115,17 @@ describe('Tier 3: Combinations — Cart Subtotal & 58 Wilaya Delivery Matrix (ca
     const oran = getWilayaByCode(31)!;
     const adrar = getWilayaByCode(1)!;
 
-    // Home vs Desk for Alger (400 vs 250)
-    expect(calculateTotal(subtotal, alger.fee)).toBe(12900);
-    expect(calculateTotal(subtotal, alger.deskFee!)).toBe(12750);
+    // Home vs Desk for Alger (700 vs 550)
+    expect(calculateTotal(subtotal, alger.fee)).toBe(13200);
+    expect(calculateTotal(subtotal, alger.deskFee!)).toBe(13050);
 
-    // Home vs Desk for Oran (600 vs 350)
-    expect(calculateTotal(subtotal, oran.fee)).toBe(13100);
-    expect(calculateTotal(subtotal, oran.deskFee!)).toBe(12850);
+    // Home vs Desk for Oran (800 vs 650)
+    expect(calculateTotal(subtotal, oran.fee)).toBe(13300);
+    expect(calculateTotal(subtotal, oran.deskFee!)).toBe(13150);
 
-    // Home vs Desk for Adrar (900 vs 500)
-    expect(calculateTotal(subtotal, adrar.fee)).toBe(13400);
-    expect(calculateTotal(subtotal, adrar.deskFee!)).toBe(13000);
+    // Home vs Desk for Adrar (1650 vs 1450)
+    expect(calculateTotal(subtotal, adrar.fee)).toBe(14150);
+    expect(calculateTotal(subtotal, adrar.deskFee!)).toBe(13950);
   });
 
   // ==========================================

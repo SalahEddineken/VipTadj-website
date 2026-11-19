@@ -9,7 +9,6 @@ import { ColorSelector } from './ColorSelector';
 import { SizeSelector } from './SizeSelector';
 import { AddToCartSection } from './AddToCartSection';
 import { TrustPillarsBar } from './TrustPillarsBar';
-import { ProductAccordions } from './ProductAccordions';
 import { SizeGuideModal } from './SizeGuideModal';
 import { useLanguage } from '@/lib/context/language-context';
 import { getLocalizedProduct } from '@/lib/i18n/catalog-translations';
@@ -65,6 +64,7 @@ export function ProductDetailPage({ product }: ProductDetailPageProps) {
             title={localizedProduct.title}
             categoryId={localizedProduct.categoryId}
             selectedColor={selectedColor}
+            colors={localizedProduct.colors}
           />
         </div>
 
@@ -96,7 +96,7 @@ export function ProductDetailPage({ product }: ProductDetailPageProps) {
 
             {/* Add to Cart & Express Direct Checkout */}
             <AddToCartSection
-              product={localizedProduct}
+              product={product}
               selectedSize={selectedSize}
               selectedColor={selectedColor}
               onValidateSize={handleValidateSize}
@@ -104,12 +104,6 @@ export function ProductDetailPage({ product }: ProductDetailPageProps) {
 
             {/* Algerian Delivery & Trust Pillars */}
             <TrustPillarsBar />
-
-            {/* Accordions (Coupe, Guide, Livraison, Entretien) */}
-            <ProductAccordions
-              product={localizedProduct}
-              onOpenSizeGuide={() => setIsSizeGuideOpen(true)}
-            />
           </div>
         </div>
       </div>

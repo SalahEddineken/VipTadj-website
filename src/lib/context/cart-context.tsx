@@ -9,6 +9,7 @@ import React, {
   useMemo,
 } from 'react';
 import { OrderItem } from '@/types';
+import { useStoreSettings } from '@/lib/context/store-settings-context';
 
 export interface CartItem extends OrderItem {
   id?: string;
@@ -36,6 +37,7 @@ export interface CartContextType {
   progressPercentage: number;
   isFreeShipping: boolean;
   canCheckout: boolean;
+  isHydrated: boolean;
 }
 
 const DEFAULT_THRESHOLD = 15000;
@@ -96,6 +98,7 @@ const defaultContextValue: CartContextType = {
   progressPercentage: 0,
   isFreeShipping: false,
   canCheckout: false,
+  isHydrated: false,
 };
 
 const CartContext = createContext<CartContextType>(defaultContextValue);
@@ -267,7 +270,11 @@ export function CartProvider({
     [items]
   );
 
-  const freeShippingThreshold = initialThreshold;
+  const { settings } = useStoreSettings();
+  const freeShippingThreshold =
+    typeof settings?.freeShippingThreshold === 'number'
+      ? settings.freeShippingThreshold
+      : initialThreshold;
   const amountRemaining = Math.max(0, freeShippingThreshold - subtotal);
   const progressPercentage = Math.min(
     100,
@@ -293,6 +300,7 @@ export function CartProvider({
     progressPercentage,
     isFreeShipping,
     canCheckout,
+    isHydrated,
   };
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

@@ -8,6 +8,7 @@ import { useCart } from '@/lib/context/cart-context';
 import { useLanguage } from '@/lib/context/language-context';
 import { formatDZD } from '@/lib/utils/formatDZD';
 import { getLocalizedSize, getLocalizedColor } from '@/lib/i18n/catalog-translations';
+import { getLocalizedCartItemTitle } from '@/components/store/cart-item-localization';
 
 export interface CartDrawerProps {
   isOpen?: boolean;
@@ -95,14 +96,14 @@ export function CartDrawer({ isOpen: controlledIsOpen, onClose: controlledOnClos
               {cart.isFreeShipping ? (
                 <>
                   <Sparkles className="w-3.5 h-3.5 text-gold-700 shrink-0" />
-                  <span>{t('cart.free_shipping_meter.qualified', 'Félicitations ! Livraison offerte sur 58 Wilayas.')}</span>
+                  <span>{t('cart.free_shipping_meter.qualified', 'Félicitations ! Livraison offerte sur 68 Wilayas.')}</span>
                 </>
               ) : (
                 t('cart.free_shipping_meter.progress', 'Plus que {remaining} pour la livraison gratuite !')
                   .replace('{remaining}', formatDZD(cart.amountRemaining, { locale: language }))
               )}
             </span>
-            <span className="font-semibold text-gold-800 font-sans tabular-nums">{cart.progressPercentage}%</span>
+            <span dir="ltr" className="font-semibold text-gold-800 font-sans tabular-nums">{cart.progressPercentage}%</span>
           </div>
           <div className="h-1.5 w-full bg-sand-200 rounded-full overflow-hidden">
             <div
@@ -139,6 +140,7 @@ export function CartDrawer({ isOpen: controlledIsOpen, onClose: controlledOnClos
             <ul className="divide-y divide-sand-100 space-y-4">
               {cart.items.map((item) => {
                 const lineId = item.id || `${item.productId}-${item.selectedSize}`;
+                const localizedTitle = getLocalizedCartItemTitle(item, language);
                 return (
                   <li key={lineId} className="pt-4 first:pt-0 flex gap-4">
                     {/* Thumbnail */}
@@ -146,7 +148,7 @@ export function CartDrawer({ isOpen: controlledIsOpen, onClose: controlledOnClos
                       {item.image ? (
                         <Image
                           src={item.image}
-                          alt={item.title}
+                          alt={localizedTitle}
                           fill
                           sizes="80px"
                           className="object-cover"
@@ -167,12 +169,12 @@ export function CartDrawer({ isOpen: controlledIsOpen, onClose: controlledOnClos
                             onClick={handleClose}
                             className="font-medium text-sm text-obsidian-900 hover:text-gold-700 line-clamp-2 transition-colors"
                           >
-                            {item.title}
+                            {localizedTitle}
                           </Link>
                           <button
                             type="button"
                             onClick={() => cart.removeItem(item.id || item.productId, item.selectedSize, item.selectedColor)}
-                            aria-label={`${t('cart.item.remove', 'Supprimer')} ${item.title}`}
+                            aria-label={`${t('cart.item.remove', 'Supprimer')} ${localizedTitle}`}
                             className="text-obsidian-600 hover:text-red-600 transition-colors p-2 min-w-[44px] min-h-[44px] flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 rounded"
                           >
                             <Trash2 className="w-3.5 h-3.5" />

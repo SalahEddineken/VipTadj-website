@@ -7,6 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDataStore } from '@/lib/data-provider';
 import { PATCH as handleStatusPatch } from './status/route';
+import { resolveApiLanguage, buildApiErrorResponse } from '@/app/api/_utils/api-i18n';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,23 +15,29 @@ export async function GET(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  const lang = resolveApiLanguage(req);
+
   try {
     const orderId = params.id;
     if (!orderId) {
-      return NextResponse.json(
-        { success: false, error: "Identifiant de commande manquant dans l'URL." },
-        { status: 400 }
-      );
+      return buildApiErrorResponse(lang, {
+        status: 400,
+        errorCode: 'ORDER_INVALID_PAYLOAD',
+        errorKey: 'api.error.order_invalid_payload',
+        frFallback: "Identifiant de commande manquant dans l'URL.",
+      });
     }
 
     const store = getDataStore();
     const order = await store.getOrderById(orderId);
 
     if (!order) {
-      return NextResponse.json(
-        { success: false, error: `Commande introuvable pour la référence "${orderId}".` },
-        { status: 404 }
-      );
+      return buildApiErrorResponse(lang, {
+        status: 404,
+        errorCode: 'ORDER_NOT_FOUND',
+        errorKey: 'api.error.order_not_found',
+        frFallback: `Commande introuvable pour la référence "${orderId}".`,
+      });
     }
 
     return NextResponse.json({
@@ -39,10 +46,12 @@ export async function GET(
     });
   } catch (error: any) {
     console.error('[API /api/orders/[id] GET Error]:', error);
-    return NextResponse.json(
-      { success: false, error: error.message || 'Erreur lors de la récupération de la commande.' },
-      { status: 500 }
-    );
+    return buildApiErrorResponse(lang, {
+      status: 500,
+      errorCode: 'INTERNAL_ERROR',
+      errorKey: 'api.error.internal',
+      frFallback: error?.message || 'Erreur lors de la récupération de la commande.',
+    });
   }
 }
 

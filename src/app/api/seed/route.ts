@@ -7,6 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDataStore } from '@/lib/data-provider';
 import { runCatalogSeed } from '@/lib/seed/seed-runner';
+import { resolveApiLanguage, buildApiErrorResponse } from '@/app/api/_utils/api-i18n';
 
 function isAuthorized(request: NextRequest): boolean {
   // Always allowed in development mode
@@ -32,11 +33,15 @@ function isAuthorized(request: NextRequest): boolean {
 }
 
 export async function POST(request: NextRequest) {
+  const lang = resolveApiLanguage(request);
+
   if (!isAuthorized(request)) {
-    return NextResponse.json(
-      { success: false, error: 'Non autorisé. Fournissez le secret de peuplement via x-seed-secret ou ?secret=.' },
-      { status: 401 }
-    );
+    return buildApiErrorResponse(lang, {
+      status: 401,
+      errorCode: 'UNAUTHORIZED',
+      errorKey: 'api.error.unauthorized',
+      frFallback: 'Non autorisé. Fournissez le secret de peuplement via x-seed-secret ou ?secret=.',
+    });
   }
 
   try {
@@ -50,10 +55,12 @@ export async function POST(request: NextRequest) {
     });
   } catch (error: any) {
     console.error('[API /api/seed] Erreur lors du peuplement:', error);
-    return NextResponse.json(
-      { success: false, error: error?.message || 'Erreur interne du serveur lors du peuplement.' },
-      { status: 500 }
-    );
+    return buildApiErrorResponse(lang, {
+      status: 500,
+      errorCode: 'INTERNAL_ERROR',
+      errorKey: 'api.error.internal',
+      frFallback: error?.message || 'Erreur interne du serveur lors du peuplement.',
+    });
   }
 }
 

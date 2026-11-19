@@ -34,9 +34,9 @@ describe('Tier 1: Foundation — Dual-Mode Data Provider (F-FOUND-03)', () => {
     expect(clothing.every((p) => p.categoryId === 'clothing')).toBe(true);
 
     // Filter by subcategory
-    const suits = await store.getProducts({ subcategory: 'costumes' });
-    expect(suits.length).toBeGreaterThanOrEqual(2);
-    expect(suits.every((p) => p.subcategory === 'costumes')).toBe(true);
+    const jackets = await store.getProducts({ subcategory: 'vestes' });
+    expect(jackets.length).toBeGreaterThanOrEqual(2);
+    expect(jackets.every((p) => p.subcategory === 'vestes')).toBe(true);
 
     // Filter by price ceiling
     const under20k = await store.getProducts({ maxPrice: 20000 });
@@ -48,9 +48,9 @@ describe('Tier 1: Foundation — Dual-Mode Data Provider (F-FOUND-03)', () => {
   // Test 3: getProductBySlug and getProductById resolution
   // ==========================================
   it('resolves products by unique slug and ID, and returns null for missing entities', async () => {
-    const bySlug = await store.getProductBySlug('costume-deux-pieces-laine-italienne');
+    const bySlug = await store.getProductBySlug('veste-saharienne-elegante-coton-lin');
     expect(bySlug).not.toBeNull();
-    expect(bySlug?.title).toBe('Costume Deux Pièces en Laine Italienne Super 130s');
+    expect(bySlug?.title).toBe('Veste Saharienne Élégante en Coton & Lin Naturel');
 
     const byId = await store.getProductById(bySlug!.id);
     expect(byId).not.toBeNull();

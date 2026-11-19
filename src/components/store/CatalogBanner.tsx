@@ -16,7 +16,7 @@ export function CatalogBanner() {
         <p className="text-neutral-400 text-xs md:text-sm font-sans leading-relaxed max-w-xl mx-auto text-balance">
           {t(
             'catalog.banner.desc',
-            'Collection Intégrale 2026 — Chaque modèle est sélectionné selon les critères les plus stricts de la couture traditionnelle européenne et adapté aux exigences des 58 Wilayas algériennes.'
+            'Collection Intégrale 2026 — Chaque modèle est sélectionné selon les critères les plus stricts de la couture traditionnelle européenne et adapté aux exigences des 68 Wilayas algériennes.'
           )}
         </p>
       </div>

@@ -1,5 +1,6 @@
 import { MetadataRoute } from 'next';
 import { getDataStore } from '@/lib/data-provider';
+import { isProductVisibleInShop } from '@/lib/utils/catalogUtils';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://viptadj-dz.vercel.app';
@@ -46,7 +47,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   try {
     const store = getDataStore();
-    const products = await store.getProducts();
+    const products = (await store.getProducts()).filter(isProductVisibleInShop);
 
     const productRoutes: MetadataRoute.Sitemap = products.map((product) => ({
       url: `${baseUrl}/product/${product.slug}`,

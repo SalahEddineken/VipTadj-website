@@ -124,6 +124,6 @@ describe('Tier 2: Boundary & Corner Cases — Media URL Boundaries (media-url-bo
     expect(isValidMediaUrl(undefined)).toBe(false);
     expect(isValidMediaUrl('not_a_valid_url_or_id')).toBe(false);
     expect(isValidMediaUrl('<script>alert("hack")</script>')).toBe(false);
-    expect(isValidMediaUrl('javascript:void(0)')).toBe(true); // Parsable as URL, but let's check normalizer fallback
+    expect(isValidMediaUrl('javascript:void(0)')).toBe(false); // Reject dangerous non-HTTP(S) schemes
   });
 });

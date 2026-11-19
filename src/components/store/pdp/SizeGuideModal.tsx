@@ -40,7 +40,7 @@ export function SizeGuideModal({ isOpen, onClose, category }: SizeGuideModalProp
           <h3 className="luxury-serif-title text-xl text-obsidian-950">
             {isShoes
               ? t('pdp.size_guide.title_shoes', 'Guide des Pointures Souliers')
-              : t('pdp.size_guide.title_suits', 'Guide des Tailles Confection')}
+              : t('pdp.size_guide.title_suits', 'Guide des Tailles Vêtements')}
           </h3>
           <button
             type="button"
@@ -87,7 +87,7 @@ export function SizeGuideModal({ isOpen, onClose, category }: SizeGuideModalProp
             <p className="text-xs text-neutral-600 font-sans leading-relaxed text-start">
               {t(
                 'pdp.size_guide.suits_advice',
-                'Nos costumes et vestes présentent une coupe semi-ajustée (Drop 7) équilibrant aisance et tombé sculptural. Mesurez votre tour de poitrine à l’endroit le plus large.'
+                'Nos vêtements et vestes présentent une coupe moderne équilibrant aisance et tombé impeccable. Mesurez votre tour de poitrine à l’endroit le plus large.'
               )}
             </p>
             <div className="overflow-x-auto">

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Menu, Search, ShoppingBag, Shield } from 'lucide-react';
 import { MobileNavDrawer } from './MobileNavDrawer';
 import { useCart } from '@/lib/context/cart-context';
@@ -50,6 +51,12 @@ export function Header({ cartCount = 0, onOpenCart }: HeaderProps) {
   }, [cartCount]);
 
   useEffect(() => {
+    if (cart.isHydrated) {
+      setLiveCount(cart.itemCount);
+    }
+  }, [cart.isHydrated, cart.itemCount]);
+
+  useEffect(() => {
     syncCartCount();
 
     const handleCartUpdate = () => {
@@ -67,7 +74,7 @@ export function Header({ cartCount = 0, onOpenCart }: HeaderProps) {
 
   return (
     <>
-      <header className="sticky top-0 z-40 bg-ivory/95 backdrop-blur-md border-b border-sand-200">
+      <header dir="ltr" className="sticky top-0 z-40 bg-ivory/95 backdrop-blur-md border-b border-sand-200 [direction:ltr]">
         <div className="luxury-container py-4 md:py-5 flex items-center justify-between">
           {/* Mobile hamburger & search button */}
           <div className="flex items-center gap-1.5 sm:gap-3 lg:hidden">
@@ -88,18 +95,20 @@ export function Header({ cartCount = 0, onOpenCart }: HeaderProps) {
             </Link>
           </div>
 
-          {/* Zara-inspired minimalist wordmark logo */}
-          <Link href="/" className="group flex flex-col items-center lg:items-start focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500">
-            <span className="luxury-cinzel-title text-xl sm:text-2xl md:text-3xl tracking-[0.2em] sm:tracking-[0.25em] text-obsidian-950 group-hover:text-gold-700 transition-colors">
-              VIP TADJ
-            </span>
-            <span className="hidden sm:block text-xs tracking-[0.25em] uppercase text-sand-800 font-sans -mt-0.5">
-              {t('brand.subtitle', 'Haute Couture Masculine')}
-            </span>
+          {/* Brand Logo */}
+          <Link href="/" className="group flex items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500">
+            <Image
+              src="/images/logo.png"
+              alt={t('header.logo_alt', 'Logo VIP TADJ')}
+              width={1024}
+              height={384}
+              priority
+              className="h-10 sm:h-12 md:h-14 w-auto object-contain transition-opacity group-hover:opacity-90"
+            />
           </Link>
 
           {/* Desktop Navigation Links (Clean customer luxury categories) */}
-          <nav className="hidden lg:flex items-center gap-8 text-xs uppercase tracking-[0.2em] font-medium text-obsidian-800">
+          <nav className="hidden lg:flex items-center gap-8 xl:gap-10 text-base lg:text-[17px] font-semibold tracking-wide text-obsidian-900">
             <Link
               href="/catalog?category=clothing"
               className="hover:text-gold-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500"
@@ -126,7 +135,7 @@ export function Header({ cartCount = 0, onOpenCart }: HeaderProps) {
               <Link
                 href="/admin"
                 className="hidden md:inline-flex items-center gap-1.5 px-2.5 py-1 text-xs uppercase tracking-wider font-semibold text-gold-700 bg-gold-50 border border-gold-200/80 rounded hover:bg-gold-100 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500"
-                title="Accéder au panneau d'administration"
+                title={t('nav.admin_portal_title', "Accéder au panneau d'administration")}
               >
                 <Shield className="w-3.5 h-3.5" />
                 <span>{t('nav.admin_space', 'Espace Admin')}</span>

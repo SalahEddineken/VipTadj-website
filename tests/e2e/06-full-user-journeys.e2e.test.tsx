@@ -236,8 +236,8 @@ describe('E2E Test Suite 06: Full Real-World User Journeys (Tier 3 & Tier 4)', (
       );
 
       assertArabicRTLDocument();
-      // Should show Oran standard fee (600 د.ج)
-      expect(screen.getByText(/600/)).toBeInTheDocument();
+      // Should show Oran standard fee (800 د.ج)
+      expect(screen.getByText(/800/)).toBeInTheDocument();
 
       // 2. Crossing 15,000 DA threshold (e.g. 25,000 DA)
       rerender(

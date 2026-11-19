@@ -261,9 +261,9 @@ describe('CHALLENGER 1 — Adversarial Stress Harness for Data Layer & Mock Data
     });
 
     it('filters subcategories case-insensitively', async () => {
-      const lower = await store.getProducts({ subcategory: 'costumes' });
-      const upper = await store.getProducts({ subcategory: 'COSTUMES' });
-      const mixed = await store.getProducts({ subcategory: 'CoStUmEs' });
+      const lower = await store.getProducts({ subcategory: 'vestes' });
+      const upper = await store.getProducts({ subcategory: 'VESTES' });
+      const mixed = await store.getProducts({ subcategory: 'VeStEs' });
 
       expect(lower.length).toBeGreaterThan(0);
       expect(upper.length).toBe(lower.length);
@@ -450,10 +450,10 @@ describe('CHALLENGER 1 — Adversarial Stress Harness for Data Layer & Mock Data
   // 4. SETTINGS INTEGRITY & PARTIAL UPDATE BEHAVIOR
   // =========================================================================
   describe('Store Settings Partial Update Resilience', () => {
-    it('probes whether updating a single wilaya shipping fee wipes out all other 57 wilayas', async () => {
+    it('probes whether updating a single wilaya shipping fee wipes out all other 67 wilayas', async () => {
       const initialSettings = await store.getSettings();
       const initialWilayaCount = Object.keys(initialSettings.wilayaShippingFees || {}).length;
-      expect(initialWilayaCount).toBe(58);
+      expect(initialWilayaCount).toBe(68);
 
       // Admin updates delivery fee for Wilaya 16 (Alger) only
       await store.updateSettings({
@@ -467,17 +467,18 @@ describe('CHALLENGER 1 — Adversarial Stress Harness for Data Layer & Mock Data
 
       if (remainingWilayaCount === 1) {
         console.warn(
-          `[EMPIRICAL FINDING] Partial update of wilayaShippingFees wiped out 57 wilayas! Remaining: ${remainingWilayaCount}`
+          `[EMPIRICAL FINDING] Partial update of wilayaShippingFees wiped out 67 wilayas! Remaining: ${remainingWilayaCount}`
         );
       }
 
-      // In a resilient store, partial update of wilayas should merge, not obliterate all other 57 wilayas
+      // In a resilient store, partial update of wilayas should merge, not obliterate all other 67 wilayas
       expect(
         remainingWilayaCount,
-        'VULNERABILITY: updateSettings shallow merge wiped out 57 wilaya fee configurations!'
-      ).toBe(58);
+        'VULNERABILITY: updateSettings shallow merge wiped out 67 wilaya fee configurations!'
+      ).toBe(68);
       expect(updatedSettings.wilayaShippingFees[16].homeFee).toBe(500);
       expect(updatedSettings.wilayaShippingFees[31]).toBeDefined(); // Oran must still exist
+      expect(updatedSettings.wilayaShippingFees[68]).toBeDefined(); // Bou Saada must still exist
     });
   });
 
@@ -569,7 +570,7 @@ describe('CHALLENGER 1 — Adversarial Stress Harness for Data Layer & Mock Data
 
       // Original price should be restored
       const restored = await store.getProductById('prod-suit-01');
-      expect(restored!.price).toBe(48500);
+      expect(restored!.price).toBe(38500);
     });
   });
 });

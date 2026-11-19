@@ -1,54 +1,77 @@
 import type { Metadata, Viewport } from 'next';
-import { cookies } from 'next/headers';
-import { Tajawal, Amiri } from 'next/font/google';
 import './globals.css';
-import { LanguageProvider, LANGUAGE_COOKIE_NAME } from '@/lib/context/language-context';
+import { LanguageProvider } from '@/lib/context/language-context';
+import { CartProvider } from '@/lib/context/cart-context';
+import { StoreSettingsProvider } from '@/lib/context/store-settings-context';
 import { SupportedLanguage } from '@/lib/i18n/types';
+import { getTranslation } from '@/lib/i18n/locales';
+import { getServerLanguage } from '@/app/_utils/server-lang';
 
-const playfair = { variable: 'font-serif' };
-const jakarta = { variable: 'font-sans' };
-const cinzel = { variable: 'font-cinzel' };
-
-const tajawal = Tajawal({
-  subsets: ['arabic', 'latin'],
-  weight: ['400', '500', '700'],
-  variable: '--font-arabic',
-  display: 'swap',
-});
-
-const amiri = Amiri({
-  subsets: ['arabic', 'latin'],
-  weight: ['400', '700'],
-  variable: '--font-arabic-serif',
-  display: 'swap',
-});
-
-export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://viptadj-dz.vercel.app'),
-  title: 'VIP TADJ | Haute Élégance Masculine | Alger',
-  description:
-    "Maison de couture et boutique de prêt-à-porter masculin de luxe en Algérie. Costumes sur-mesure, blazers raffinés, souliers en cuir artisanal et accessoires d'exception. Livraison express 58 Wilayas avec paiement à la livraison (COD).",
-  keywords: [
+const LOCALIZED_KEYWORDS: Record<SupportedLanguage, string[]> = {
+  fr: [
     'VIP TADJ',
     'Mode Homme Algerie',
-    'Costume Homme Alger',
+    'Vêtements Homme Algérie',
+    'Prêt à porter homme',
     'Blazer Luxe',
     'Souliers Cuir',
-    'Kiabi dz',
-    'Zara Homme',
     'Paiement a la livraison',
-    '58 Wilayas',
+    '68 Wilayas',
   ],
-  authors: [{ name: 'VIP TADJ Maison de Couture' }],
-  openGraph: {
-    title: 'VIP TADJ | Haute Élégance Masculine',
-    description: "Boutique de prêt-à-porter masculin d'exception en Algérie.",
-    url: 'https://viptadj-dz.vercel.app',
-    siteName: 'VIP TADJ',
-    locale: 'fr_DZ',
-    type: 'website',
-  },
+  en: [
+    'VIP TADJ',
+    'Menswear Algeria',
+    'Luxury Men Clothing',
+    'Ready to wear men',
+    'Luxury Blazer',
+    'Leather Shoes',
+    'Cash on Delivery',
+    '68 Wilayas',
+  ],
+  ar: [
+    'VIP TADJ',
+    'أزياء رجالية الجزائر',
+    'ملابس رجالية فاخرة',
+    'سترات كلاسيكية',
+    'أحذية جلدية',
+    'الدفع عند الاستلام',
+    '68 ولاية',
+  ],
 };
+
+const LOCALIZED_AUTHORS: Record<SupportedLanguage, string> = {
+  fr: "VIP TADJ Maison d'Élégance Masculine",
+  en: 'VIP TADJ House of Masculine Elegance',
+  ar: 'دار VIP TADJ للأناقة الرجالية',
+};
+
+export async function generateMetadata(): Promise<Metadata> {
+  const lang = getServerLanguage();
+
+  return {
+    metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://viptadj-dz.vercel.app'),
+    title: getTranslation(lang, 'meta.site.title', 'VIP TADJ | Haute Élégance Masculine | Algérie'),
+    description: getTranslation(
+      lang,
+      'meta.site.description',
+      "Boutique de prêt-à-porter masculin de luxe en Algérie. Vêtements, souliers en cuir et accessoires. Livraison 68 Wilayas avec paiement à la livraison (COD)."
+    ),
+    keywords: LOCALIZED_KEYWORDS[lang] || LOCALIZED_KEYWORDS.ar,
+    authors: [{ name: LOCALIZED_AUTHORS[lang] || LOCALIZED_AUTHORS.ar }],
+    openGraph: {
+      title: getTranslation(lang, 'meta.og.title', 'VIP TADJ | Haute Élégance Masculine'),
+      description: getTranslation(
+        lang,
+        'meta.og.description',
+        "Boutique de prêt-à-porter masculin d'exception en Algérie."
+      ),
+      url: 'https://viptadj-dz.vercel.app',
+      siteName: 'VIP TADJ',
+      locale: lang === 'ar' ? 'ar_DZ' : lang === 'fr' ? 'fr_DZ' : 'en_US',
+      type: 'website',
+    },
+  };
+}
 
 export const viewport: Viewport = {
   themeColor: '#080808',
@@ -62,10 +85,7 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const cookieStore = cookies();
-  const rawLang = cookieStore.get(LANGUAGE_COOKIE_NAME)?.value;
-  const initialLanguage: SupportedLanguage =
-    rawLang === 'en' || rawLang === 'ar' || rawLang === 'fr' ? rawLang : 'fr';
+  const initialLanguage = getServerLanguage();
   const dir = initialLanguage === 'ar' ? 'rtl' : 'ltr';
 
   return (
@@ -73,9 +93,22 @@ export default function RootLayout({
       lang={initialLanguage}
       dir={dir}
       suppressHydrationWarning
-      className={`${jakarta.variable} ${playfair.variable} ${cinzel.variable} ${tajawal.variable} ${amiri.variable}`}
     >
       <head>
+        <link
+          rel="preload"
+          href="/fonts/readex-pro/readex-pro-arabic.woff2"
+          as="font"
+          type="font/woff2"
+          crossOrigin="anonymous"
+        />
+        <link
+          rel="preload"
+          href="/fonts/readex-pro/readex-pro-latin.woff2"
+          as="font"
+          type="font/woff2"
+          crossOrigin="anonymous"
+        />
         <script
           dangerouslySetInnerHTML={{
             __html: `(function(){try{var l=localStorage.getItem('vip_tadj_lang')||'${initialLanguage}';document.documentElement.lang=l;document.documentElement.dir=(l==='ar'?'rtl':'ltr');}catch(e){}})();`,
@@ -84,7 +117,11 @@ export default function RootLayout({
       </head>
       <body className="min-h-screen bg-ivory text-obsidian-900 font-sans antialiased flex flex-col selection:bg-gold-500 selection:text-obsidian-950">
         <LanguageProvider initialLanguage={initialLanguage}>
-          {children}
+          <StoreSettingsProvider>
+            <CartProvider>
+              {children}
+            </CartProvider>
+          </StoreSettingsProvider>
         </LanguageProvider>
       </body>
     </html>

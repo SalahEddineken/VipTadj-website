@@ -14,15 +14,26 @@ import {
   AlertCircle,
   Loader2,
   Sparkles,
-  Lock,
 } from 'lucide-react';
 import { WilayaSelector } from '@/components/store/WilayaSelector';
-import { CustomerShippingInfo, OrderItem } from '@/types';
+import { CommuneSelector } from '@/components/store/CommuneSelector';
+import { CustomerShippingInfo, OrderItem, CommuneShippingFeeOverride } from '@/types';
 import { getWilayaByCode } from '@/lib/data/wilayas';
 import { isValidAlgerianPhone } from '@/lib/utils/phoneUtils';
 import { calculateDeliveryFee, calculateSubtotal, calculateTotal } from '@/lib/utils/deliveryUtils';
 import { formatDZD } from '@/lib/utils/formatDZD';
 import { useLanguage } from '@/lib/context/language-context';
+import { useStoreSettings } from '@/lib/context/store-settings-context';
+import { formatTranslation } from '@/lib/i18n/locales';
+import { SupportedLanguage } from '@/lib/i18n/types';
+import { SEED_PRODUCTS } from '@/lib/seed/seed-data';
+import {
+  getLocalizedProduct,
+  getLocalizedSize,
+  getLocalizedColor,
+} from '@/lib/i18n/catalog-translations';
+import { getLocalizedCartItemTitle } from '@/components/store/cart-item-localization';
+import { StorefrontLayout } from '@/components/store/StorefrontLayout';
 
 interface FormState {
   fullName: string;
@@ -42,6 +53,94 @@ interface FormErrors {
   commune?: string;
   address?: string;
   general?: string;
+}
+
+function isValidCheckoutItem(it: unknown): it is OrderItem {
+  return Boolean(
+    it &&
+      typeof it === 'object' &&
+      typeof (it as OrderItem).productId === 'string' &&
+      typeof (it as OrderItem).title === 'string' &&
+      typeof (it as OrderItem).selectedSize === 'string' &&
+      typeof (it as OrderItem).price === 'number' &&
+      Number.isFinite((it as OrderItem).price) &&
+      (it as OrderItem).price >= 0 &&
+      typeof (it as OrderItem).quantity === 'number' &&
+      Number.isFinite((it as OrderItem).quantity) &&
+      (it as OrderItem).quantity > 0
+  );
+}
+
+function resolveOrderErrorTitle(
+  rawTitle: string,
+  rawProductId: string | undefined,
+  items: OrderItem[],
+  language: SupportedLanguage
+): string {
+  const trimmed = rawTitle.trim();
+  if (!trimmed) return rawTitle;
+  if (language === 'ar' && /[\u0600-\u06FF]/.test(trimmed)) {
+    return rawTitle;
+  }
+
+  if (rawProductId) {
+    const byIdItem = items.find((it) => it.productId === rawProductId);
+    if (byIdItem) return getLocalizedCartItemTitle(byIdItem, language);
+    const byIdSeed = SEED_PRODUCTS.find((p) => p.id === rawProductId);
+    if (byIdSeed) return getLocalizedProduct(byIdSeed, language).title;
+  }
+
+  const lower = trimmed.toLowerCase();
+  const exactItem = items.find(
+    (it) =>
+      it.title.toLowerCase() === lower ||
+      getLocalizedCartItemTitle(it, 'fr').toLowerCase() === lower ||
+      getLocalizedCartItemTitle(it, 'en').toLowerCase() === lower
+  );
+  if (exactItem) return getLocalizedCartItemTitle(exactItem, language);
+
+  const exactSeed = SEED_PRODUCTS.find((p) => p.title.toLowerCase() === lower);
+  if (exactSeed) return getLocalizedProduct(exactSeed, language).title;
+
+  if (lower.length >= 4) {
+    const partialItem = items.find(
+      (it) =>
+        it.title.toLowerCase().includes(lower) ||
+        getLocalizedCartItemTitle(it, 'fr').toLowerCase().includes(lower)
+    );
+    if (partialItem) return getLocalizedCartItemTitle(partialItem, language);
+
+    const partialSeed = SEED_PRODUCTS.find((p) => p.title.toLowerCase().includes(lower));
+    if (partialSeed) return getLocalizedProduct(partialSeed, language).title;
+  }
+
+  return rawTitle;
+}
+
+function localizeOrderErrorParams(
+  rawParams: Record<string, unknown> | undefined,
+  items: OrderItem[],
+  language: SupportedLanguage
+): Record<string, string | number> {
+  if (!rawParams || typeof rawParams !== 'object') return {};
+  const localized: Record<string, string | number> = {};
+  for (const [k, v] of Object.entries(rawParams)) {
+    if (typeof v === 'string' || typeof v === 'number') {
+      localized[k] = v;
+    }
+  }
+  if (rawParams.size !== undefined && rawParams.size !== null) {
+    localized.size = getLocalizedSize(String(rawParams.size), language);
+  }
+  if (rawParams.title !== undefined && rawParams.title !== null) {
+    localized.title = resolveOrderErrorTitle(
+      String(rawParams.title),
+      typeof rawParams.productId === 'string' ? rawParams.productId : undefined,
+      items,
+      language
+    );
+  }
+  return localized;
 }
 
 function CheckoutLoading() {
@@ -74,7 +173,7 @@ function CheckoutContent() {
     commune: '',
     address: '',
     notes: '',
-    deliveryType: 'home',
+    deliveryType: 'desk',
   });
 
   const [errors, setErrors] = useState<FormErrors>({});
@@ -86,8 +185,9 @@ function CheckoutContent() {
         // Express checkout: loads strictly from sessionStorage to keep localStorage untouched
         const expressRaw = sessionStorage.getItem('vip_express_checkout');
         if (expressRaw) {
-          const item = JSON.parse(expressRaw);
-          setItems([item]);
+          const parsed = JSON.parse(expressRaw);
+          const candidates = Array.isArray(parsed) ? parsed : [parsed];
+          setItems(candidates.filter(isValidCheckoutItem));
         }
       } else {
         // Standard cart checkout
@@ -95,7 +195,7 @@ function CheckoutContent() {
         if (cartRaw) {
           const cart = JSON.parse(cartRaw);
           if (Array.isArray(cart)) {
-            setItems(cart);
+            setItems(cart.filter(isValidCheckoutItem));
           }
         }
       }
@@ -106,18 +206,80 @@ function CheckoutContent() {
     }
   }, [isDirectCheckout]);
 
+  const { settings: contextSettings } = useStoreSettings();
+
+  const [freeShippingThreshold, setFreeShippingThreshold] = useState<number>(
+    contextSettings?.freeShippingThreshold ?? 15000
+  );
+  const [wilayaShippingFees, setWilayaShippingFees] = useState<
+    Record<number, { homeFee: number; deskFee: number; active: boolean }> | undefined
+  >(contextSettings?.wilayaShippingFees);
+  const [communeShippingFees, setCommuneShippingFees] = useState<
+    Record<string, CommuneShippingFeeOverride> | undefined
+  >(contextSettings?.communeShippingFees);
+
+  useEffect(() => {
+    if (contextSettings) {
+      if (typeof contextSettings.freeShippingThreshold === 'number') {
+        setFreeShippingThreshold(contextSettings.freeShippingThreshold);
+      }
+      if (contextSettings.wilayaShippingFees) {
+        setWilayaShippingFees(contextSettings.wilayaShippingFees);
+      }
+      if (contextSettings.communeShippingFees) {
+        setCommuneShippingFees(contextSettings.communeShippingFees);
+      }
+    }
+  }, [contextSettings]);
+
+  useEffect(() => {
+    const fetchLatestSettings = () => {
+      fetch('/api/settings', { cache: 'no-store' })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data?.success && data.settings) {
+            if (typeof data.settings.freeShippingThreshold === 'number') {
+              setFreeShippingThreshold(data.settings.freeShippingThreshold);
+            }
+            if (data.settings.wilayaShippingFees) {
+              setWilayaShippingFees(data.settings.wilayaShippingFees);
+            }
+            if (data.settings.communeShippingFees) {
+              setCommuneShippingFees(data.settings.communeShippingFees);
+            }
+          }
+        })
+        .catch(() => {
+          // Fallback to default rates silently
+        });
+    };
+
+    fetchLatestSettings();
+
+    const handleSettingsUpdated = () => {
+      fetchLatestSettings();
+    };
+
+    window.addEventListener('vip-settings-updated', handleSettingsUpdated);
+    return () => {
+      window.removeEventListener('vip-settings-updated', handleSettingsUpdated);
+    };
+  }, []);
+
   // Financial calculations
   const subtotal = useMemo(() => calculateSubtotal(items), [items]);
-  const freeShippingThreshold = 15000;
 
   const deliveryFee = useMemo(() => {
     return calculateDeliveryFee(
       subtotal,
       formData.wilayaCode,
       freeShippingThreshold,
-      formData.deliveryType
+      formData.deliveryType,
+      wilayaShippingFees,
+      formData.commune,
+      communeShippingFees
     );
-  }, [subtotal, formData.wilayaCode, freeShippingThreshold, formData.deliveryType]);
+  }, [subtotal, formData.wilayaCode, formData.commune, freeShippingThreshold, formData.deliveryType, wilayaShippingFees, communeShippingFees]);
 
   const total = useMemo(() => {
     return calculateTotal(subtotal, deliveryFee);
@@ -161,7 +323,7 @@ function CheckoutContent() {
     if (!formData.wilayaCode) {
       newErrors.wilaya = t(
         'checkout.validation.wilaya_required',
-        'Veuillez sélectionner votre Wilaya de livraison (1 à 58).'
+        'Veuillez sélectionner votre Wilaya de livraison (1 à 68).'
       );
     }
 
@@ -172,18 +334,23 @@ function CheckoutContent() {
       );
     }
 
-    if (!formData.address.trim()) {
-      newErrors.address = t(
-        'checkout.validation.address_required',
-        "L'adresse de livraison détaillée est obligatoire."
-      );
-    }
-
     const stockViolationItem = items.find(
       (it) => typeof it.maxStock === 'number' && it.maxStock >= 0 && it.quantity > it.maxStock
     );
     if (stockViolationItem) {
-      newErrors.general = `Stock insuffisant pour "${stockViolationItem.title}" en taille ${stockViolationItem.selectedSize}. Stock disponible : ${stockViolationItem.maxStock}.`;
+      const localizedTitle = getLocalizedCartItemTitle(stockViolationItem, language);
+      const localizedSize = getLocalizedSize(stockViolationItem.selectedSize, language);
+      newErrors.general = formatTranslation(
+        t(
+          'checkout.validation.insufficient_stock',
+          'Stock insuffisant pour "{title}" en taille {size}. Stock disponible : {stock}.'
+        ),
+        {
+          title: localizedTitle,
+          size: localizedSize,
+          stock: stockViolationItem.maxStock ?? 0,
+        }
+      );
     }
 
     setErrors(newErrors);
@@ -210,7 +377,7 @@ function CheckoutContent() {
         wilayaCode: formData.wilayaCode!,
         wilaya: selectedWilaya?.name || '',
         commune: formData.commune.trim(),
-        address: formData.address.trim(),
+        address: formData.deliveryType === 'home' ? formData.address.trim() : '',
         deliveryType: formData.deliveryType,
       };
 
@@ -231,13 +398,63 @@ function CheckoutContent() {
 
       const response = await fetch('/api/orders', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'x-lang': language,
+        },
         body: JSON.stringify(orderPayload),
       });
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || t('checkout.error.submit_failed', 'Erreur lors de la validation de votre commande.'));
+        const code = errorData?.errorCode || errorData?.code;
+        const CODE_TO_KEY: Record<string, string> = {
+          INSUFFICIENT_STOCK: 'api.error.out_of_stock',
+          OUT_OF_STOCK: 'api.error.out_of_stock',
+          ORDER_INVALID_PAYLOAD: 'api.error.order_invalid_payload',
+          ORDER_ITEMS_REQUIRED: 'api.error.order_items_required',
+          ORDER_NOT_FOUND: 'api.error.order_not_found',
+          PRODUCT_NOT_FOUND: 'api.error.product_not_found',
+          INVALID_JSON: 'api.error.invalid_json',
+          CHECKOUT_NAME_REQUIRED: 'checkout.validation.name_required',
+          CHECKOUT_PHONE_INVALID: 'checkout.validation.phone_invalid',
+          CHECKOUT_WILAYA_REQUIRED: 'checkout.validation.wilaya_required',
+          CHECKOUT_COMMUNE_REQUIRED: 'checkout.validation.commune_required',
+          INTERNAL_ERROR: 'api.error.internal',
+        };
+        const localizedParams = localizeOrderErrorParams(errorData?.errorParams, items, language);
+        let resolvedMessage: string;
+        if (errorData?.errorKey) {
+          resolvedMessage = formatTranslation(
+            t(errorData.errorKey, t('checkout.error.submit_failed', 'Erreur lors de la validation de votre commande.')),
+            localizedParams
+          );
+        } else if (code && CODE_TO_KEY[code]) {
+          if ((code === 'OUT_OF_STOCK' || code === 'INSUFFICIENT_STOCK') && localizedParams.size) {
+            resolvedMessage = formatTranslation(
+              t('api.error.out_of_stock_size', 'Stock insuffisant pour "{title}" en taille {size}. Exemplaires restants : {available}.'),
+              localizedParams
+            );
+          } else if ((code === 'OUT_OF_STOCK' || code === 'INSUFFICIENT_STOCK') && localizedParams.title) {
+            resolvedMessage = formatTranslation(
+              t('api.error.out_of_stock_product', 'Stock insuffisant pour "{title}". Exemplaires restants : {available}.'),
+              localizedParams
+            );
+          } else {
+            resolvedMessage = t(
+              CODE_TO_KEY[code],
+              t('checkout.error.submit_failed', 'Erreur lors de la validation de votre commande.')
+            );
+          }
+        } else if (language === 'fr' && errorData?.error) {
+          resolvedMessage = errorData.error;
+        } else {
+          resolvedMessage = t('checkout.error.submit_failed', 'Erreur lors de la validation de votre commande.');
+        }
+
+        setErrors({ general: resolvedMessage });
+        setIsSubmitting(false);
+        return;
       }
 
       const result = await response.json();
@@ -266,9 +483,9 @@ function CheckoutContent() {
       // Navigate to order confirmation
       const queryParam = isDirectCheckout ? '?direct=1' : '';
       router.push(`/checkout/success/${placedOrder.id || placedOrder.orderNumber}${queryParam}`);
-    } catch (err: any) {
+    } catch {
       setErrors({
-        general: err.message || t('checkout.error.unexpected', 'Une erreur inattendue est survenue. Veuillez vérifier votre saisie.'),
+        general: t('checkout.error.unexpected', 'Une erreur inattendue est survenue. Veuillez vérifier votre saisie.'),
       });
       setIsSubmitting(false);
     }
@@ -306,10 +523,13 @@ function CheckoutContent() {
   }
 
   return (
-    <div className="bg-sand-50/50 min-h-screen py-8 md:py-12">
+    <div className="bg-sand-50/50 flex-1 py-8 md:py-12">
       <div className="luxury-container max-w-6xl mx-auto px-4 sm:px-6">
         {/* Navigation Breadcrumb */}
-        <nav className="text-xs text-charcoal-500 mb-6 flex items-center gap-2">
+        <nav
+          aria-label={t('pdp.breadcrumb.aria_label', "Fil d'Ariane")}
+          className="text-xs text-charcoal-500 mb-6 flex items-center gap-2"
+        >
           <Link href="/" className="hover:text-charcoal-900 transition-colors">
             {t('checkout.breadcrumb.home', 'Accueil')}
           </Link>
@@ -322,27 +542,6 @@ function CheckoutContent() {
             {t('checkout.breadcrumb.checkout', 'Validation de Commande (COD)')}
           </span>
         </nav>
-
-        {/* Cash On Delivery (COD) Trust Banner */}
-        <div className="mb-8 p-4 md:p-5 bg-white border border-gold-600/30 shadow-sm rounded-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-gold-50 flex items-center justify-center flex-shrink-0 text-gold-700">
-              <ShieldCheck className="w-6 h-6" />
-            </div>
-            <div>
-              <h2 className="text-sm font-semibold uppercase tracking-wider text-charcoal-900">
-                {t('checkout.cod_banner.title', 'Paiement en espèces à la livraison (COD) • Aucun prépaiement par carte')}
-              </h2>
-              <p className="text-xs text-charcoal-600">
-                {t('checkout.cod_banner.desc', 'Réglez en toute sérénité à la réception de votre colis. Commande 100% Sécurisée.')}
-              </p>
-            </div>
-          </div>
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-sand-100 rounded text-xs font-medium text-charcoal-700">
-            <Lock className="w-3.5 h-3.5 text-gold-600" />
-            <span>{t('checkout.trust.secure', 'Commande 100% Sécurisée')}</span>
-          </div>
-        </div>
 
         {/* Global Error Banner */}
         {errors.general && (
@@ -393,17 +592,12 @@ function CheckoutContent() {
 
                 {/* Primary Phone */}
                 <div>
-                  <label htmlFor="checkout-phone" className="block text-xs uppercase tracking-wider text-charcoal-700 font-medium mb-1.5 flex flex-wrap items-baseline justify-between gap-x-2 gap-y-0.5 text-start">
-                    <span>
-                      {t('checkout.field.phone', 'Téléphone mobile *')}{' '}
-                      <span aria-hidden="true" className="text-bronze-600 font-serif">*</span>
-                    </span>
-                    <span className="text-xs text-charcoal-500 font-normal">
-                      {t('checkout.field.phone_hint', 'Numéro joignable pour confirmation de la commande avant expédition.')}
-                    </span>
+                  <label htmlFor="checkout-phone" className="block text-xs uppercase tracking-wider text-charcoal-700 font-medium mb-1.5 text-start">
+                    {t('checkout.field.phone', 'Téléphone mobile *')}{' '}
+                    <span aria-hidden="true" className="text-bronze-600 font-serif">*</span>
                   </label>
-                  <div className="relative">
-                    <span className="absolute start-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-sand-800 flex items-center gap-1 font-sans">
+                  <div className="relative" dir="ltr">
+                    <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-sand-800 flex items-center gap-1 font-sans">
                       DZ
                     </span>
                     <input
@@ -415,33 +609,14 @@ function CheckoutContent() {
                       placeholder={t('checkout.field.phone_ph', '05 / 06 / 07 XX XX XX XX')}
                       aria-invalid={!!errors.phone}
                       aria-describedby={errors.phone ? "checkout-phone-error" : undefined}
-                      className={`w-full ps-10 pe-3.5 py-2.5 text-sm bg-white border ${
+                      className={`w-full pl-10 pr-3.5 py-2.5 text-sm bg-white border ${
                         errors.phone ? 'border-red-500 focus:ring-red-500' : 'border-sand-300 focus:border-gold-600'
-                      } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 transition-colors rounded-sm font-sans tabular-nums text-start`}
+                      } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 transition-colors rounded-sm font-sans tabular-nums text-left`}
                     />
                   </div>
                   {errors.phone && (
                     <p id="checkout-phone-error" className="mt-1 text-xs text-red-600 text-start">{errors.phone}</p>
                   )}
-                </div>
-
-                {/* Secondary Phone (Optional) */}
-                <div>
-                  <label htmlFor="checkout-secondaryPhone" className="block text-xs uppercase tracking-wider text-charcoal-700 font-medium mb-1.5 flex flex-wrap items-baseline justify-between gap-x-2 gap-y-0.5 text-start">
-                    <span>{t('checkout.field.phone2', 'Numéro secondaire (optionnel)')}</span>
-                    <span className="text-xs text-charcoal-500 font-normal">
-                      {t('checkout.field.phone2_ph', 'Autre numéro de contact')}
-                    </span>
-                  </label>
-                  <input
-                    id="checkout-secondaryPhone"
-                    type="tel"
-                    dir="ltr"
-                    value={formData.secondaryPhone}
-                    onChange={(e) => handleChange('secondaryPhone', e.target.value)}
-                    placeholder={t('checkout.field.phone2_ph', 'Autre numéro de contact')}
-                    className="w-full px-3.5 py-2.5 text-sm bg-white border border-sand-300 focus:border-gold-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 transition-colors rounded-sm font-sans tabular-nums text-start"
-                  />
                 </div>
               </div>
 
@@ -452,66 +627,52 @@ function CheckoutContent() {
                   <span>{t('checkout.section.shipping', 'Adresse de Livraison en Algérie')}</span>
                 </h3>
 
-                {/* Algerian 58 Wilayas Selector Component */}
+                {/* Algerian 68 Wilayas Selector Component */}
                 <WilayaSelector
                   selectedWilayaCode={formData.wilayaCode}
                   deliveryType={formData.deliveryType}
                   cartSubtotal={subtotal}
                   freeShippingThreshold={freeShippingThreshold}
+                  customFees={wilayaShippingFees}
+                  communeFees={communeShippingFees}
+                  selectedCommune={formData.commune}
+                  hideFreeShippingProgress={true}
                   onSelectWilaya={(wilaya) => {
                     handleChange('wilayaCode', wilaya.code);
+                    if (formData.wilayaCode !== wilaya.code) {
+                      handleChange('commune', '');
+                    }
                   }}
                   onChangeDeliveryType={(type) => {
                     handleChange('deliveryType', type);
                   }}
                   error={errors.wilaya}
-                />
-
-                {/* Commune */}
-                <div>
-                  <label htmlFor="checkout-commune" className="block text-xs uppercase tracking-wider text-charcoal-700 font-medium mb-1.5 text-start">
-                    {t('checkout.field.commune', 'Commune / Ville *')}{' '}
-                    <span aria-hidden="true" className="text-bronze-600 font-serif">*</span>
-                  </label>
-                  <input
-                    id="checkout-commune"
-                    type="text"
+                >
+                  {/* Baladiya / Commune Selector positioned before Delivery Mode */}
+                  <CommuneSelector
+                    selectedWilayaCode={formData.wilayaCode}
                     value={formData.commune}
-                    onChange={(e) => handleChange('commune', e.target.value)}
-                    placeholder={t('checkout.field.commune_ph', 'ex. Hydra, Bab Ezzouar, Oran Centre...')}
-                    aria-invalid={!!errors.commune}
-                    aria-describedby={errors.commune ? "checkout-commune-error" : undefined}
-                    className={`w-full px-3.5 py-2.5 text-sm bg-white border ${
-                      errors.commune ? 'border-red-500 focus:ring-red-500' : 'border-sand-300 focus:border-gold-600'
-                    } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 transition-colors rounded-sm text-start`}
+                    onChange={(val) => handleChange('commune', val)}
+                    error={errors.commune}
                   />
-                  {errors.commune && (
-                    <p id="checkout-commune-error" className="mt-1 text-xs text-red-600 text-start">{errors.commune}</p>
-                  )}
-                </div>
+                </WilayaSelector>
 
-                {/* Full Street Address */}
-                <div>
-                  <label htmlFor="checkout-address" className="block text-xs uppercase tracking-wider text-charcoal-700 font-medium mb-1.5 text-start">
-                    {t('checkout.field.address', 'Adresse détaillée *')}{' '}
-                    <span aria-hidden="true" className="text-bronze-600 font-serif">*</span>
-                  </label>
-                  <textarea
-                    id="checkout-address"
-                    rows={2}
-                    value={formData.address}
-                    onChange={(e) => handleChange('address', e.target.value)}
-                    placeholder={t('checkout.field.address_ph', 'Numéro, rue, bâtiment, quartier, repère visible...')}
-                    aria-invalid={!!errors.address}
-                    aria-describedby={errors.address ? "checkout-address-error" : undefined}
-                    className={`w-full px-3.5 py-2.5 text-sm bg-white border ${
-                      errors.address ? 'border-red-500 focus:ring-red-500' : 'border-sand-300 focus:border-gold-600'
-                    } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 transition-colors rounded-sm resize-none text-start`}
-                  />
-                  {errors.address && (
-                    <p id="checkout-address-error" className="mt-1 text-xs text-red-600 text-start">{errors.address}</p>
-                  )}
-                </div>
+                {/* Full Street Address - Only shown for Home Delivery and Optional */}
+                {formData.deliveryType === 'home' && (
+                  <div className="animate-fadeIn">
+                    <label htmlFor="checkout-address" className="block text-xs uppercase tracking-wider text-charcoal-700 font-medium mb-1.5 text-start">
+                      {t('checkout.field.address', 'Adresse détaillée (optionnel)')}
+                    </label>
+                    <textarea
+                      id="checkout-address"
+                      rows={2}
+                      value={formData.address}
+                      onChange={(e) => handleChange('address', e.target.value)}
+                      placeholder={t('checkout.field.address_ph', 'Numéro, rue, bâtiment, quartier, repère visible...')}
+                      className="w-full px-3.5 py-2.5 text-sm bg-white border border-sand-300 focus:border-gold-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 transition-colors rounded-sm resize-none text-start"
+                    />
+                  </div>
+                )}
 
                 {/* Delivery Notes (Optional) */}
                 <div>
@@ -571,53 +732,64 @@ function CheckoutContent() {
 
               {/* Items List */}
               <div className="divide-y divide-sand-100 max-h-80 overflow-y-auto mb-4">
-                {items.map((item, idx) => (
-                  <div key={`${item.productId}-${item.selectedSize}-${idx}`} className="py-3 flex gap-3">
-                    <div className="w-16 h-20 bg-sand-100 relative rounded-sm overflow-hidden flex-shrink-0">
-                      {item.image ? (
-                        <Image
-                          src={item.image}
-                          alt={item.title}
-                          fill
-                          className="object-cover"
-                          sizes="64px"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-charcoal-400">
-                          <ShoppingBag className="w-6 h-6" />
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0 flex flex-col justify-between">
-                      <div>
-                        <h4 className="text-xs font-medium text-charcoal-900 line-clamp-2 text-start">
-                          {item.title}
-                        </h4>
-                        <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-charcoal-500">
-                          <span className="px-1.5 py-0.5 bg-sand-100 rounded">
-                            {t('checkout.summary.size_label', 'Taille :')} {item.selectedSize}
-                          </span>
-                          {item.selectedColor && (
-                            <span className="px-1.5 py-0.5 bg-sand-100 rounded">
-                              {t('checkout.summary.color_label', 'Couleur :')} {item.selectedColor}
-                            </span>
-                          )}
-                          <span>
-                            {t('checkout.summary.qty_label', 'Qté :')} {item.quantity}
-                          </span>
-                          {typeof item.maxStock === 'number' && item.quantity > item.maxStock && (
-                            <span className="text-red-600 font-medium">
-                              (Stock max : {item.maxStock})
-                            </span>
-                          )}
-                        </div>
+                {items.map((item, idx) => {
+                  const localizedTitle = getLocalizedCartItemTitle(item, language);
+                  const localizedSize = getLocalizedSize(item.selectedSize, language);
+                  const localizedColor = item.selectedColor
+                    ? getLocalizedColor(item.selectedColor, language) || item.selectedColor
+                    : null;
+
+                  return (
+                    <div key={`${item.productId}-${item.selectedSize}-${idx}`} className="py-3 flex gap-3">
+                      <div className="w-16 h-20 bg-sand-100 relative rounded-sm overflow-hidden flex-shrink-0">
+                        {item.image ? (
+                          <Image
+                            src={item.image}
+                            alt={localizedTitle}
+                            fill
+                            className="object-cover"
+                            sizes="64px"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-charcoal-400">
+                            <ShoppingBag className="w-6 h-6" />
+                          </div>
+                        )}
                       </div>
-                      <p className="text-xs font-semibold text-charcoal-900 text-start">
-                        {formatDZD(item.price * item.quantity, { locale: language })}
-                      </p>
+                      <div className="flex-1 min-w-0 flex flex-col justify-between">
+                        <div>
+                          <h4 className="text-xs font-medium text-charcoal-900 line-clamp-2 text-start">
+                            {localizedTitle}
+                          </h4>
+                          <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-charcoal-500">
+                            <span className="px-1.5 py-0.5 bg-sand-100 rounded">
+                              {t('checkout.summary.size_label', 'Taille :')} {localizedSize}
+                            </span>
+                            {localizedColor && (
+                              <span className="px-1.5 py-0.5 bg-sand-100 rounded">
+                                {t('checkout.summary.color_label', 'Couleur :')} {localizedColor}
+                              </span>
+                            )}
+                            <span>
+                              {t('checkout.summary.qty_label', 'Qté :')} {item.quantity}
+                            </span>
+                            {typeof item.maxStock === 'number' && item.quantity > item.maxStock && (
+                              <span className="text-red-600 font-medium">
+                                {formatTranslation(
+                                  t('checkout.summary.max_stock', '(Stock max : {count})'),
+                                  { count: item.maxStock }
+                                )}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <p className="text-xs font-semibold text-charcoal-900 text-start">
+                          {formatDZD(item.price * item.quantity, { locale: language })}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
 
               {/* Financial Totals */}
@@ -631,7 +803,13 @@ function CheckoutContent() {
 
                 <div className="flex justify-between items-center">
                   <span>
-                    {t('checkout.summary.shipping', 'Livraison')} ({selectedWilaya?.name || (language === 'ar' ? 'الجزائر' : 'Algérie')} -{' '}
+                    {t('checkout.summary.shipping', 'Livraison')} (
+                    {selectedWilaya
+                      ? language === 'ar'
+                        ? selectedWilaya.nameAr || selectedWilaya.name
+                        : selectedWilaya.name
+                      : t('common.country_algeria', 'Algérie')}{' '}
+                    -{' '}
                     {formData.deliveryType === 'home'
                       ? t('checkout.delivery.home', 'À domicile')
                       : t('checkout.delivery.desk', 'Point Relais / Bureau')})
@@ -648,7 +826,7 @@ function CheckoutContent() {
                 {subtotal >= freeShippingThreshold && (
                   <div className="p-2 bg-green-50 border border-green-200 rounded text-xs text-green-800 flex items-center gap-1.5">
                     <Sparkles className="w-3.5 h-3.5 text-green-600" />
-                    <span>{t('cart.free_shipping_meter.qualified', 'Félicitations ! Livraison offerte sur 58 Wilayas.')}</span>
+                    <span>{t('cart.free_shipping_meter.qualified', 'Félicitations ! Livraison offerte sur 68 Wilayas.')}</span>
                   </div>
                 )}
 
@@ -692,8 +870,10 @@ function CheckoutContent() {
 
 export default function CheckoutPage() {
   return (
-    <Suspense fallback={<CheckoutLoading />}>
-      <CheckoutContent />
-    </Suspense>
+    <StorefrontLayout>
+      <Suspense fallback={<CheckoutLoading />}>
+        <CheckoutContent />
+      </Suspense>
+    </StorefrontLayout>
   );
 }

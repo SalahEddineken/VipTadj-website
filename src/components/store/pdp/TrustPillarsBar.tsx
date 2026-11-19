@@ -13,7 +13,7 @@ export function TrustPillarsBar() {
         <Truck className="w-4 h-4 text-gold-700 flex-shrink-0 mt-0.5" />
         <div>
           <span className="font-semibold text-obsidian-950 block">
-            {t('home.pillars.wilayas.title', 'Livraison 58 Wilayas')}
+            {t('home.pillars.wilayas.title', 'Livraison 68 Wilayas')}
           </span>
           <span className="text-neutral-600 text-xs">
             {t('pdp.trust.delivery', 'Yalidine & ZR Express (24-48h)')}

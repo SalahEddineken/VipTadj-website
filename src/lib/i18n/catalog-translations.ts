@@ -1,9 +1,11 @@
 import { SupportedLanguage } from './types';
+import type { Category } from '@/types';
 
 export interface ProductTranslation {
   title: string;
   description: string;
   subtitle?: string;
+  shortDescription?: string;
   materials?: string;
   careInstructions?: string;
 }
@@ -18,21 +20,21 @@ export const CATEGORY_TRANSLATIONS: Record<string, Record<SupportedLanguage, Cat
   clothing: {
     fr: {
       name: 'Vêtements',
-      subtitle: 'Costumes, Blazers & Confection Sartoriale',
+      subtitle: 'Vestes, Chemises & Prêt-à-Porter',
       description:
-        "L'art du sur-mesure et de la coupe d'apparat. Des laines vierges d'exception Super 130s, des boutonnières façon tailleur et des finitions semi-entoilées d'une distinction souveraine.",
+        "L'art du vestiaire masculin d'exception. Des matières nobles, des coupes contemporaines et des finitions soignées d'une distinction souveraine pour toutes vos occasions.",
     },
     en: {
       name: 'Clothing',
-      subtitle: 'Suits, Blazers & Sartorial Tailoring',
+      subtitle: 'Jackets, Shirts & Fine Apparel',
       description:
-        'The art of bespoke tailoring and ceremonial silhouettes. Exceptional Super 130s virgin wools, artisan buttonholes, and semi-canvassed construction of commanding distinction.',
+        'The art of refined masculine clothing. Noble fabrics, contemporary silhouettes, and impeccable finishes for elevated everyday style.',
     },
     ar: {
-      name: 'أزياء فاخرة',
-      subtitle: 'بدلات راقية، سترات بليزر وخياطة متقنة',
+      name: 'ملابس وأزياء',
+      subtitle: 'سترات، قمصان، ومعاطف راقية',
       description:
-        'فن الخياطة الرفيعة والقصات الملكية. أصواف نقية Super 130s، عراوي متقونة بلمسة يدوية وبطانة نصف مدعمة تمنح هيبة وتميزاً استثنائياً.',
+        'فن الأزياء والملابس الرجالية الفاخرة. خامات عالية الجودة، قصات عصرية متقونة وتفاصيل تمنح هيبة وأناقة متكاملة.',
     },
   },
   shoes: {
@@ -80,26 +82,26 @@ export const CATEGORY_TRANSLATIONS: Record<string, Record<SupportedLanguage, Cat
 export const PRODUCT_TRANSLATIONS: Record<string, Record<Exclude<SupportedLanguage, 'fr'>, ProductTranslation>> = {
   'prod-suit-01': {
     en: {
-      title: 'Two-Piece Italian Super 130s Wool Suit',
+      title: 'Safari Jacket in Natural Cotton & Linen Blend',
       description:
-        "Crafted in pure virgin Super 130's wool spun in Italy, this two-piece suit embodies the pinnacle of VIP TADJ masculine refinement. Featuring a semi-canvassed notch lapel jacket and pleated fluid trousers, it guarantees an impeccable sculptural drape for prestige receptions and business.",
+        'A timeless staple blending ease and masculine character. Crafted from a refined Italian linen-cotton blend, this safari jacket features four flap pockets and a tailored profile perfect for effortless daily elegance.',
     },
     ar: {
-      title: 'بدلة كلاسيكية من قطعتين بصوف إيطالي فائق الجودة Super 130s',
+      title: 'سترة سفاري أنيقة من الكتان والقطن الإيطالي الطبيعي',
       description:
-        'صُنعت هذه البدلة الكلاسيكية من الصوف الخالص Super 130s المغزول في إيطاليا، وتجسد قمة الرقي الرجالي لدى VIP TADJ. تتألف من سترة بنصف بطانة وياقة مشقوقة وسروال مريح بكسرات، مما يمنح قواماً مثالياً وجاذبية لا تُضاهى للمناسبات الرسمية والاجتماعات الرفيعة.',
+        'قطعة أيقونية تجمع بين الراحة والجاذبية الرجالية. صُنعت من مزيج فاخر من الكتان والقطن الإيطالي الطبيعي، بأربعة جيوب أنيقة وقصة متوازنة تناسب الإطلالات اليومية والمناسبات الراقية.',
     },
   },
   'prod-smoking-ceremonie-noir': {
     en: {
-      title: 'Deep Black Ceremonial Tuxedo with Satin Lapels',
+      title: 'Minimalist Suede Leather Bomber Jacket',
       description:
-        'Masterpiece for gala evenings and formal ceremonies, this deep black tuxedo features shawl lapels faced in duchess satin, covered buttons, and bespoke tailored trousers.',
+        'Refined modern outerwear crafted from velvety soft suede leather, featuring tone-on-tone ribbed trims and a gilded two-way metal zipper.',
     },
     ar: {
-      title: 'بدلة سموكينغ فاخرة للمناسبات باللون الأسود الملكي وحرير الساتان',
+      title: 'جاكيت بومبر فاخر من الجلد السويدي الناعم',
       description:
-        'تحفة استثنائية لأمسيات الغالا والمناسبات الكبرى، تتميز بدلة السموكينغ بياقة شال مكسوة بحرير الساتان الفاخر وأزرار مغطاة مع سروال مفصل بدقة متناهية.',
+        'أناقة عصرية راقية. جاكيت بومبر خفيف مصنوع من جلد السويد فائق النعومة بملمس مخملي وسحاب معدني مذهب وتصميم عصري يواكب مختلف الإطلالات.',
     },
   },
   'prod-blazer-velours-anthracite': {
@@ -267,7 +269,7 @@ export const PRODUCT_TRANSLATIONS: Record<string, Record<Exclude<SupportedLangua
     ar: {
       title: 'حزام جلدي طبيعي بوجهين بلوني الأسود والكونياك',
       description:
-        'حزام من جلد البقر الطبيعي بوجهين (أسود وكونياك) مع إبزيم دوار مطلي بالذهب المات، يتيح تنسيقاً مثالياً مع مختلف البدلات والأحذية.',
+        'حزام من جلد البقر الطبيعي بوجهين (أسود وكونياك) مع إبزيم دوار مطلي بالذهب المات، يتيح تنسيقاً مثالياً مع مختلف الملابس والأحذية.',
     },
   },
   'prod-boutons-manchette-or-onyx': {
@@ -286,24 +288,24 @@ export const PRODUCT_TRANSLATIONS: Record<string, Record<Exclude<SupportedLangua
     en: {
       title: 'Hand-Rolled Pure Silk Pocket Square',
       description:
-        'Pure Italian silk pocket square featuring subtle paisley motif and meticulous hand-rolled edges, adding refined flourish to suit lapels.',
+        'Pure Italian silk pocket square featuring subtle paisley motif and meticulous hand-rolled edges, adding refined flourish to jacket pockets.',
     },
     ar: {
-      title: 'منديل جيب للبدلات من الحرير الخالص المبروم يدوياً',
+      title: 'منديل جيب من الحرير الخالص المبروم يدوياً',
       description:
-        'منديل جيب فاخر من الحرير الإيطالي الخالص بنقوش البيزلي الهادئة وحواف مبرومة ومخيطة يدوياً لتزيين جيب سترة البدلة بأناقة بالغة.',
+        'منديل جيب فاخر من الحرير الإيطالي الخالص بنقوش البيزلي الهادئة وحواف مبرومة ومخيطة يدوياً لتزيين جيب السترة بأناقة بالغة.',
     },
   },
   'prod-costume-trois-pieces-prince': {
     en: {
-      title: 'Prince of Wales Three-Piece Suit with Tailored Vest',
+      title: 'Warm Wool & Cashmere Check Overshirt',
       description:
-        'Aristocratic British elegance tailored with Italian fluidity in grey Prince of Wales virgin wool, complemented by a sharp double-breasted vest.',
+        'The ultimate mid-season layering piece. Woven in a soft wool-cashmere blend with subtle grey and charcoal patterns, dual chest pockets, and horn-effect buttons.',
     },
     ar: {
-      title: 'بدلة رجالية ملكية ثلاث قطع بنقشة برنس دي غال وسترة كلاسيكية',
+      title: 'قميص جاكيت (أوفر شيرت) من الصوف والكشمير بنقشة كاروهات هادئة',
       description:
-        'أناقة أرستقراطية تجمع بين التقاليد البريطانية والمرونة الإيطالية بصوف نقي رمادي، مع سترة داخلية أنيقة.',
+        'القطعة المثالية لإطلالة شتوية وربيعية راقية. منسوجة من مزيج فاخر من الصوف والكشمير بنقوش هادئة وجيوب أمامية عملية تمنح مظهراً عصرياً وجذاباً.',
     },
   },
   'prod-blazer-bleu-cobalt': {
@@ -351,7 +353,7 @@ export const PRODUCT_TRANSLATIONS: Record<string, Record<Exclude<SupportedLangua
     ar: {
       title: 'كنزة بياقة عالية من الكشمير الخالص باللون الأسود الملكي',
       description:
-        'حياكة راقية من كشمير منغوليا الخالص بأربعة خيوط تمنح الدفء والنعومة الفائقة تحت سترات البدلات الشتوية.',
+        'حياكة راقية من كشمير منغوليا الخالص بأربعة خيوط تمنح الدفء والنعومة الفائقة تحت السترات والمعاطف الشتوية.',
     },
   },
   'prod-double-boucle-cognac': {
@@ -385,9 +387,9 @@ export const PRODUCT_TRANSLATIONS: Record<string, Record<Exclude<SupportedLangua
         'Iconic Italian tassel loafers finished in lustrous deep burgundy patina with hand-woven tassels.',
     },
     ar: {
-      title: 'حذاء موكاسين بشرابات أنيقة من الجلد الفاخر بلون بورغندي داكن',
+      title: 'حذاء موكاسان بشرابات أنيقة من الجلد الفاخر بلون عنابي داكن',
       description:
-        'موكاسين أيقوني مريح وبشرابات جلدية متقونة مع صباغة يدوية بلون نبيذي غني.',
+        'موكاسان أيقوني مريح وبشرابات جلدية متقنة مع صباغة يدوية بلون عنابي غني.',
     },
   },
   'prod-sneakers-cuir-minimaliste': {
@@ -430,38 +432,120 @@ export const PRODUCT_TRANSLATIONS: Record<string, Record<Exclude<SupportedLangua
     en: {
       title: 'Ultra-Slim Italian Nappa Leather Wallet with RFID Shield',
       description:
-        'Sleek bifold pocket wallet designed to glide smoothly into suit jacket pockets with RFID blocking protection.',
+        'Sleek bifold pocket wallet designed to glide smoothly into jacket pockets with RFID blocking protection.',
     },
     ar: {
-      title: 'محفظة جيب نحيفة جداً من جلد النابا الأسود مع حماية ضد التردد اللاسلكي',
+      title: 'محفظة جيب نحيفة جداً من جلد النابا الأسود مع حماية للبطاقات البنكية (RFID)',
       description:
-        'محفظة جيب فائقة النحافة مصممة خصيصاً لجيب سترة البدلة الداخلية مع حماية بطاقات مدمجة.',
+        'محفظة جيب فائقة النحافة مصممة خصيصاً للجيب الداخلي للسترات والمعاطف مع حماية للبطاقات البنكية مدمجة.',
     },
   },
 };
 
+function nonEmpty(val: unknown): string | undefined {
+  return typeof val === 'string' && val.trim().length > 0 ? val : undefined;
+}
+
 /**
  * Localizes a product object based on the active language.
  * When language is 'fr', returns the original product unmodified (preserving contract tests).
- * When language is 'en' or 'ar', overrides title, description, and available metadata with translated counterparts.
+ * When language is 'en' or 'ar', checks product *Ar/*En fields before PRODUCT_TRANSLATIONS,
+ * and handles partial CartItem/OrderItem shapes via productId lookup.
  */
 export function getLocalizedProduct<
-  T extends { id: string; title: string; description: string; [key: string]: any }
+  T extends {
+    id?: string;
+    productId?: string;
+    title: string;
+    description?: string;
+    [key: string]: any;
+  }
 >(product: T, language: SupportedLanguage): T {
   if (language === 'fr' || !product) {
     return product;
   }
 
-  const translations = PRODUCT_TRANSLATIONS[product.id]?.[language];
-  if (!translations) {
+  const lookupId =
+    (product.id && PRODUCT_TRANSLATIONS[product.id] ? product.id : undefined) ??
+    product.productId ??
+    product.id;
+
+  const dict = lookupId ? PRODUCT_TRANSLATIONS[lookupId]?.[language] : undefined;
+
+  const localizedTitle =
+    language === 'ar'
+      ? nonEmpty(product.titleAr) || dict?.title
+      : nonEmpty(product.titleEn) || dict?.title;
+
+  const localizedDescription =
+    language === 'ar'
+      ? nonEmpty(product.descriptionAr) || dict?.description
+      : nonEmpty(product.descriptionEn) || dict?.description;
+
+  const localizedSubtitle =
+    language === 'ar'
+      ? nonEmpty(product.subtitleAr) || dict?.subtitle
+      : nonEmpty(product.subtitleEn) || dict?.subtitle;
+
+  const localizedShortDescription =
+    language === 'ar'
+      ? nonEmpty(product.shortDescriptionAr) || dict?.shortDescription
+      : nonEmpty(product.shortDescriptionEn) || dict?.shortDescription;
+
+  const localizedMaterials =
+    language === 'ar'
+      ? nonEmpty(product.materialsAr) || dict?.materials
+      : nonEmpty(product.materialsEn) || dict?.materials;
+
+  const localizedCare =
+    language === 'ar'
+      ? nonEmpty(product.careInstructionsAr) || dict?.careInstructions
+      : nonEmpty(product.careInstructionsEn) || dict?.careInstructions;
+
+  const localizedFit =
+    typeof product.fit === 'string' && product.fit.trim()
+      ? getLocalizedFit(product.fit, language)
+      : undefined;
+  const hasFitChange = Boolean(localizedFit && localizedFit !== product.fit);
+
+  const hasAnyTranslation =
+    localizedTitle ||
+    localizedDescription ||
+    localizedSubtitle ||
+    localizedShortDescription ||
+    localizedMaterials ||
+    localizedCare ||
+    hasFitChange;
+
+  if (!hasAnyTranslation) {
     return product;
   }
 
-  return {
+  const result: Record<string, any> = {
     ...product,
-    title: translations.title || product.title,
-    description: translations.description || product.description,
+    title: localizedTitle || product.title,
   };
+
+  if (product.description !== undefined || localizedDescription) {
+    result.description = localizedDescription || product.description;
+  }
+  if (product.subtitle !== undefined || localizedSubtitle) {
+    result.subtitle = localizedSubtitle || product.subtitle;
+  }
+  if (product.shortDescription !== undefined || localizedShortDescription) {
+    result.shortDescription = localizedShortDescription || product.shortDescription;
+  }
+  if (product.materials !== undefined || localizedMaterials) {
+    result.materials = localizedMaterials || product.materials;
+  }
+  if (product.careInstructions !== undefined || localizedCare) {
+    result.careInstructions = localizedCare || product.careInstructions;
+  }
+  if (product.fit !== undefined || localizedFit) {
+    result.fit = localizedFit || product.fit;
+  }
+
+  return result as T;
 }
 
 /**
@@ -503,14 +587,58 @@ export function getLocalizedCategory(
 }
 
 /**
+ * Localizes a Category object using inline *Ar/*En fields before CATEGORY_TRANSLATIONS fallback.
+ */
+export function localizeCategory<T extends Category>(
+  category: T,
+  language: SupportedLanguage
+): T {
+  if (!category || language === 'fr') {
+    return category;
+  }
+
+  const normalizedId = normalizeCategoryKey(category.id || category.slug);
+  const dict = CATEGORY_TRANSLATIONS[normalizedId]?.[language];
+
+  const localizedName =
+    language === 'ar'
+      ? nonEmpty(category.nameAr) || dict?.name
+      : nonEmpty(category.nameEn) || dict?.name;
+
+  const localizedSubtitle =
+    language === 'ar'
+      ? nonEmpty(category.subtitleAr) || dict?.subtitle
+      : nonEmpty(category.subtitleEn) || dict?.subtitle;
+
+  const localizedDescription =
+    language === 'ar'
+      ? nonEmpty(category.descriptionAr) || dict?.description
+      : nonEmpty(category.descriptionEn) || dict?.description;
+
+  return {
+    ...category,
+    name: localizedName || category.name,
+    ...(category.subtitle !== undefined || localizedSubtitle
+      ? { subtitle: localizedSubtitle || category.subtitle }
+      : {}),
+    description: localizedDescription || category.description,
+  };
+}
+
+/**
  * Subcategory translation definitions across French, English, and Arabic.
  */
 export const SUBCATEGORY_TRANSLATIONS: Record<string, Record<SupportedLanguage, string>> = {
   // Clothing
+  vestes: {
+    fr: 'Vestes & Blousons',
+    en: 'Jackets & Outerwear',
+    ar: 'سترات وجواكيت',
+  },
   costumes: {
-    fr: 'Costumes',
-    en: 'Suits',
-    ar: 'بدلات',
+    fr: 'Vestes & Ensembles',
+    en: 'Jackets & Sets',
+    ar: 'سترات وملابس',
   },
   blazers: {
     fr: 'Blazers',
@@ -530,48 +658,48 @@ export const SUBCATEGORY_TRANSLATIONS: Record<string, Record<SupportedLanguage, 
   pantalons: {
     fr: 'Pantalons',
     en: 'Trousers',
-    ar: 'سراويل',
+    ar: 'سراويل كلاسيكية',
   },
   tricots: {
     fr: 'Tricots & Maille',
     en: 'Knitwear',
-    ar: 'ملابس صوفية',
+    ar: 'كنزات وملابس صوفية',
   },
   // Shoes
   richelieu: {
     fr: 'Richelieu',
     en: 'Richelieu',
-    ar: 'ريشليو',
+    ar: 'أحذية ريشليو',
   },
   richelieus: {
     fr: 'Richelieus',
     en: 'Richelieu',
-    ar: 'ريشليو',
+    ar: 'أحذية ريشليو',
   },
   oxfords: {
     fr: 'Oxfords',
     en: 'Oxfords',
-    ar: 'أوكسفورد',
+    ar: 'أحذية أكسفورد',
   },
   derbies: {
     fr: 'Derbies',
     en: 'Derbies',
-    ar: 'ديربي',
+    ar: 'أحذية ديربي',
   },
   mocassins: {
     fr: 'Mocassins',
     en: 'Loafers',
-    ar: 'موكاسين',
+    ar: 'أحذية موكاسان',
   },
   bottines: {
     fr: 'Bottines',
     en: 'Ankle Boots',
-    ar: 'أحذية كاحل بوتين',
+    ar: 'أحذية بوت',
   },
   boucles: {
     fr: 'Double Boucle',
     en: 'Monk Strap',
-    ar: 'أحذية ذات إبزيم مزدوج',
+    ar: 'أحذية بإبزيم مزدوج',
   },
   sneakers: {
     fr: 'Baskets de Luxe',
@@ -587,10 +715,15 @@ export const SUBCATEGORY_TRANSLATIONS: Record<string, Record<SupportedLanguage, 
   ceintures: {
     fr: 'Ceintures',
     en: 'Belts',
-    ar: 'أحزمة',
+    ar: 'أحزمة جلدية',
   },
   montres: {
     fr: 'Montres',
+    en: 'Watches',
+    ar: 'ساعات',
+  },
+  horlogerie: {
+    fr: 'Horlogerie',
     en: 'Watches',
     ar: 'ساعات',
   },
@@ -607,7 +740,7 @@ export const SUBCATEGORY_TRANSLATIONS: Record<string, Record<SupportedLanguage, 
   pochettes: {
     fr: 'Pochettes',
     en: 'Pocket Squares',
-    ar: 'منديل الجيب',
+    ar: 'مناديل الجيب',
   },
   maroquinerie: {
     fr: 'Maroquinerie',
@@ -618,6 +751,7 @@ export const SUBCATEGORY_TRANSLATIONS: Record<string, Record<SupportedLanguage, 
 
 /**
  * Common color variant name translations across French, English, and Arabic.
+ * Covers all 115 COLOR_PALETTE_BASE entries + 11 legacy/compound names (126 total).
  */
 export const COLOR_TRANSLATIONS: Record<string, Record<SupportedLanguage, string>> = {
   'Noir Cérémonie': {
@@ -638,7 +772,7 @@ export const COLOR_TRANSLATIONS: Record<string, Record<SupportedLanguage, string
   'Bordeaux Royal': {
     fr: 'Bordeaux Royal',
     en: 'Royal Burgundy',
-    ar: 'بورغندي ملكي',
+    ar: 'عنابي ملكي',
   },
   'Havane': {
     fr: 'Havane',
@@ -668,7 +802,7 @@ export const COLOR_TRANSLATIONS: Record<string, Record<SupportedLanguage, string
   'Cognac': {
     fr: 'Cognac',
     en: 'Cognac Leather',
-    ar: 'جلد كونياك',
+    ar: 'كونياك',
   },
   'Noir': {
     fr: 'Noir',
@@ -688,14 +822,253 @@ export const COLOR_TRANSLATIONS: Record<string, Record<SupportedLanguage, string
   'Bordeaux': {
     fr: 'Bordeaux',
     en: 'Burgundy',
-    ar: 'بورغندي',
+    ar: 'عنابي',
   },
   'Blanc': {
     fr: 'Blanc',
     en: 'White',
     ar: 'أبيض',
   },
+  'Noir Profond': {
+    fr: 'Noir Profond',
+    en: 'Deep Black',
+    ar: 'أسود حالك',
+  },
+  'Noir Ébène': {
+    fr: 'Noir Ébène',
+    en: 'Ebony Black',
+    ar: 'أسود أبنوسي',
+  },
+  'Jaune Moutarde': {
+    fr: 'Jaune Moutarde',
+    en: 'Mustard Yellow',
+    ar: 'أصفر خردلي',
+  },
+  'Doré / Or': {
+    fr: 'Doré / Or',
+    en: 'Gold',
+    ar: 'ذهبي فاخر',
+  },
+  'Or Impérial': {
+    fr: 'Or Impérial',
+    en: 'Imperial Gold',
+    ar: 'ذهبي إمبراطوري',
+  },
+  'Jaune': {
+    fr: 'Jaune',
+    en: 'Yellow',
+    ar: 'أصفر',
+  },
+  'Violet': {
+    fr: 'Violet',
+    en: 'Purple',
+    ar: 'بنفسجي',
+  },
+  'Violet Impérial': {
+    fr: 'Violet Impérial',
+    en: 'Imperial Purple',
+    ar: 'بنفسجي إمبراطوري',
+  },
+  'Améthyste': {
+    fr: 'Améthyste',
+    en: 'Amethyst',
+    ar: 'بنفسجي أرجواني',
+  },
+  'Aubergine': {
+    fr: 'Aubergine',
+    en: 'Eggplant Purple',
+    ar: 'باذنجاني داكن',
+  },
+  'Vert Kaki': {
+    fr: 'Vert Kaki',
+    en: 'Khaki Green',
+    ar: 'أخضر كاكي',
+  },
+  'Vert Olive': {
+    fr: 'Vert Olive',
+    en: 'Olive Green',
+    ar: 'أخضر زيتوني',
+  },
+  'Vert Bouteille': {
+    fr: 'Vert Bouteille',
+    en: 'Bottle Green',
+    ar: 'أخضر غامق ملكي',
+  },
+  'Vert Émeraude': {
+    fr: 'Vert Émeraude',
+    en: 'Emerald Green',
+    ar: 'أخضر زمردي',
+  },
+  'Vert': {
+    fr: 'Vert',
+    en: 'Green',
+    ar: 'أخضر',
+  },
+  'Marron Cognac': {
+    fr: 'Marron Cognac',
+    en: 'Cognac Brown',
+    ar: 'بني كونياك',
+  },
+  'Camel': {
+    fr: 'Camel',
+    en: 'Camel',
+    ar: 'بيج كاميل',
+  },
+  'Beige Écru': {
+    fr: 'Beige Écru',
+    en: 'Ecru Beige',
+    ar: 'بيج خام',
+  },
+  'Bleu Marine': {
+    fr: 'Bleu Marine',
+    en: 'Navy Blue',
+    ar: 'أزرق كحلي',
+  },
+  'Bleu Royal': {
+    fr: 'Bleu Royal',
+    en: 'Royal Blue',
+    ar: 'أزرق ملكي',
+  },
+  'Bleu Ciel': {
+    fr: 'Bleu Ciel',
+    en: 'Sky Blue',
+    ar: 'أزرق سماوي',
+  },
+  'Rouge Rubis': {
+    fr: 'Rouge Rubis',
+    en: 'Ruby Red',
+    ar: 'أحمر ياقوتي',
+  },
+  'Terracotta': {
+    fr: 'Terracotta',
+    en: 'Terracotta',
+    ar: 'آجوري محروق',
+  },
+  'Rose Poudré': {
+    fr: 'Rose Poudré',
+    en: 'Powder Pink',
+    ar: 'وردي هادئ',
+  },
+  // Additional 87 COLOR_PALETTE_BASE entries
+  'Noir Satiné': { fr: 'Noir Satiné', en: 'Satin Black', ar: 'أسود ساتيني' },
+  'Gris Anthracite Foncé': { fr: 'Gris Anthracite Foncé', en: 'Dark Anthracite Grey', ar: 'رمادي فحمي غامق' },
+  'Gris Fumé': { fr: 'Gris Fumé', en: 'Smoked Grey', ar: 'رمادي مدخّن' },
+  'Gris Acier': { fr: 'Gris Acier', en: 'Steel Grey', ar: 'رمادي فولاذي' },
+  'Gris Ardoise': { fr: 'Gris Ardoise', en: 'Slate Grey', ar: 'رمادي أردوازي' },
+  'Gris Perle': { fr: 'Gris Perle', en: 'Pearl Grey', ar: 'رمادي لؤلؤي' },
+  'Gris Souris': { fr: 'Gris Souris', en: 'Mouse Grey', ar: 'رمادي متوسط' },
+  'Gris Argent': { fr: 'Gris Argent', en: 'Silver Grey', ar: 'رمادي فضي' },
+  'Gris Clair': { fr: 'Gris Clair', en: 'Light Grey', ar: 'رمادي فاتح' },
+  'Gris Givré': { fr: 'Gris Givré', en: 'Frosted Grey', ar: 'رمادي ثلجي فاتح' },
+  'Blanc Cassé': { fr: 'Blanc Cassé', en: 'Off-White', ar: 'أبيض مكسور (كريمي)' },
+  'Crème': { fr: 'Crème', en: 'Cream', ar: 'كريمي' },
+  'Ivoire': { fr: 'Ivoire', en: 'Ivory', ar: 'عاجي' },
+  'Lin Naturel': { fr: 'Lin Naturel', en: 'Natural Linen', ar: 'بيج كتاني طبيعي' },
+  'Sable': { fr: 'Sable', en: 'Sand', ar: 'بيج رملي' },
+  'Beige Tan': { fr: 'Beige Tan', en: 'Tan Beige', ar: 'بيج تان' },
+  'Chocolat Noir': { fr: 'Chocolat Noir', en: 'Dark Chocolate', ar: 'بني شوكولاتة غامق' },
+  'Sienne Havane': { fr: 'Sienne Havane', en: 'Havana Sienna', ar: 'بني هافانا محمر' },
+  'Marron Glacé': { fr: 'Marron Glacé', en: 'Chestnut Brown', ar: 'بني كستنائي' },
+  'Ocre Doré': { fr: 'Ocre Doré', en: 'Golden Ochre', ar: 'أصفر ترابي ذهبي' },
+  'Cuir Tabac': { fr: 'Cuir Tabac', en: 'Tobacco Leather', ar: 'بني تبغي' },
+  'Caramel Doré': { fr: 'Caramel Doré', en: 'Golden Caramel', ar: 'كراميل ذهبي' },
+  'Cuir Vintage': { fr: 'Cuir Vintage', en: 'Vintage Leather', ar: 'بني جلدي معتّق' },
+  'Bleu Nuit Profond': { fr: 'Bleu Nuit Profond', en: 'Deep Midnight Blue', ar: 'أزرق ليلي غامق' },
+  'Bleu Nuit Cérémonie': { fr: 'Bleu Nuit Cérémonie', en: 'Ceremony Midnight Blue', ar: 'أزرق ليلي ملكي' },
+  'Bleu Marine Sombre': { fr: 'Bleu Marine Sombre', en: 'Dark Navy Blue', ar: 'أزرق كحلي غامق' },
+  'Bleu Sombre': { fr: 'Bleu Sombre', en: 'Dark Blue', ar: 'أزرق غامق' },
+  'Bleu Saphir': { fr: 'Bleu Saphir', en: 'Sapphire Blue', ar: 'أزرق ياقوتي' },
+  'Bleu Impérial': { fr: 'Bleu Impérial', en: 'Imperial Blue', ar: 'أزرق إمبراطوري' },
+  'Bleu Roi': { fr: 'Bleu Roi', en: 'King Blue', ar: 'أزرق زهري ملكي' },
+  'Bleu Azur': { fr: 'Bleu Azur', en: 'Azure Blue', ar: 'أزرق سماوي زاهي' },
+  'Bleu Céruléen': { fr: 'Bleu Céruléen', en: 'Cerulean Blue', ar: 'أزرق بحري' },
+  'Bleu Pétrole': { fr: 'Bleu Pétrole', en: 'Petrol Blue', ar: 'أزرق بترولي' },
+  'Bleu Canard': { fr: 'Bleu Canard', en: 'Duck Blue', ar: 'أزرق مخضر داكن' },
+  'Sarcelle': { fr: 'Sarcelle', en: 'Teal', ar: 'أزرق تركوازي غامق' },
+  'Turquoise': { fr: 'Turquoise', en: 'Turquoise', ar: 'تركوازي' },
+  'Bleu Glacier': { fr: 'Bleu Glacier', en: 'Ice Blue', ar: 'أزرق جليدي فاتح' },
+  'Bleu Pastel': { fr: 'Bleu Pastel', en: 'Pastel Blue', ar: 'أزرق باستيل فاتح' },
+  'Vert Forêt Profond': { fr: 'Vert Forêt Profond', en: 'Deep Forest Green', ar: 'أخضر غابي غامق' },
+  'Vert Émeraude Sombre': { fr: 'Vert Émeraude Sombre', en: 'Dark Emerald Green', ar: 'أخضر زمردي غامق' },
+  'Vert Sapin': { fr: 'Vert Sapin', en: 'Pine Green', ar: 'أخضر صنوبري غامق' },
+  'Vert Anglais': { fr: 'Vert Anglais', en: 'British Racing Green', ar: 'أخضر إنجليزي' },
+  'Vert Vif': { fr: 'Vert Vif', en: 'Bright Green', ar: 'أخضر زاهي' },
+  'Vert Kaki Foncé': { fr: 'Vert Kaki Foncé', en: 'Dark Khaki Green', ar: 'أخضر كاكي غامق' },
+  'Vert Bronze': { fr: 'Vert Bronze', en: 'Bronze Green', ar: 'أخضر برونزي' },
+  'Vert Mousse': { fr: 'Vert Mousse', en: 'Moss Green', ar: 'أخضر عشبي' },
+  'Vert Marin': { fr: 'Vert Marin', en: 'Sea Green', ar: 'أخضر بحري' },
+  'Vert Sauge': { fr: 'Vert Sauge', en: 'Sage Green', ar: 'أخضر رمادي هادئ' },
+  'Vert Pistache': { fr: 'Vert Pistache', en: 'Pistachio Green', ar: 'أخضر فستقي' },
+  'Vert Menthe': { fr: 'Vert Menthe', en: 'Mint Green', ar: 'أخضر نعناعي فاتح' },
+  'Ocre Jaune': { fr: 'Ocre Jaune', en: 'Yellow Ochre', ar: 'أصفر ترابي' },
+  'Jaune Safran': { fr: 'Jaune Safran', en: 'Saffron Yellow', ar: 'أصفر زعفراني' },
+  'Jaune Soleil': { fr: 'Jaune Soleil', en: 'Sun Yellow', ar: 'أصفر مشرق' },
+  'Jaune Vif': { fr: 'Jaune Vif', en: 'Bright Yellow', ar: 'أصفر فاقع' },
+  'Jaune Pâle': { fr: 'Jaune Pâle', en: 'Pale Yellow', ar: 'أصفر فاتح' },
+  'Rouille': { fr: 'Rouille', en: 'Rust', ar: 'بني صدئ' },
+  'Brique Cuite': { fr: 'Brique Cuite', en: 'Burnt Brick', ar: 'أحمر آجوري' },
+  'Orange Sanguine': { fr: 'Orange Sanguine', en: 'Blood Orange', ar: 'برتقالي غامق' },
+  'Orange': { fr: 'Orange', en: 'Orange', ar: 'برتقالي' },
+  'Corail': { fr: 'Corail', en: 'Coral', ar: 'مرجاني' },
+  'Bordeaux Profond': { fr: 'Bordeaux Profond', en: 'Deep Burgundy', ar: 'عنابي غامق' },
+  'Lie de Vin': { fr: 'Lie de Vin', en: 'Wine Red', ar: 'عنابي داكن' },
+  'Rouge Grenat': { fr: 'Rouge Grenat', en: 'Garnet Red', ar: 'أحمر رماني غامق' },
+  'Rouge Carmin': { fr: 'Rouge Carmin', en: 'Crimson Red', ar: 'أحمر قرمزي' },
+  'Rouge Vif': { fr: 'Rouge Vif', en: 'Bright Red', ar: 'أحمر زاهي' },
+  'Rouge Écarlate': { fr: 'Rouge Écarlate', en: 'Scarlet Red', ar: 'أحمر قاني' },
+  'Aubergine Sombre': { fr: 'Aubergine Sombre', en: 'Dark Eggplant', ar: 'باذنجاني غامق' },
+  'Indigo': { fr: 'Indigo', en: 'Indigo', ar: 'نيلي غامق' },
+  'Violet Nuit': { fr: 'Violet Nuit', en: 'Midnight Purple', ar: 'بنفسجي ليلي' },
+  'Violet Évêque': { fr: 'Violet Évêque', en: 'Bishop Purple', ar: 'بنفسجي غامق' },
+  'Violet Vif': { fr: 'Violet Vif', en: 'Bright Purple', ar: 'بنفسجي زاهي' },
+  'Bleu Violet': { fr: 'Bleu Violet', en: 'Blue Violet', ar: 'بنفسجي مائل للأزرق' },
+  'Pourpre Royal': { fr: 'Pourpre Royal', en: 'Royal Purple', ar: 'أرجواني ملكي' },
+  'Mauve Orchidée': { fr: 'Mauve Orchidée', en: 'Orchid Mauve', ar: 'موف أرجواني' },
+  'Mauve Clair': { fr: 'Mauve Clair', en: 'Light Mauve', ar: 'بنفسجي فاتح' },
+  'Chardon': { fr: 'Chardon', en: 'Thistle', ar: 'موف رمادي فاتح' },
+  'Lavande': { fr: 'Lavande', en: 'Lavender', ar: 'خزامي فاتح' },
+  'Lilas': { fr: 'Lilas', en: 'Lilac', ar: 'ليلكي فاتح' },
+  'Prune Sauvage': { fr: 'Prune Sauvage', en: 'Wild Plum', ar: 'برقوقي غامق' },
+  'Framboise': { fr: 'Framboise', en: 'Raspberry', ar: 'توتي غامق' },
+  'Fuchsia': { fr: 'Fuchsia', en: 'Fuchsia', ar: 'فوشيا' },
+  'Rose Cerise': { fr: 'Rose Cerise', en: 'Cherry Pink', ar: 'وردي كرزي' },
+  'Rose Velours': { fr: 'Rose Velours', en: 'Velvet Rose', ar: 'وردي مخملي' },
+  'Rose Corail': { fr: 'Rose Corail', en: 'Coral Pink', ar: 'وردي مرجاني' },
+  'Rose Saumon': { fr: 'Rose Saumon', en: 'Salmon Pink', ar: 'وردي سلموني' },
+  'Rose Bonbon': { fr: 'Rose Bonbon', en: 'Candy Pink', ar: 'وردي زاهي' },
+  'Vieux Rose': { fr: 'Vieux Rose', en: 'Dusty Rose', ar: 'وردي معتّق' },
 };
+
+function foldColorKey(val: string): string {
+  return val
+    .trim()
+    .replace(/\s+/g, ' ')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+}
+
+const COLOR_LOOKUP_EXACT = new Map<string, Record<SupportedLanguage, string>>();
+const COLOR_LOOKUP_FOLDED = new Map<string, Record<SupportedLanguage, string>>();
+
+const COLOR_PART_ALIASES: Record<string, Record<SupportedLanguage, string>> = {
+  Or: { fr: 'Or', en: 'Gold', ar: 'ذهبي' },
+  Doré: { fr: 'Doré', en: 'Gold', ar: 'ذهبي' },
+  Argent: { fr: 'Argent', en: 'Silver', ar: 'فضي' },
+  Marron: { fr: 'Marron', en: 'Brown', ar: 'بني' },
+  Beige: { fr: 'Beige', en: 'Beige', ar: 'بيج' },
+  Rouge: { fr: 'Rouge', en: 'Red', ar: 'أحمر' },
+  Rose: { fr: 'Rose', en: 'Pink', ar: 'وردي' },
+};
+
+for (const [key, trans] of Object.entries({ ...COLOR_PART_ALIASES, ...COLOR_TRANSLATIONS })) {
+  const lowerKey = key.trim().replace(/\s+/g, ' ').toLowerCase();
+  COLOR_LOOKUP_EXACT.set(lowerKey, trans);
+  COLOR_LOOKUP_FOLDED.set(foldColorKey(key), trans);
+  COLOR_LOOKUP_FOLDED.set(foldColorKey(trans.fr), trans);
+  COLOR_LOOKUP_FOLDED.set(foldColorKey(trans.en), trans);
+  COLOR_LOOKUP_FOLDED.set(foldColorKey(trans.ar), trans);
+}
 
 /**
  * Size labels localization (e.g. 'Taille Unique' -> 'One Size' / 'مقاس موحد').
@@ -721,27 +1094,61 @@ export const SIZE_TRANSLATIONS: Record<string, Record<SupportedLanguage, string>
     en: 'One Size',
     ar: 'مقاس موحد',
   },
+  'مقاس موحد': {
+    fr: 'Taille Unique',
+    en: 'One Size',
+    ar: 'مقاس موحد',
+  },
+  Unique: {
+    fr: 'Taille Unique',
+    en: 'One Size',
+    ar: 'مقاس موحد',
+  },
+  unique: {
+    fr: 'Taille Unique',
+    en: 'One Size',
+    ar: 'مقاس موحد',
+  },
+  Standard: {
+    fr: 'Standard',
+    en: 'Standard',
+    ar: 'مقاس قياسي',
+  },
+  standard: {
+    fr: 'Standard',
+    en: 'Standard',
+    ar: 'مقاس قياسي',
+  },
+  'مقاس قياسي': {
+    fr: 'Standard',
+    en: 'Standard',
+    ar: 'مقاس قياسي',
+  },
 };
 
 /**
- * Returns localized subcategory label by subcategory ID or French label.
+ * Returns localized subcategory label by subcategory ID or French/English/Arabic label.
  */
 export function getLocalizedSubcategory(
   subcategoryIdOrLabel: string,
   language: SupportedLanguage
 ): string {
   if (!subcategoryIdOrLabel || typeof subcategoryIdOrLabel !== 'string') return '';
-  if (language === 'fr') return subcategoryIdOrLabel;
 
-  const key = subcategoryIdOrLabel.toLowerCase().trim().replace(/\s+/g, '-');
+  const trimmed = subcategoryIdOrLabel.trim();
+  const key = trimmed.toLowerCase().replace(/\s+/g, '-');
+
   if (SUBCATEGORY_TRANSLATIONS[key]?.[language]) {
     return SUBCATEGORY_TRANSLATIONS[key][language];
   }
+
+  const lower = trimmed.toLowerCase();
   for (const [id, trans] of Object.entries(SUBCATEGORY_TRANSLATIONS)) {
     if (
       id.toLowerCase() === key ||
-      trans.fr.toLowerCase() === subcategoryIdOrLabel.toLowerCase() ||
-      trans.en.toLowerCase() === subcategoryIdOrLabel.toLowerCase()
+      trans.fr.toLowerCase() === lower ||
+      trans.en.toLowerCase() === lower ||
+      trans.ar.toLowerCase() === lower
     ) {
       return trans[language] || subcategoryIdOrLabel;
     }
@@ -750,31 +1157,119 @@ export function getLocalizedSubcategory(
 }
 
 /**
- * Returns localized color name.
+ * Returns localized color name with whitespace normalization, accent folding, and compound splitting.
  */
 export function getLocalizedColor(
   colorName: string,
   language: SupportedLanguage
 ): string {
   if (!colorName || typeof colorName !== 'string') return '';
-  if (language === 'fr') return colorName;
+  const trimmed = colorName.trim().replace(/\s+/g, ' ');
+  if (!trimmed) return '';
 
-  const found = COLOR_TRANSLATIONS[colorName]?.[language];
-  if (found) return found;
+  const direct =
+    COLOR_TRANSLATIONS[trimmed] ||
+    COLOR_LOOKUP_EXACT.get(trimmed.toLowerCase()) ||
+    COLOR_LOOKUP_FOLDED.get(foldColorKey(trimmed));
 
-  for (const trans of Object.values(COLOR_TRANSLATIONS)) {
-    if (
-      trans.fr.toLowerCase() === colorName.toLowerCase() ||
-      trans.en.toLowerCase() === colorName.toLowerCase()
-    ) {
-      return trans[language];
+  if (direct) {
+    return direct[language] || trimmed;
+  }
+
+  if (language === 'fr') {
+    return colorName;
+  }
+
+  // Compound color splitting (e.g. "Bleu Marine & Or", "Noir / Camel")
+  const tokens = trimmed.split(/\s*(&|\/|\+|,|;|\s-\s|\set\s|\sand\s)\s*/i);
+  if (tokens.length > 1) {
+    let anyChanged = false;
+    const translatedParts: string[] = [];
+
+    for (let i = 0; i < tokens.length; i++) {
+      const part = tokens[i];
+      if (!part) continue;
+      if (i % 2 === 1) {
+        const sep = part.trim().toLowerCase();
+        if (sep === '&' || sep === '+' || sep === 'et' || sep === 'and') {
+          translatedParts.push(language === 'ar' ? ' و' : ' & ');
+        } else if (sep === '/') {
+          translatedParts.push(' / ');
+        } else if (sep === ',') {
+          translatedParts.push(language === 'ar' ? '، ' : ', ');
+        } else if (sep === ';') {
+          translatedParts.push(language === 'ar' ? '؛ ' : '; ');
+        } else {
+          translatedParts.push(` ${part.trim()} `);
+        }
+      } else {
+        const translatedPart = getLocalizedColor(part, language);
+        if (translatedPart !== part.trim()) {
+          anyChanged = true;
+        }
+        translatedParts.push(translatedPart);
+      }
+    }
+
+    if (anyChanged) {
+      return translatedParts.join('').replace(/\s+/g, ' ').trim();
     }
   }
+
   return colorName;
 }
 
+export const FIT_TRANSLATIONS: Record<string, Record<SupportedLanguage, string>> = {
+  'Tailored Fit': {
+    fr: 'Tailored Fit',
+    en: 'Tailored Fit',
+    ar: 'قصة عصرية مضبوطة',
+  },
+  'Slim Fit': {
+    fr: 'Slim Fit',
+    en: 'Slim Fit',
+    ar: 'قصة ضيقة',
+  },
+  'Classic Fit': {
+    fr: 'Classic Fit',
+    en: 'Classic Fit',
+    ar: 'قصة كلاسيكية مريحة',
+  },
+  'Relaxed Fit': {
+    fr: 'Relaxed Fit',
+    en: 'Relaxed Fit',
+    ar: 'قصة واسعة ومريحة',
+  },
+};
+
 /**
- * Returns localized size name (e.g. 'Taille Unique' -> 'One Size' / 'مقاس موحد').
+ * Returns localized garment fit label (e.g. 'Slim Fit' -> 'قصة ضيقة').
+ */
+export function getLocalizedFit(
+  fit: string,
+  language: SupportedLanguage
+): string {
+  if (!fit || typeof fit !== 'string') return '';
+  const trimmed = fit.trim();
+  if (!trimmed) return '';
+  const lower = trimmed.toLowerCase();
+
+  for (const [key, trans] of Object.entries(FIT_TRANSLATIONS)) {
+    if (
+      key.toLowerCase() === lower ||
+      trans.fr.toLowerCase() === lower ||
+      trans.en.toLowerCase() === lower ||
+      trans.ar.toLowerCase() === lower
+    ) {
+      return trans[language] || fit;
+    }
+  }
+
+  return fit;
+}
+
+/**
+ * Returns localized size name (e.g. 'Taille Unique' -> 'One Size' / 'مقاس موحد', '85 cm' -> '85 سم').
  */
 export function getLocalizedSize(
   size: string,
@@ -783,13 +1278,6 @@ export function getLocalizedSize(
   if (!size || typeof size !== 'string') return '';
   const trimmed = size.trim();
   const lower = trimmed.toLowerCase();
-
-  if (language === 'fr') {
-    if (lower === 'one size' || lower === 'taille unique') {
-      return SIZE_TRANSLATIONS['Taille Unique'].fr;
-    }
-    return size;
-  }
 
   const found = SIZE_TRANSLATIONS[trimmed]?.[language];
   if (found) return found;
@@ -805,6 +1293,11 @@ export function getLocalizedSize(
     ) {
       return trans[language] || size;
     }
+  }
+
+  const cmMatch = trimmed.match(/^(\d+(?:[.,]\d+)?)\s*(?:cm|سم)$/iu);
+  if (cmMatch) {
+    return language === 'ar' ? `${cmMatch[1]} سم` : `${cmMatch[1]} cm`;
   }
 
   return size;

@@ -203,9 +203,9 @@ describe('Challenger M3 Empirical Adversarial Test Suite', () => {
   // =========================================================================
   // SUITE 2: 58 WILAYAS DATASET & SEARCH RESILIENCE
   // =========================================================================
-  describe('2. 58 Wilayas Dataset Completeness & Tariff Tiers', () => {
-    it('verifies exact 58 wilayas with contiguous codes 1 to 58 and unique names', () => {
-      expect(ALGERIAN_58_WILAYAS).toHaveLength(58);
+  describe('2. 68 Wilayas Dataset Completeness & Tariff Tiers', () => {
+    it('verifies exact 68 wilayas with contiguous codes 1 to 68 and unique names', () => {
+      expect(ALGERIAN_58_WILAYAS).toHaveLength(68);
 
       const codes = new Set<number>();
       const names = new Set<string>();
@@ -224,30 +224,31 @@ describe('Challenger M3 Empirical Adversarial Test Suite', () => {
         names.add(w.name);
       });
 
-      expect(codes.size).toBe(58);
-      expect(names.size).toBe(58);
+      expect(codes.size).toBe(68);
+      expect(names.size).toBe(68);
       expect(Math.min(...codes)).toBe(1);
-      expect(Math.max(...codes)).toBe(58);
+      expect(Math.max(...codes)).toBe(68);
     });
 
-    it('enforces regional fee rules: Alger (400), Centre (500/600), Sud (900)', () => {
-      expect(getWilayaFee(16, 'home')).toBe(400); // Alger
-      expect(getWilayaFee(16, 'desk')).toBe(250); // Alger stop desk
+    it('enforces regional fee rules: Alger (700), Centre (800), Sud (1150/1650)', () => {
+      expect(getWilayaFee(16, 'home')).toBe(700); // Alger
+      expect(getWilayaFee(16, 'desk')).toBe(550); // Alger stop desk
 
-      expect(getWilayaFee(9, 'home')).toBe(500); // Blida
-      expect(getWilayaFee(9, 'desk')).toBe(300);
+      expect(getWilayaFee(9, 'home')).toBe(800); // Blida
+      expect(getWilayaFee(9, 'desk')).toBe(650);
 
-      expect(getWilayaFee(1, 'home')).toBe(900); // Adrar
-      expect(getWilayaFee(11, 'home')).toBe(900); // Tamanrasset
-      expect(getWilayaFee(58, 'home')).toBe(900); // El Meniaa
+      expect(getWilayaFee(1, 'home')).toBe(1650); // Adrar
+      expect(getWilayaFee(11, 'home')).toBe(1650); // Tamanrasset
+      expect(getWilayaFee(58, 'home')).toBe(1150); // El Meniaa
+      expect(getWilayaFee(68, 'home')).toBe(800); // Bou Saâda
     });
 
     it('handles out-of-bounds codes with safe default national fallback', () => {
-      const outOfBounds = [0, -1, 59, 60, 999, NaN];
+      const outOfBounds = [0, -1, 69, 70, 999, NaN];
       for (const code of outOfBounds) {
         expect(getWilayaByCode(code)).toBeUndefined();
-        // getWilayaFee falls back to 600 for unknown wilayas
-        expect(getWilayaFee(code, 'home')).toBe(600);
+        // getWilayaFee falls back to 800 for unknown wilayas
+        expect(getWilayaFee(code, 'home')).toBe(800);
       }
     });
 
@@ -270,9 +271,9 @@ describe('Challenger M3 Empirical Adversarial Test Suite', () => {
       const code16 = searchWilayas('16');
       expect(code16.some((w) => w.code === 16)).toBe(true);
 
-      // Empty query returns all 58
-      expect(searchWilayas('')).toHaveLength(58);
-      expect(searchWilayas('   ')).toHaveLength(58);
+      // Empty query returns all 68
+      expect(searchWilayas('')).toHaveLength(68);
+      expect(searchWilayas('   ')).toHaveLength(68);
 
       // Special characters & injection strings do not crash
       expect(searchWilayas('[[').length).toBe(0);
@@ -285,8 +286,8 @@ describe('Challenger M3 Empirical Adversarial Test Suite', () => {
   // SUITE 3: FREE SHIPPING THRESHOLD & FINANCIAL INTEGRITY
   // =========================================================================
   describe('3. Free Shipping Threshold Waiver & Financial Math', () => {
-    it('strictly waives delivery fee (returns 0 DA) at and above 15,000 DA threshold across all 58 wilayas', () => {
-      for (let code = 1; code <= 58; code++) {
+    it('strictly waives delivery fee (returns 0 DA) at and above 15,000 DA threshold across all 68 wilayas', () => {
+      for (let code = 1; code <= 68; code++) {
         // At threshold (15,000 DA)
         expect(calculateDeliveryFee(15000, code, 15000, 'home')).toBe(0);
         expect(calculateDeliveryFee(15000, code, 15000, 'desk')).toBe(0);
@@ -491,8 +492,8 @@ describe('Challenger M3 Empirical Adversarial Test Suite', () => {
       expect(json.error).toContain('Numéro de téléphone algérien invalide');
     });
 
-    it('rejects POST /api/orders with invalid wilaya code (0 or 59)', async () => {
-      for (const badCode of [0, 59, 99]) {
+    it('rejects POST /api/orders with invalid wilaya code (0 or 69)', async () => {
+      for (const badCode of [0, 69, 99]) {
         const badWilayaBody = {
           ...validRequestBody,
           customer: {
@@ -512,7 +513,7 @@ describe('Challenger M3 Empirical Adversarial Test Suite', () => {
 
         const json = await res.json();
         expect(json.success).toBe(false);
-        expect(json.error).toContain('Veuillez sélectionner une wilaya parmi les 58 wilayas');
+        expect(json.error).toContain('Veuillez sélectionner une wilaya parmi les 68 wilayas');
       }
     });
 

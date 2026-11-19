@@ -131,7 +131,9 @@ export function renderWithProviders(
       user: {
         id: 'usr-admin-01',
         email: 'direction@viptadj.dz',
-        displayName: 'Directeur Général VIP TADJ',
+        displayName: 'Direction Générale VIP TADJ',
+        displayNameAr: 'الإدارة العامة VIP TADJ',
+        displayNameEn: 'VIP TADJ General Management',
         role: 'superadmin',
         isActive: true,
         createdAt: new Date().toISOString(),

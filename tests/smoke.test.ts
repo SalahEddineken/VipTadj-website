@@ -100,21 +100,22 @@ describe('VIP TADJ Test Infrastructure — Smoke Suite', () => {
       }
     });
 
-    it('contains all 58 Algerian Wilayas in exact numerical sequence', () => {
-      expect(wilayasFixture).toHaveLength(58);
+    it('contains all 68 Algerian Wilayas in exact numerical sequence', () => {
+      expect(wilayasFixture).toHaveLength(68);
 
-      // Check codes 1 to 58
+      // Check codes 1 to 68
       wilayasFixture.forEach((w, index) => {
         expect(w.code).toBe(index + 1);
         expect(w.name).toBeTruthy();
         expect(w.fee).toBeGreaterThan(0);
       });
 
-      // Check regional tier benchmarks: Alger (400 DA), Oran (600 DA), Adrar (900 DA)
-      expect(getWilayaFee(16)).toBe(400); // Alger
-      expect(getWilayaFee(31)).toBe(600); // Oran
-      expect(getWilayaFee(1)).toBe(900); // Adrar
+      // Check regional tier benchmarks: Alger (700 DA), Oran (800 DA), Adrar (1650 DA)
+      expect(getWilayaFee(16)).toBe(700); // Alger
+      expect(getWilayaFee(31)).toBe(800); // Oran
+      expect(getWilayaFee(1)).toBe(1650); // Adrar
       expect(getWilayaByCode(25)?.name).toBe('Constantine');
+      expect(getWilayaByCode(68)?.name).toBe('Bou Saâda');
     });
 
     it('contains realistic COD orders covering all lifecycle statuses', () => {
@@ -142,8 +143,8 @@ describe('VIP TADJ Test Infrastructure — Smoke Suite', () => {
       expect(settingsFixture.currency).toBe('DZD');
       expect(settingsFixture.currencySymbol).toBe('DA');
       expect(settingsFixture.freeShippingThreshold).toBe(15000);
-      expect(Object.keys(settingsFixture.wilayaShippingFees)).toHaveLength(58);
-      expect(settingsFixture.wilayaShippingFees[16].homeFee).toBe(400);
+      expect(Object.keys(settingsFixture.wilayaShippingFees)).toHaveLength(68);
+      expect(settingsFixture.wilayaShippingFees[16].homeFee).toBe(700);
     });
   });
 
@@ -342,9 +343,9 @@ describe('VIP TADJ Test Infrastructure — Smoke Suite', () => {
       expect(calculateDeliveryFee(subtotal, 31, 15000)).toBe(0);
 
       // Subtotal under threshold -> standard wilaya fee
-      expect(calculateDeliveryFee(10000, 16, 15000)).toBe(400); // Alger
-      expect(calculateDeliveryFee(10000, 31, 15000)).toBe(600); // Oran
-      expect(calculateDeliveryFee(10000, 1, 15000)).toBe(900); // Adrar
+      expect(calculateDeliveryFee(10000, 16, 15000)).toBe(700); // Alger
+      expect(calculateDeliveryFee(10000, 31, 15000)).toBe(800); // Oran
+      expect(calculateDeliveryFee(10000, 1, 15000)).toBe(1650); // Adrar
 
       expect(calculateTotal(10000, 400)).toBe(10400);
       expect(calculateTotal(10000, 400, 1000)).toBe(9400);

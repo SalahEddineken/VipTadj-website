@@ -43,7 +43,7 @@ export function ProductCard({ product, onQuickView, priority = false }: ProductC
     ? product.colors?.find((c) => c.name === activeColor)?.imageUrl
       ? {
         url: product.colors.find((c) => c.name === activeColor)!.imageUrl!,
-        alt: `${localizedProduct.title} - ${activeColor}`,
+        alt: `${localizedProduct.title} - ${getLocalizedColor(activeColor, language) || activeColor}`,
       }
       : product.images?.find(
         (img) =>
@@ -60,7 +60,17 @@ export function ProductCard({ product, onQuickView, priority = false }: ProductC
     width: 600,
     quality: 85,
     fallbackCategory: product.categoryId,
+    language,
   });
+
+  const displayAlt =
+    language === 'fr'
+      ? displayImage.alt || localizedProduct.title
+      : colorMatchedImage && activeColor
+      ? `${localizedProduct.title} - ${getLocalizedColor(activeColor, language) || activeColor}`
+      : 'color' in displayImage && typeof displayImage.color === 'string' && displayImage.color
+      ? `${localizedProduct.title} - ${getLocalizedColor(displayImage.color, language) || displayImage.color}`
+      : localizedProduct.title;
 
   const productUrl = `/catalog/${product.categorySlug || 'clothing'}/${product.slug}`;
 
@@ -91,7 +101,7 @@ export function ProductCard({ product, onQuickView, priority = false }: ProductC
         <Link href={productUrl} className="block w-full h-full">
           <img
             src={resolvedImageUrl}
-            alt={displayImage.alt || localizedProduct.title}
+            alt={displayAlt}
             className={`w-full h-full object-cover object-center transition-transform duration-700 ease-out ${
               isHovered ? 'scale-105' : 'scale-100'
             } ${isOutOfStock ? 'grayscale opacity-75' : ''}`}

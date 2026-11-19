@@ -6,7 +6,9 @@ import { initialProducts } from '@/lib/seed/seed-data';
 import { StorefrontLayout } from '@/components/store/StorefrontLayout';
 import { CatalogClient } from '@/components/store/CatalogClient';
 import { CategoryBanner } from '@/components/store/CategoryBanner';
-import { getCategoryMeta, resolveCategoryId } from '@/lib/utils/catalogUtils';
+import { getCategoryMeta, resolveCategoryId, isProductVisibleInShop } from '@/lib/utils/catalogUtils';
+import { getServerLanguage } from '@/app/_utils/server-lang';
+import { getTranslation } from '@/lib/i18n/locales';
 
 interface CategoryPageProps {
   params: {
@@ -17,33 +19,35 @@ interface CategoryPageProps {
 export async function generateMetadata({
   params,
 }: CategoryPageProps): Promise<Metadata> {
-  const meta = getCategoryMeta(params.category);
+  const lang = getServerLanguage();
+  const meta = getCategoryMeta(params.category, lang);
   if (!meta) {
     return {
-      title: 'Catalogue | VIP TADJ',
+      title: getTranslation(lang, 'meta.category.fallback_title', 'Catalogue | VIP TADJ'),
     };
   }
 
   return {
-    title: `${meta.name} | VIP TADJ | Haute Couture Masculine`,
+    title: `${meta.name} | ${getTranslation(lang, 'meta.category.title_suffix', 'VIP TADJ | Haute Couture Masculine')}`,
     description: meta.description,
   };
 }
 
 export default async function CategoryCatalogPage({ params }: CategoryPageProps) {
-  const meta = getCategoryMeta(params.category);
+  const lang = getServerLanguage();
+  const meta = getCategoryMeta(params.category, lang);
   const categoryId = resolveCategoryId(params.category);
 
   if (!meta || !categoryId) {
     notFound();
   }
 
-  let allProducts = initialProducts;
+  let allProducts = initialProducts.filter(isProductVisibleInShop);
   try {
     const dataStore = getDataStore();
     const fetched = await dataStore.getProducts();
     if (fetched && fetched.length > 0) {
-      allProducts = fetched;
+      allProducts = fetched.filter(isProductVisibleInShop);
     }
   } catch (error) {
     console.warn('[CategoryCatalogPage SSR] Using initialProducts fallback:', error);

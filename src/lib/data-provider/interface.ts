@@ -37,7 +37,8 @@ export interface IDataStore {
     status: OrderStatus,
     note?: string,
     updatedBy?: string,
-    cancellationReason?: CancellationReason | string
+    cancellationReason?: CancellationReason | string,
+    logistics?: { courier?: string; trackingCode?: string }
   ): Promise<Order>;
 
   // Settings

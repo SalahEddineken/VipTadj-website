@@ -5,7 +5,11 @@ import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
 import { Product } from '@/types';
 import { useLanguage } from '@/lib/context/language-context';
-import { getLocalizedCategoryName, getLocalizedProduct } from '@/lib/i18n/catalog-translations';
+import {
+  getLocalizedCategoryName,
+  getLocalizedProduct,
+  getLocalizedSubcategory,
+} from '@/lib/i18n/catalog-translations';
 
 export interface PDPBreadcrumbProps {
   product: Product;
@@ -24,7 +28,7 @@ export function PDPBreadcrumb({ product }: PDPBreadcrumbProps) {
   return (
     <nav
       className="py-4 text-xs font-sans text-neutral-500 uppercase tracking-wider flex items-center flex-wrap gap-1.5"
-      aria-label="Fil d'Ariane"
+      aria-label={t('pdp.breadcrumb.aria_label', "Fil d'Ariane")}
     >
       <Link href="/" className="hover:text-gold-600 transition-colors">
         {t('pdp.breadcrumb.home', 'Accueil')}
@@ -40,7 +44,7 @@ export function PDPBreadcrumb({ product }: PDPBreadcrumbProps) {
             href={`/catalog?category=${localizedProduct.categoryId}&subcategory=${localizedProduct.subcategory}`}
             className="hover:text-gold-600 transition-colors"
           >
-            {t(`subcategory.${localizedProduct.subcategory}`, localizedProduct.subcategory)}
+            {getLocalizedSubcategory(localizedProduct.subcategory, language)}
           </Link>
         </>
       )}

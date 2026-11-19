@@ -12,10 +12,18 @@ export const SEED_CATEGORIES: Category[] = [
     id: 'clothing',
     name: 'Vêtements',
     nameEn: 'Clothing',
+    nameAr: 'ملابس وأزياء',
+    subtitle: 'Vestes, Chemises & Prêt-à-Porter',
+    subtitleEn: 'Jackets, Shirts & Fine Apparel',
+    subtitleAr: 'سترات، قمصان، ومعاطف راقية',
     slug: 'vetements',
-    description: 'Costumes sur mesure, blazers de cérémonie, manteaux en cachemire et chemises de haute couture.',
-    image: 'https://images.unsplash.com/photo-1594938298603-c8148c4dae35?auto=format&fit=crop&q=80&w=1200',
-    bannerImage: 'https://images.unsplash.com/photo-1594938298603-c8148c4dae35?auto=format&fit=crop&q=80&w=1200',
+    description: 'Vestes de saison, chemises haut de gamme, manteaux en cachemire, pantalons et mailles fines.',
+    descriptionEn:
+      'The art of refined masculine clothing. Noble fabrics, contemporary silhouettes, and impeccable finishes for elevated everyday style.',
+    descriptionAr:
+      'فن الأزياء والملابس الرجالية الفاخرة. خامات عالية الجودة، قصات عصرية متقونة وتفاصيل تمنح هيبة وأناقة متكاملة.',
+    image: 'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?auto=format&fit=crop&q=80&w=1200',
+    bannerImage: 'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?auto=format&fit=crop&q=80&w=1200',
     itemCount: 12,
     displayOrder: 1,
     isActive: true,
@@ -23,9 +31,17 @@ export const SEED_CATEGORIES: Category[] = [
   {
     id: 'shoes',
     name: 'Chaussures',
-    nameEn: 'Shoes',
+    nameEn: 'Footwear',
+    nameAr: 'أحذية',
+    subtitle: 'Souliers de Maître Bottier & Richelieus',
+    subtitleEn: 'Master Shoemaker Shoes & Oxfords',
+    subtitleAr: 'أحذية جلدية كلاسيكية وصناعة يدوية',
     slug: 'chaussures',
     description: 'Richelieus patinés main, derbies Oxford cousus Goodyear, mocassins italiens et bottines en daim.',
+    descriptionEn:
+      'Crafted from full-grain leathers from Italy and Spain. Goodyear welts and Blake stitching, hand-applied patinas for flawless arch support and poise.',
+    descriptionAr:
+      'مصنوعة من أرقى جلود العجل الطبيعية من إيطاليا وإسبانيا. خياطة غوديار وبليك متينة وتلميع يدوي يمنح راحة ووقاراً منقطع النظير.',
     image: 'https://images.unsplash.com/photo-1617137984095-74e4e5e3613f?auto=format&fit=crop&q=80&w=1200',
     bannerImage: 'https://images.unsplash.com/photo-1617137984095-74e4e5e3613f?auto=format&fit=crop&q=80&w=1200',
     itemCount: 10,
@@ -36,8 +52,16 @@ export const SEED_CATEGORIES: Category[] = [
     id: 'accessories',
     name: 'Accessoires',
     nameEn: 'Accessories',
+    nameAr: 'إكسسوارات',
+    subtitle: 'Soie Jacquard, Maroquinerie & Horlogerie',
+    subtitleEn: 'Jacquard Silk, Leather Goods & Timepieces',
+    subtitleAr: 'حرير طبيعي، مصنوعات جلدية وساعات',
     slug: 'accessoires',
     description: 'Montres chronographes classiques, cravates en soie de Côme, ceintures en cuir grainé et maroquinerie d\'art.',
+    descriptionEn:
+      'Refined details crowning the masculine silhouette: seven-fold silk ties, curved genuine leather belts, and gilded cufflinks.',
+    descriptionAr:
+      'تفاصيل راقية تتوج الإطلالة الرجالية المتكاملة: ربطات عنق سباعية الطيات من الحرير، أحزمة جلدية متقنة وأزرار أكمام مذهبة.',
     image: 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&q=80&w=1200',
     bannerImage: 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&q=80&w=1200',
     itemCount: 8,
@@ -52,32 +76,32 @@ export const SEED_PRODUCTS: Product[] = [
   // ====================================================
   {
     id: 'prod-suit-01',
-    title: 'Costume Deux Pièces en Laine Italienne Super 130s',
-    slug: 'costume-deux-pieces-laine-italienne',
+    title: 'Veste Saharienne Élégante en Coton & Lin Naturel',
+    slug: 'veste-saharienne-elegante-coton-lin',
     description:
-      'Confectionné dans une pure laine vierge Super 130\'s filée en Italie, ce costume deux pièces incarne le sommet du raffinement masculin VIP TADJ. Composé d\'une veste à revers crantés semi-entoilée et d\'un pantalon fluide à plis d\'aisance, il garantit un tombé sculptural irréprochable pour les réceptions et affaires de prestige.',
-    price: 48500,
-    compareAtPrice: 58000,
+      'Une pièce intemporelle alliant confort et allure masculine. Confectionnée dans un mélange noble de lin et coton d’Italie, cette saharienne arbore 4 poches à rabat et une coupe droite ajustée idéale pour les journées douces et soirées habillées.',
+    price: 38500,
+    compareAtPrice: 46000,
     categoryId: 'clothing',
     categorySlug: 'vetements',
-    subcategory: 'costumes',
+    subcategory: 'vestes',
     images: [
       {
         id: 'img-1-1',
-        url: 'https://images.unsplash.com/photo-1594938298603-c8148c4dae35?auto=format&fit=crop&q=80&w=1200',
-        alt: 'Costume deux pièces en laine italienne coupe ajustée',
+        url: 'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?auto=format&fit=crop&q=80&w=1200',
+        alt: 'Veste saharienne élégante en lin et coton naturel',
         isPrimary: true,
       },
       {
         id: 'img-1-2',
-        url: 'https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&q=80&w=1200',
-        alt: 'Vue d\'ensemble mannequin en costume complet',
+        url: 'https://images.unsplash.com/photo-1550995694-3f5f4a7e1bd2?auto=format&fit=crop&q=80&w=1200',
+        alt: 'Vue d ensemble mannequin veste saharienne et pantalon clair',
         isPrimary: false,
       },
       {
         id: 'img-1-3',
-        url: 'https://images.unsplash.com/photo-1593032465175-481ac7f401a0?auto=format&fit=crop&q=80&w=1200',
-        alt: 'Détail de la boutonnière tailleur et grain du tissu',
+        url: 'https://images.unsplash.com/photo-1618354691373-d851c5c3a990?auto=format&fit=crop&q=80&w=1200',
+        alt: 'Détail poches à rabat et texture du tissu lin coton',
         isPrimary: false,
       },
     ],
@@ -86,32 +110,32 @@ export const SEED_PRODUCTS: Product[] = [
     inStock: true,
     isFeatured: true,
     isNewArrival: true,
-    sku: 'VIP-SUIT-001',
+    sku: 'VIP-VEST-001',
     createdAt: '2026-01-10T10:00:00.000Z',
     updatedAt: '2026-01-10T10:00:00.000Z',
   },
   {
     id: 'prod-smoking-ceremonie-noir',
-    title: 'Smoking de Cérémonie Noir Profond & Satin',
-    slug: 'smoking-ceremonie-noir-profond-satin',
+    title: 'Veste Bomber Minimaliste en Cuir Suédé Doux',
+    slug: 'veste-bomber-minimaliste-cuir-suede',
     description:
-      'L\'élégance absolue du Black Tie revisitée. Ce smoking noir d\'encre associe un drap de laine vierge noble à des revers châle recouverts de satin de soie duchesse. Boutons recouverts de satin cousus main, fentes d\'aisance invisibles et pantalon galonné pour une prestance souveraine.',
-    price: 62500,
-    compareAtPrice: 72000,
+      'L’élégance urbaine sublimée. Ce blouson bomber d’inspiration contemporaine est confectionné en cuir suédé souple toucher velours avec bords-côtes ton sur ton et fermeture zippée double curseur en métal doré.',
+    price: 49500,
+    compareAtPrice: 58000,
     categoryId: 'clothing',
     categorySlug: 'vetements',
-    subcategory: 'costumes',
+    subcategory: 'vestes',
     images: [
       {
         id: 'img-2-1',
-        url: 'https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&q=80&w=1200',
-        alt: 'Smoking de gala noir à revers châle',
+        url: 'https://images.unsplash.com/photo-1551028719-00167b16eac5?auto=format&fit=crop&q=80&w=1200',
+        alt: 'Blouson bomber en cuir suédé doux',
         isPrimary: true,
       },
       {
         id: 'img-2-2',
-        url: 'https://images.unsplash.com/photo-1594938298603-c8148c4dae35?auto=format&fit=crop&q=80&w=1200',
-        alt: 'Détail col et boutons en satin',
+        url: 'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?auto=format&fit=crop&q=80&w=1200',
+        alt: 'Détail fermeture et finition col',
         isPrimary: false,
       },
     ],
@@ -120,32 +144,32 @@ export const SEED_PRODUCTS: Product[] = [
     inStock: true,
     isFeatured: true,
     isNewArrival: false,
-    sku: 'VIP-SMOK-002',
+    sku: 'VIP-JACK-002',
     createdAt: '2026-01-12T10:00:00.000Z',
     updatedAt: '2026-01-12T10:00:00.000Z',
   },
   {
     id: 'prod-costume-trois-pieces-prince',
-    title: 'Costume Trois Pièces Prince de Galles Gris & Gilet Tailleur',
-    slug: 'costume-trois-pieces-prince-de-galles-gris',
+    title: 'Surchemise Chaude en Laine & Cachemire à Carreaux',
+    slug: 'surchemise-chaude-laine-cachemire-carreaux',
     description:
-      'L\'aristocratie du vestiaire masculin britannique interprétée avec la fluidité de la coupe italienne. Réalisé dans un motif Prince de Galles subtil en nuances gris perle et anthracite, ce costume 3 pièces intègre un gilet croisé 6 boutons taillé avec précision. Une pièce maîtresse pour l\'homme d\'influence.',
-    price: 54900,
-    compareAtPrice: 65000,
+      'La pièce hybride incontournable de mi-saison. Tissée dans un mélange doux de laine et cachemire aux motifs discrets gris et anthracite, avec poches plaquées poitrine et boutons effet corne.',
+    price: 36000,
+    compareAtPrice: 42000,
     categoryId: 'clothing',
     categorySlug: 'vetements',
-    subcategory: 'costumes',
+    subcategory: 'chemises',
     images: [
       {
         id: 'img-3-1',
-        url: 'https://images.unsplash.com/photo-1592878904946-b3cd8ae243d0?auto=format&fit=crop&q=80&w=1200',
-        alt: 'Costume trois pièces Prince de Galles gris perle et gilet tailleur',
+        url: 'https://images.unsplash.com/photo-1576995853123-5a10305d93c0?auto=format&fit=crop&q=80&w=1200',
+        alt: 'Surchemise en laine et cachemire à carreaux',
         isPrimary: true,
       },
       {
         id: 'img-3-2',
-        url: 'https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&q=80&w=1200',
-        alt: 'Silhouette complète avec cravate et pochette de cérémonie',
+        url: 'https://images.unsplash.com/photo-1479064555552-3ef4979f8908?auto=format&fit=crop&q=80&w=1200',
+        alt: 'Silhouette complète masculine surchemise et pantalon flanelle',
         isPrimary: false,
       },
     ],
@@ -154,7 +178,7 @@ export const SEED_PRODUCTS: Product[] = [
     inStock: true,
     isFeatured: true,
     isNewArrival: true,
-    sku: 'VIP-SUIT-003',
+    sku: 'VIP-OVERSHIRT-003',
     createdAt: '2026-01-15T10:00:00.000Z',
     updatedAt: '2026-01-15T10:00:00.000Z',
   },
@@ -207,7 +231,7 @@ export const SEED_PRODUCTS: Product[] = [
       {
         id: 'img-5-1',
         url: 'https://images.unsplash.com/photo-1617127365659-c47fa864d8bc?auto=format&fit=crop&q=80&w=1200',
-        alt: 'Veste de costume bordeaux profond boutons corne naturelle',
+        alt: 'Veste bordeaux profond boutons corne naturelle',
         isPrimary: true,
       },
       {
@@ -281,7 +305,7 @@ export const SEED_PRODUCTS: Product[] = [
       {
         id: 'img-7-2',
         url: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&q=80&w=1200',
-        alt: 'Vue d\'ensemble mannequin manteau camel et costume sombre',
+        alt: 'Vue d\'ensemble mannequin manteau camel et pantalon élégant',
         isPrimary: false,
       },
     ],
@@ -435,7 +459,7 @@ export const SEED_PRODUCTS: Product[] = [
     title: 'Pull Col Roulé en Pur Cachemire 4 Fils Noir Onyx',
     slug: 'pull-col-roule-pur-cachemire-noir-onyx',
     description:
-      'L\'allié parfait sous un costume ou un blazer en hiver. Tricoté en 4 fils de cachemire de Mongolie intérieure jauge 12, ce pull col roulé conjugue chaleur optimale et finesse structurelle pour ne jamais alourdir la silhouette sous la veste.',
+      'L\'allié parfait sous une veste ou un manteau en hiver. Tricoté en 4 fils de cachemire de Mongolie intérieure jauge 12, ce pull col roulé conjugue chaleur optimale et finesse structurelle pour ne jamais alourdir la silhouette.',
     price: 32000,
     compareAtPrice: 38000,
     categoryId: 'clothing',
@@ -478,7 +502,7 @@ export const SEED_PRODUCTS: Product[] = [
     compareAtPrice: 44000,
     categoryId: 'shoes',
     categorySlug: 'chaussures',
-    subcategory: 'richelieu',
+    subcategory: 'richelieus',
     images: [
       {
         id: 'img-s1-1',
@@ -507,7 +531,7 @@ export const SEED_PRODUCTS: Product[] = [
     title: 'Derbies Oxford Noirs Cousu Goodyear',
     slug: 'derbies-oxford-noirs-cousu-goodyear',
     description:
-      'L\'élégance formelle par excellence. Ce modèle classique à laçage fermé bénéficie d\'un montage trépointe Goodyear imperméable et ressemelable à vie. Cuir box-calf noir profond d\'origine française, lustré au miroir pour accompagner vos costumes d\'apparat.',
+      'L\'élégance formelle par excellence. Ce modèle classique à laçage fermé bénéficie d\'un montage trépointe Goodyear imperméable et ressemelable à vie. Cuir box-calf noir profond d\'origine française, lustré au miroir pour accompagner vos tenues de prestige.',
     price: 39500,
     compareAtPrice: 47000,
     categoryId: 'shoes',
@@ -984,8 +1008,8 @@ export const SEED_PRODUCTS: Product[] = [
   },
   {
     id: 'prod-pochette-soie-roulottee',
-    title: 'Pochette de Costume en Soie Pure Roulottée Main',
-    slug: 'pochette-costume-soie-pure-roulottee-main',
+    title: 'Pochette en Soie Pure Roulottée Main',
+    slug: 'pochette-soie-pure-roulottee-main',
     description:
       'Le détail de distinction qui transforme un veston en déclaration de style. Confectionnée dans un twill de soie pure de 14 mommes, cette pochette présente des bords roulottés à la main au fil de soie par des artisanes passionnées. Motifs paisley baroques subtils.',
     price: 9500,
@@ -997,13 +1021,13 @@ export const SEED_PRODUCTS: Product[] = [
       {
         id: 'img-18-1',
         url: 'https://images.unsplash.com/photo-1509114397022-ed747cca3f65?auto=format&fit=crop&q=80&w=1200',
-        alt: 'Pochette de costume en soie pure roulottée main',
+        alt: 'Pochette en soie pure roulottée main',
         isPrimary: true,
       },
       {
         id: 'img-18-2',
         url: 'https://images.unsplash.com/photo-1589756823695-278bc923f962?auto=format&fit=crop&q=80&w=1200',
-        alt: 'Détail pliage dans la poche de poitrine de costume',
+        alt: 'Détail pliage dans la poche de poitrine',
         isPrimary: false,
       },
     ],
@@ -1055,7 +1079,7 @@ export const SEED_PRODUCTS: Product[] = [
     title: 'Portefeuille Ultra-Fin en Cuir Nappa Noir & Fentes Cartes Dorées',
     slug: 'portefeuille-ultra-fin-cuir-nappa-noir',
     description:
-      'Étudié pour glisser sans aucune surépaisseur dans la poche intérieure d\'une veste de costume. Cuir nappa italien au toucher beurré souple, doté d\'un bouclier anti-ondes RFID bloquant toute tentative de piratage sans contact et 8 fentes pour cartes biseautées.',
+      'Étudié pour glisser sans aucune surépaisseur dans la poche intérieure d\'une veste ou d\'un manteau. Cuir nappa italien au toucher beurré souple, doté d\'un bouclier anti-ondes RFID bloquant toute tentative de piratage sans contact et 8 fentes pour cartes biseautées.',
     price: 12500,
     compareAtPrice: 15500,
     categoryId: 'accessories',
@@ -1086,14 +1110,15 @@ export const SEED_PRODUCTS: Product[] = [
   },
 ];
 
-// Official 58 Algerian Wilayas mapping
-export const ALGERIAN_WILAYAS: { code: number; name: string; nameAr: string; fee: number; deskFee: number; zone: string }[] = ALGERIAN_58_WILAYAS.map((w) => ({
+// Official 68 Algerian Wilayas mapping
+export const ALGERIAN_WILAYAS: { code: number; name: string; nameAr: string; fee: number; deskFee: number; zone: string; estimatedDays: string }[] = ALGERIAN_58_WILAYAS.map((w) => ({
   code: w.code,
   name: w.name,
   nameAr: w.nameAr || '',
   fee: w.fee,
   deskFee: w.deskFee,
   zone: w.zone,
+  estimatedDays: w.estimatedDays,
 }));
 
 export const SEED_WILAYAS_DELIVERY: WilayaDeliveryConfig[] = ALGERIAN_WILAYAS.map((w) => ({
@@ -1104,7 +1129,7 @@ export const SEED_WILAYAS_DELIVERY: WilayaDeliveryConfig[] = ALGERIAN_WILAYAS.ma
   homeDeliveryFee: w.fee,
   deskDeliveryFee: w.deskFee,
   zone: w.zone,
-  estimatedDays: w.zone === 'local' ? '24h' : w.zone === 'est' ? '24h à 48h' : w.zone === 'sud' ? '3 à 5 jours' : '48h à 72h',
+  estimatedDays: w.estimatedDays,
   isAvailable: true,
 }));
 
@@ -1125,8 +1150,27 @@ export const DEFAULT_STORE_SETTINGS: StoreSettings = {
   freeShippingThreshold: 50000,
   announcementBar: {
     enabled: true,
-    text: 'Livraison Express 58 Wilayas | Paiement à la Livraison (COD)',
+    text: 'Livraison Express 68 Wilayas | Paiement à la Livraison (COD)',
     link: '/catalog',
+  },
+  heroVideo: {
+    enabled: true,
+    videoUrl: '/videos/20261117_170900.mp4',
+    posterUrl: '',
+    overlayOpacity: 65,
+    playbackRate: 1.0,
+  },
+  featuredSection: {
+    enabled: true,
+    title: 'Créations Emblématiques',
+    titleAr: 'تشكيلاتنا المختارة',
+    titleEn: 'Signature Creations',
+    productIds: [
+      'prod-blazer-royal-bordeaux',
+      'prod-costume-trois-pieces-prince',
+      'prod-smoking-ceremonie-noir',
+      'prod-suit-01',
+    ],
   },
   orderNotificationAudio: true,
   wilayasDelivery: SEED_WILAYAS_DELIVERY,

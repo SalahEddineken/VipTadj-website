@@ -5,7 +5,11 @@ import { Product } from '@/types';
 import { formatDZD } from '@/lib/utils/formatDZD';
 import { ShieldCheck } from 'lucide-react';
 import { useLanguage } from '@/lib/context/language-context';
-import { getLocalizedCategoryName, getLocalizedProduct } from '@/lib/i18n/catalog-translations';
+import {
+  getLocalizedCategoryName,
+  getLocalizedProduct,
+  getLocalizedSubcategory,
+} from '@/lib/i18n/catalog-translations';
 
 export interface ProductInfoProps {
   product: Product;
@@ -27,24 +31,13 @@ export function ProductInfo({ product }: ProductInfoProps) {
     ? Math.round((savings / localizedProduct.compareAtPrice!) * 100)
     : 0;
 
-  const isAvailable = localizedProduct.inStock && localizedProduct.stockQuantity > 0;
-
   return (
     <div className="space-y-4 pb-6 border-b border-sand-200">
       {/* Category / Subcategory Micro-tag */}
-      <div className="flex items-center justify-between">
+      <div>
         <p className="text-xs uppercase tracking-[0.25em] text-gold-700 font-sans font-medium">
-          {categoryName} {localizedProduct.subcategory ? `• ${t(`subcategory.${localizedProduct.subcategory}`, localizedProduct.subcategory)}` : ''}
+          {categoryName} {localizedProduct.subcategory ? `• ${getLocalizedSubcategory(localizedProduct.subcategory, language)}` : ''}
         </p>
-        <span
-          className={`text-xs tracking-wider uppercase px-2 py-0.5 font-medium ${
-            isAvailable
-              ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
-              : 'bg-red-50 text-red-800 border border-red-200'
-          }`}
-        >
-          {isAvailable ? t('pdp.stock.in_stock', 'En Stock (58 Wilayas)') : t('pdp.stock.out_of_stock', 'Rupture de Stock')}
-        </span>
       </div>
 
       {/* Product Title */}

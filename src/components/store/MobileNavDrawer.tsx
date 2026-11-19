@@ -4,7 +4,8 @@ import React, { useEffect } from 'react';
 import Link from 'next/link';
 import { X, Phone, ShieldCheck, Truck, Search } from 'lucide-react';
 import { useLanguage } from '@/lib/context/language-context';
-import { LanguageSelector } from '@/components/ui/LanguageSelector';
+import { useStoreSettings } from '@/lib/context/store-settings-context';
+import { formatTelLink } from '@/lib/utils/phoneUtils';
 
 export interface MobileNavDrawerProps {
   isOpen: boolean;
@@ -15,6 +16,7 @@ export interface MobileNavDrawerProps {
 
 export function MobileNavDrawer({ isOpen, onClose, isAdmin = false }: MobileNavDrawerProps) {
   const { t } = useLanguage();
+  const { phone } = useStoreSettings();
 
   // Prevent background scroll when drawer is open
   useEffect(() => {
@@ -42,7 +44,7 @@ export function MobileNavDrawer({ isOpen, onClose, isAdmin = false }: MobileNavD
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal="true" aria-label="Navigation">
+    <div className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal="true" aria-label={t('nav.mobile_aria', 'Navigation')}>
       {/* Backdrop */}
       <div
         className="fixed inset-0 bg-obsidian-950/70 backdrop-blur-sm transition-opacity animate-in fade-in duration-300"
@@ -60,7 +62,7 @@ export function MobileNavDrawer({ isOpen, onClose, isAdmin = false }: MobileNavD
                 VIP TADJ
               </span>
               <span className="text-xs tracking-[0.25em] uppercase text-sand-800 font-sans">
-                {t('brand.subtitle', 'Haute Couture Masculine')}
+                {t('brand.subtitle', 'Prêt-à-Porter Masculin')}
               </span>
             </Link>
             <button
@@ -71,14 +73,6 @@ export function MobileNavDrawer({ isOpen, onClose, isAdmin = false }: MobileNavD
             >
               <X className="w-5 h-5" />
             </button>
-          </div>
-
-          {/* Language Switcher in Drawer */}
-          <div className="px-6 py-3 bg-sand-100 border-b border-sand-200 flex items-center justify-between">
-            <span className="text-xs uppercase tracking-wider font-semibold text-obsidian-700">
-              {t('lang.selector.label', 'Langue')}
-            </span>
-            <LanguageSelector variant="pills" />
           </div>
 
           {/* Search Quick Link */}
@@ -104,7 +98,7 @@ export function MobileNavDrawer({ isOpen, onClose, isAdmin = false }: MobileNavD
                 {t('nav.clothing', 'Vêtements')}
               </Link>
               <p className="text-xs text-obsidian-600 tracking-normal normal-case mt-0.5">
-                {t('category.clothing.subtitle', 'Costumes, Blazers & Confection Sartoriale')}
+                {t('category.clothing.subtitle', 'Vestes, Chemises & Prêt-à-Porter')}
               </p>
             </div>
 
@@ -162,16 +156,16 @@ export function MobileNavDrawer({ isOpen, onClose, isAdmin = false }: MobileNavD
         {/* Footer info inside Drawer */}
         <div className="p-6 bg-sand-100 border-t border-sand-200 space-y-3 text-xs text-neutral-600">
           <a
-            href="tel:+213550000000"
-            className="flex items-center gap-2 text-obsidian-900 font-semibold hover:text-gold-700 transition-colors ltr-protect focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500"
+            href={formatTelLink(phone)}
             dir="ltr"
+            className="ltr-protect flex items-center gap-2 text-obsidian-900 font-semibold hover:text-gold-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500"
           >
             <Phone className="w-4 h-4 text-gold-700 flex-shrink-0" />
-            <span className="font-sans tabular-nums text-xs">+213 (0) 550 00 00 00</span>
+            <span dir="ltr" className="font-sans tabular-nums text-xs ltr-protect">{phone}</span>
           </a>
           <div className="flex items-center gap-2">
             <Truck className="w-4 h-4 text-gold-600 flex-shrink-0" />
-            <span>{t('announcement.shipping', 'Livraison 58 Wilayas • Paiement à la Livraison (COD)')}</span>
+            <span>{t('announcement.shipping', 'Livraison 68 Wilayas • Paiement à la Livraison (COD)')}</span>
           </div>
           <div className="flex items-center gap-2">
             <ShieldCheck className="w-4 h-4 text-gold-600 flex-shrink-0" />

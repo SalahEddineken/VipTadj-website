@@ -6,6 +6,8 @@ import { ShoppingBag, Zap, Plus, Minus, Check } from 'lucide-react';
 import { Product, ProductColor } from '@/types';
 import { useCart } from '@/lib/context/cart-context';
 import { useLanguage } from '@/lib/context/language-context';
+import { formatTranslation } from '@/lib/i18n/locales';
+import { getLocalizedSize } from '@/lib/i18n/catalog-translations';
 
 export interface AddToCartSectionProps {
   product: Product;
@@ -22,7 +24,7 @@ export function AddToCartSection({
 }: AddToCartSectionProps) {
   const router = useRouter();
   const cart = useCart();
-  const { t } = useLanguage();
+  const { language, t } = useLanguage();
   const [quantity, setQuantity] = useState(1);
   const [isAddedFeedback, setIsAddedFeedback] = useState(false);
   const [stockErrorMessage, setStockErrorMessage] = useState<string | null>(null);
@@ -70,7 +72,7 @@ export function AddToCartSection({
     if (isSizeOutOfStock) return;
 
     try {
-      const chosenSize = selectedSize || (product.sizes?.[0] ?? 'Unique');
+      const chosenSize = selectedSize || (product.sizes?.[0] ?? 'Taille Unique');
       const raw = localStorage.getItem('vip_cart');
       const localCart = raw ? JSON.parse(raw) : [];
       const existingIdx = localCart.findIndex(
@@ -83,9 +85,12 @@ export function AddToCartSection({
       const existingQty = existingIdx >= 0 ? Number(localCart[existingIdx].quantity || 0) : 0;
       if (existingQty + quantity > availableStock) {
         setStockErrorMessage(
-          t(
-            'pdp.error.max_stock_reached',
-            `Stock insuffisant : vous avez déjà ${existingQty} exemplaire(s) au panier pour un stock disponible de ${availableStock}.`
+          formatTranslation(
+            t(
+              'pdp.error.max_stock_reached',
+              'Stock insuffisant : vous avez déjà {existing} exemplaire(s) au panier (stock disponible : {available}).'
+            ),
+            { existing: existingQty, available: availableStock }
           )
         );
         setTimeout(() => setStockErrorMessage(null), 4000);
@@ -129,7 +134,7 @@ export function AddToCartSection({
     if (!onValidateSize()) return;
     if (isSizeOutOfStock) return;
 
-    const chosenSize = selectedSize || (product.sizes?.[0] ?? 'Unique');
+    const chosenSize = selectedSize || (product.sizes?.[0] ?? 'Taille Unique');
     const clampedQty = Math.min(availableStock, quantity);
 
     const expressItem = {
@@ -214,7 +219,10 @@ export function AddToCartSection({
         <span className="text-xs text-neutral-600 font-sans tabular-nums">
           {isSizeOutOfStock ? (
             <span className="text-red-600 font-medium">
-              {t('pdp.size.out_of_stock_selected', `Taille ${selectedSize} épuisée`)}
+              {formatTranslation(
+                t('pdp.size.out_of_stock_named', 'Taille {size} épuisée'),
+                { size: getLocalizedSize(selectedSize || '', language) }
+              )}
             </span>
           ) : (
             <>

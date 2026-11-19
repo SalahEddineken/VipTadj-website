@@ -169,7 +169,7 @@ describe('CHALLENGER M2-1 — Adversarial Stress Test Suite (Milestone 2 Custome
     it('handles search queries in uppercase, lowercase, and mixed casing identically', () => {
       const testTerms = [
         { lower: 'laine', upper: 'LAINE', mixed: 'LaInE' },
-        { lower: 'costume', upper: 'COSTUME', mixed: 'CoStUmE' },
+        { lower: 'veste', upper: 'VESTE', mixed: 'VeStE' },
         { lower: 'soie', upper: 'SOIE', mixed: 'SoIe' },
         { lower: 'cuir', upper: 'CUIR', mixed: 'CuIr' },
       ];
@@ -250,18 +250,18 @@ describe('CHALLENGER M2-1 — Adversarial Stress Test Suite (Milestone 2 Custome
       // Both should be arrays and not crash
       expect(Array.isArray(vetementsWithAccent)).toBe(true);
       expect(Array.isArray(vetementsWithoutAccent)).toBe(true);
-      const smokingMatches = filterProducts(initialProducts, {
+      const suedeMatches = filterProducts(initialProducts, {
         ...DEFAULT_FILTER_STATE,
-        searchQuery: 'cérémonie',
+        searchQuery: 'suédé',
       });
-      expect(smokingMatches.some((p) => p.slug.includes('smoking') || p.title.toLowerCase().includes('cérémonie'))).toBe(true);
+      expect(suedeMatches.some((p) => p.title.toLowerCase().includes('suédé'))).toBe(true);
 
-      // Verify that 'pièces' matches the two-piece suit
+      // Verify that 'pièce' matches products with 'pièce' in description
       const suitMatches = filterProducts(initialProducts, {
         ...DEFAULT_FILTER_STATE,
-        searchQuery: 'pièces',
+        searchQuery: 'pièce',
       });
-      expect(suitMatches.some((p) => p.title.toLowerCase().includes('pièces'))).toBe(true);
+      expect(suitMatches.some((p) => p.description.toLowerCase().includes('pièce'))).toBe(true);
 
       // Verify that non-matching term 'écharpe' returns an empty array cleanly without crashing
       const echarpeMatches = filterProducts(initialProducts, {

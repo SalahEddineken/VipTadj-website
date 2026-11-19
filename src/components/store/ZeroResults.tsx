@@ -22,7 +22,8 @@ export function ZeroResults({ onReset, query }: ZeroResultsProps) {
       </h3>
       {query ? (
         <p className="text-xs md:text-sm text-neutral-600 leading-relaxed font-sans mb-8">
-          {query}
+          {t('catalog.zero_results.desc_query', 'Aucun résultat trouvé pour')}{' '}
+          <span className="font-semibold text-obsidian-900">{query}</span>
         </p>
       ) : (
         <p className="text-xs md:text-sm text-neutral-600 leading-relaxed font-sans mb-8">

@@ -15,10 +15,25 @@ import {
 } from '@/types';
 import { IDataStore } from './interface';
 import { initialProducts, initialCategories, initialSettings } from '@/lib/seed/seed-data';
+import {
+  PRODUCT_TRANSLATIONS,
+  SUBCATEGORY_TRANSLATIONS,
+} from '@/lib/i18n/catalog-translations';
+import { getWilayaByCode } from '@/lib/data/wilayas';
+import { findCommune } from '@/lib/data/communes';
+
+function normalizeProviderSearch(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[\u064B-\u065F\u0670]/g, '')
+    .replace(/[أإآٱ]/g, 'ا')
+    .replace(/ى/g, 'ي')
+    .replace(/ة/g, 'ه');
+}
 
 const SLUG_ALIASES: Record<string, string> = {
-  'costume-deux-pieces-laine-super-130s': 'costume-deux-pieces-laine-italienne',
-  'costume-deux-pieces-laine-italienne': 'costume-deux-pieces-laine-super-130s',
+  'costume-deux-pieces-laine-super-130s': 'veste-saharienne-elegante-coton-lin',
+  'costume-deux-pieces-laine-italienne': 'veste-saharienne-elegante-coton-lin',
   'richelieu-one-cut-cuir-veau': 'souliers-richelieu-one-cut',
   'souliers-richelieu-one-cut': 'richelieu-one-cut-cuir-veau',
   'cravate-soie-jacquard-sept-plis': 'cravate-soie-jacquard-bleu-imperial-or',
@@ -85,6 +100,42 @@ function savePersistedOrders(orders: Order[]): void {
   }
 }
 
+function loadPersistedSettings(): StoreSettings | null {
+  const node = getNodeFs();
+  if (!node) return null;
+  try {
+    const { fs, path } = node;
+    const filePath = path.join(process.cwd(), '.data', 'mock-settings.json');
+    if (fs.existsSync(filePath)) {
+      const raw = fs.readFileSync(filePath, 'utf-8');
+      const data = JSON.parse(raw);
+      if (data && typeof data === 'object') {
+        return data;
+      }
+    }
+  } catch {
+    // Graceful fallback
+  }
+  return null;
+}
+
+function savePersistedSettings(settings: StoreSettings): void {
+  if (process.env.NODE_ENV === 'test') return;
+  const node = getNodeFs();
+  if (!node) return;
+  try {
+    const { fs, path } = node;
+    const dataDir = path.join(process.cwd(), '.data');
+    if (!fs.existsSync(dataDir)) {
+      fs.mkdirSync(dataDir, { recursive: true });
+    }
+    const filePath = path.join(dataDir, 'mock-settings.json');
+    fs.writeFileSync(filePath, JSON.stringify(settings, null, 2), 'utf-8');
+  } catch {
+    // Graceful fallback
+  }
+}
+
 export class MockSeedDataProvider implements IDataStore {
   readonly mode = 'mock' as const;
 
@@ -102,7 +153,9 @@ export class MockSeedDataProvider implements IDataStore {
     if (!this.isInitialized) {
       this.products = clone(initialProducts);
       this.categories = clone(initialCategories);
-      this.settings = clone(initialSettings);
+
+      const persistedSettings = loadPersistedSettings();
+      this.settings = persistedSettings ? clone(persistedSettings) : clone(initialSettings);
       
       const sampleOrders = this.generateSampleOrders();
       const persisted = loadPersistedOrders();
@@ -145,12 +198,12 @@ export class MockSeedDataProvider implements IDataStore {
         items: [
           {
             productId: 'prod-suit-01',
-            title: 'Costume Deux Pièces en Laine Italienne Super 130s',
-            slug: 'costume-deux-pieces-laine-italienne',
-            price: 48500,
+            title: 'Veste Saharienne Élégante en Coton & Lin Naturel',
+            slug: 'veste-saharienne-elegante-coton-lin',
+            price: 38500,
             quantity: 1,
             selectedSize: '50',
-            image: 'https://images.unsplash.com/photo-1594938298603-c8148c4dae35',
+            image: 'https://images.unsplash.com/photo-1591047139829-d91aecb6caea',
           },
         ],
         subtotal: 48500,
@@ -199,6 +252,12 @@ export class MockSeedDataProvider implements IDataStore {
           : !p.inStock || p.stockQuantity <= 0
       );
     }
+    if (filter.status !== undefined) {
+      result = result.filter((p) => p.status === filter.status);
+    }
+    if (filter.isActive !== undefined) {
+      result = result.filter((p) => (p.isActive !== undefined ? p.isActive === filter.isActive : p.inStock === filter.isActive));
+    }
     if (filter.featured !== undefined) {
       result = result.filter((p) => p.isFeatured === filter.featured);
     }
@@ -212,14 +271,37 @@ export class MockSeedDataProvider implements IDataStore {
       result = result.filter((p) => p.price <= (filter.maxPrice ?? Infinity));
     }
     if (filter.search?.trim()) {
-      const q = filter.search.toLowerCase().trim();
-      result = result.filter(
-        (p) =>
-          p.title.toLowerCase().includes(q) ||
-          p.description.toLowerCase().includes(q) ||
-          p.subcategory.toLowerCase().includes(q) ||
-          p.tags?.some((t) => t.toLowerCase().includes(q))
-      );
+      const q = normalizeProviderSearch(filter.search.trim());
+      result = result.filter((p) => {
+        const prodTrans = PRODUCT_TRANSLATIONS[p.id];
+        const subTrans = p.subcategory
+          ? SUBCATEGORY_TRANSLATIONS[p.subcategory.toLowerCase().trim()]
+          : undefined;
+
+        const fields: (string | undefined)[] = [
+          p.title,
+          p.description,
+          p.subcategory,
+          p.titleAr,
+          p.titleEn,
+          p.descriptionAr,
+          p.descriptionEn,
+          p.subtitleAr,
+          p.subtitleEn,
+          p.materialsAr,
+          p.materialsEn,
+          ...(Array.isArray(p.tags) ? p.tags : []),
+          prodTrans?.en?.title,
+          prodTrans?.en?.description,
+          prodTrans?.ar?.title,
+          prodTrans?.ar?.description,
+          subTrans?.fr,
+          subTrans?.en,
+          subTrans?.ar,
+        ];
+
+        return fields.some((f) => f && normalizeProviderSearch(f).includes(q));
+      });
     }
 
     if (filter.sortBy) {
@@ -347,14 +429,29 @@ export class MockSeedDataProvider implements IDataStore {
       result = result.filter((o) => o.customer.wilayaCode === filter.wilayaCode);
     }
     if (filter.search?.trim()) {
-      const q = filter.search.toLowerCase().trim();
-      result = result.filter(
-        (o) =>
-          o.orderNumber.toLowerCase().includes(q) ||
-          o.customer.fullName.toLowerCase().includes(q) ||
-          o.customer.phone.includes(q) ||
-          o.customer.wilaya.toLowerCase().includes(q)
-      );
+      const q = normalizeProviderSearch(filter.search.trim());
+      result = result.filter((o) => {
+        const wilayaObj = o.customer.wilayaCode
+          ? getWilayaByCode(o.customer.wilayaCode)
+          : undefined;
+        const communeObj =
+          o.customer.wilayaCode && o.customer.commune
+            ? findCommune(o.customer.wilayaCode, o.customer.commune)
+            : undefined;
+        const fields: (string | undefined)[] = [
+          o.orderNumber,
+          o.customer.fullName,
+          o.customer.phone,
+          o.customer.secondaryPhone,
+          o.customer.wilaya,
+          o.customer.commune,
+          wilayaObj?.name,
+          wilayaObj?.nameAr,
+          communeObj?.name,
+          communeObj?.nameAr,
+        ];
+        return fields.some((f) => f && normalizeProviderSearch(f).includes(q));
+      });
     }
 
     result.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
@@ -445,7 +542,8 @@ export class MockSeedDataProvider implements IDataStore {
     status: OrderStatus,
     note?: string,
     updatedBy?: string,
-    cancellationReason?: CancellationReason | string
+    cancellationReason?: CancellationReason | string,
+    logistics?: { courier?: string; trackingCode?: string }
   ): Promise<Order> {
     this.init();
 
@@ -470,6 +568,8 @@ export class MockSeedDataProvider implements IDataStore {
     const order = this.orders[index];
     const previousStatus = order.status;
     const now = new Date().toISOString();
+    const courierName = logistics?.courier?.trim() || undefined;
+    const trackingCode = logistics?.trackingCode?.trim() || undefined;
 
     const historyEntry: OrderStatusHistoryItem = {
       status,
@@ -477,11 +577,22 @@ export class MockSeedDataProvider implements IDataStore {
       note,
       updatedBy,
       ...(cancellationReason ? { cancellationReason: cancellationReason as CancellationReason } : {}),
+      ...(courierName ? { courier: courierName } : {}),
+      ...(trackingCode ? { trackingCode } : {}),
     };
 
     const updated: Order = {
       ...order,
       status,
+      ...(courierName || trackingCode
+        ? {
+            courier: {
+              ...(order.courier || {}),
+              name: courierName || order.courier?.name || 'Yalidine Express',
+              ...(trackingCode ? { trackingCode } : {}),
+            },
+          }
+        : {}),
       statusHistory: [...order.statusHistory, historyEntry],
       updatedAt: now,
     };
@@ -536,6 +647,7 @@ export class MockSeedDataProvider implements IDataStore {
       wilayaShippingFees: mergedWilayaShippingFees,
       updatedAt: new Date().toISOString(),
     };
+    savePersistedSettings(this.settings);
     return clone(this.settings);
   }
 

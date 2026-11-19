@@ -156,6 +156,6 @@ describe('Tier 1: Foundation — Domain Types & Interfaces (F-FOUND-01, F-FOUND-
     expect(settingsFixture.currencySymbol).toBe('DA');
     expect(settingsFixture.freeShippingThreshold).toBe(15000);
     expect(typeof settingsFixture.wilayaShippingFees).toBe('object');
-    expect(Object.keys(settingsFixture.wilayaShippingFees).length).toBe(58);
+    expect(Object.keys(settingsFixture.wilayaShippingFees).length).toBe(68);
   });
 });

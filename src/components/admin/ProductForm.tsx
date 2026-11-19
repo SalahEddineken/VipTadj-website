@@ -31,43 +31,46 @@ import { generateSlug, calculateTotalStock, validateProductForm } from '@/lib/va
 import { AdminMediaUpload } from './AdminMediaUpload';
 import { compressImageFile } from '@/lib/media/client-image-compressor';
 import { normalizeImageUrl } from '@/lib/media/url-normalizer';
+import { getColorNameFromHex, extractDominantColorFromFile } from '@/lib/utils/colorUtils';
 import { cn } from '@/lib/utils/cn';
+import { useLanguage } from '@/lib/context/language-context';
+import { formatTranslation } from '@/lib/i18n/locales';
+import {
+  getLocalizedProduct,
+  getLocalizedCategoryName,
+  getLocalizedSubcategory,
+  getLocalizedColor,
+  getLocalizedSize,
+} from '@/lib/i18n/catalog-translations';
+import { SUBCATEGORIES_BY_CATEGORY, getLocalizedSubcategories } from '@/lib/utils/catalogUtils';
 
 export interface ProductFormProps {
   mode: 'create' | 'edit';
   initialData?: Product | null;
 }
 
-const SUBCATEGORIES_BY_CATEGORY: Record<ProductCategoryType, { value: string; label: string }[]> = {
-  clothing: [
-    { value: 'costumes', label: 'Costumes & Smokings' },
-    { value: 'blazers', label: 'Blazers & Vestes Sartoriales' },
-    { value: 'chemises', label: 'Chemises Sur-Mesure' },
-    { value: 'pantalons', label: 'Pantalons & Chinos Habillés' },
-    { value: 'manteaux', label: 'Manteaux & Pardessus Laine' },
-  ],
-  shoes: [
-    { value: 'richelieu', label: 'Richelieus & Brogues' },
-    { value: 'oxfords', label: 'Oxfords Cuir Pleine Fleur' },
-    { value: 'derbies', label: 'Derbies' },
-    { value: 'mocassins', label: 'Mocassins & Loafers' },
-    { value: 'bottines', label: 'Bottines & Chelsea Boots' },
-    { value: 'sneakers', label: 'Sneakers Minimalistes Cuir' },
-  ],
-  accessories: [
-    { value: 'cravates', label: 'Cravates & Nœuds Soie' },
-    { value: 'ceintures', label: 'Ceintures Cuir Italien' },
-    { value: 'montres', label: 'Montres & Horlogerie' },
-    { value: 'boutons-manchette', label: 'Boutons de Manchette' },
-    { value: 'maroquinerie', label: 'Portefeuilles & Mallettes' },
-  ],
-};
-
 const CATEGORY_SLUG_MAP: Record<ProductCategoryType, string> = {
   clothing: 'vetements',
   shoes: 'chaussures',
   accessories: 'accessoires',
 };
+
+const SUBCATEGORY_ALIASES: Record<string, string> = {
+  richelieu: 'richelieus',
+};
+
+function normalizeSubcategoryForCategory(
+  rawSub: string | undefined,
+  cat: ProductCategoryType
+): string {
+  const list = SUBCATEGORIES_BY_CATEGORY[cat] || [];
+  if (!rawSub || !rawSub.trim()) return list[0]?.id || '';
+  const trimmed = rawSub.trim();
+  const lower = trimmed.toLowerCase();
+  const aliased = SUBCATEGORY_ALIASES[lower] || lower;
+  const matched = list.find((s) => s.id.toLowerCase() === aliased);
+  return matched ? matched.id : trimmed;
+}
 
 // Size Presets
 const CLOTHING_STANDARD_SIZES = ['S', 'M', 'L', 'XL', 'XXL'];
@@ -76,25 +79,30 @@ const SHOE_SIZES = ['39', '40', '41', '42', '43', '44', '45'];
 
 export function ProductForm({ mode, initialData }: ProductFormProps) {
   const router = useRouter();
+  const { language, t } = useLanguage();
+  const initialLocalized = initialData ? getLocalizedProduct(initialData, language) : null;
 
   // Form State
-  const [title, setTitle] = useState(initialData?.title || '');
+  const [title, setTitle] = useState(initialLocalized?.title || '');
   const [slug, setSlug] = useState(initialData?.slug || '');
   const [isSlugLocked, setIsSlugLocked] = useState(mode === 'create');
-  const [subtitle, setSubtitle] = useState(initialData?.subtitle || '');
-  const [description, setDescription] = useState(initialData?.description || '');
-  const [shortDescription, setShortDescription] = useState(initialData?.shortDescription || '');
+  const [subtitle, setSubtitle] = useState(initialLocalized?.subtitle || '');
+  const [description, setDescription] = useState(initialLocalized?.description || '');
+  const [shortDescription, setShortDescription] = useState(initialLocalized?.shortDescription || '');
   const [sku, setSku] = useState(initialData?.sku || '');
-  const [materials, setMaterials] = useState(initialData?.materials || '');
-  const [careInstructions, setCareInstructions] = useState(initialData?.careInstructions || '');
-  const [fit, setFit] = useState(initialData?.fit || 'Tailored Fit');
+  const materials = initialLocalized?.materials || '';
+  const careInstructions = initialLocalized?.careInstructions || '';
+  const fit = initialData?.fit || '';
 
   // Categorization
   const [categoryId, setCategoryId] = useState<ProductCategoryType>(
     initialData?.categoryId || 'clothing'
   );
-  const [subcategory, setSubcategory] = useState(
-    initialData?.subcategory || SUBCATEGORIES_BY_CATEGORY['clothing'][0].value
+  const [subcategory, setSubcategory] = useState(() =>
+    normalizeSubcategoryForCategory(
+      initialData?.subcategory,
+      initialData?.categoryId || 'clothing'
+    )
   );
 
   // Pricing
@@ -126,11 +134,19 @@ export function ProductForm({ mode, initialData }: ProductFormProps) {
 
   // Images & Colors
   const [images, setImages] = useState<ProductImage[]>(initialData?.images || []);
-  const [colors, setColors] = useState<ProductColor[]>(initialData?.colors || []);
+  const [colors, setColors] = useState<ProductColor[]>(() =>
+    (initialData?.colors || []).map((c) => ({
+      ...c,
+      name: getLocalizedColor(c.name, language),
+    }))
+  );
   const [uploadingColorIdx, setUploadingColorIdx] = useState<number | null>(null);
   const [targetColorIdxForUpload, setTargetColorIdxForUpload] = useState<number | null>(null);
   const [urlInputOpenIdx, setUrlInputOpenIdx] = useState<number | null>(null);
   const colorFileInputRef = useRef<HTMLInputElement>(null);
+  const fallbackSlugIdRef = useRef<string>(
+    Math.random().toString(36).replace(/[^a-z0-9]/g, '').slice(1, 5).padEnd(4, 'x')
+  );
 
   const handleColorFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -140,19 +156,41 @@ export function ProductForm({ mode, initialData }: ProductFormProps) {
     setUploadingColorIdx(cIdx);
 
     try {
+      // Auto-extract dominant color from the uploaded photo
+      const dominant = await extractDominantColorFromFile(file);
+
       const compressed = await compressImageFile(file, { maxWidth: 1600, maxHeight: 2000, quality: 0.85 });
       const formData = new FormData();
       formData.append('file', compressed);
-      formData.append('alt', `${title || 'Produit VIP TADJ'} - ${colors[cIdx]?.name || 'Coloris'}`);
+      formData.append(
+        'alt',
+        `${title || 'VIP TADJ'} - ${
+          getLocalizedColor(dominant?.name || colors[cIdx]?.name || '', language) ||
+          t('admin.product_form.color_photo_btn', 'Photo')
+        }`
+      );
 
       const res = await fetch('/api/media/upload', {
         method: 'POST',
+        headers: {
+          'x-lang': language,
+        },
         body: formData,
       });
       const data = await res.json();
       if (data.success && data.image) {
         const next = [...colors];
         next[cIdx].imageUrl = data.image.url;
+
+        // Auto-assign hex and color name from the photo if detected
+        if (dominant) {
+          next[cIdx].hex = dominant.hex;
+          const currentName = next[cIdx].name;
+          if (!currentName || currentName.startsWith('Coloris') || currentName.includes('Nouveau Coloris')) {
+            next[cIdx].name = getLocalizedColor(dominant.name, language);
+          }
+        }
+
         setColors(next);
 
         // Also add to product gallery if not already present
@@ -160,11 +198,17 @@ export function ProductForm({ mode, initialData }: ProductFormProps) {
           setImages((prev) => [...prev, data.image]);
         }
       } else {
-        alert(data.error || 'Erreur lors du téléversement pour ce coloris.');
+        alert(
+          data.errorKey
+            ? t(data.errorKey, data.error)
+            : language === 'fr' && data.error
+            ? data.error
+            : t('admin.product_form.color_upload_error', 'Erreur lors du téléversement pour ce coloris.')
+        );
       }
     } catch (err) {
       console.error('Failed to upload color image:', err);
-      alert('Échec du téléversement de la photo de ce coloris.');
+      alert(t('admin.product_form.color_upload_failed', 'Échec du téléversement de la photo de ce coloris.'));
     } finally {
       setUploadingColorIdx(null);
       setTargetColorIdxForUpload(null);
@@ -184,19 +228,32 @@ export function ProductForm({ mode, initialData }: ProductFormProps) {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitSuccess, setSubmitSuccess] = useState<string | null>(null);
 
+  const computeAutoSlug = (rawTitle: string): string => {
+    const trimmed = rawTitle.trim();
+    if (!trimmed) return '';
+    const fromTitle = generateSlug(trimmed);
+    if (fromTitle.length >= 3) return fromTitle;
+    const fromSku = generateSlug(sku);
+    if (fromSku.length >= 3) return fromSku;
+    return `${categoryId}-${fallbackSlugIdRef.current}`;
+  };
+
   // Auto-generate slug when title changes if locked
   useEffect(() => {
-    if (isSlugLocked && title) {
-      setSlug(generateSlug(title));
+    if (mode === 'create' && isSlugLocked) {
+      setSlug(computeAutoSlug(title));
+    } else if (isSlugLocked && title.trim()) {
+      setSlug(computeAutoSlug(title));
     }
-  }, [title, isSlugLocked]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [title, sku, categoryId, isSlugLocked, mode]);
 
   // Adjust subcategory when category changes
   const handleCategoryChange = (newCat: ProductCategoryType) => {
     setCategoryId(newCat);
     const available = SUBCATEGORIES_BY_CATEGORY[newCat];
     if (available && available.length > 0) {
-      setSubcategory(available[0].value);
+      setSubcategory(available[0].id);
     }
     // Set default size matrix for new category
     if (newCat === 'clothing') {
@@ -250,12 +307,99 @@ export function ProductForm({ mode, initialData }: ProductFormProps) {
       .filter(([_, qty]) => qty > 0)
       .map(([size]) => size);
 
+    const isNonFrEdit = mode === 'edit' && language !== 'fr';
+
+    const baseTitle =
+      isNonFrEdit && initialData?.title
+        ? title.trim()
+          ? initialData.title
+          : ''
+        : title.trim();
+    const baseSubtitle = isNonFrEdit ? initialData?.subtitle : subtitle.trim() || undefined;
+    const baseDescription =
+      isNonFrEdit && initialData?.description
+        ? description.trim()
+          ? initialData.description
+          : ''
+        : description.trim();
+    const baseShortDescription = isNonFrEdit
+      ? initialData?.shortDescription
+      : shortDescription.trim() || undefined;
+    const baseMaterials = isNonFrEdit ? initialData?.materials : materials.trim() || undefined;
+    const baseCare = isNonFrEdit
+      ? initialData?.careInstructions
+      : careInstructions.trim() || undefined;
+
+    const normalizedColors =
+      colors.length > 0
+        ? colors.map((c) => ({
+            ...c,
+            name: getLocalizedColor(c.name, 'fr'),
+          }))
+        : undefined;
+
     const payload = {
-      title: title.trim(),
+      title: baseTitle,
+      ...(language === 'ar'
+        ? title.trim()
+          ? { titleAr: title.trim() }
+          : {}
+        : initialData?.titleAr
+        ? { titleAr: initialData.titleAr }
+        : {}),
+      ...(language === 'en'
+        ? title.trim()
+          ? { titleEn: title.trim() }
+          : {}
+        : initialData?.titleEn
+        ? { titleEn: initialData.titleEn }
+        : {}),
       slug: slug.trim(),
-      subtitle: subtitle.trim() || undefined,
-      description: description.trim(),
-      shortDescription: shortDescription.trim() || undefined,
+      subtitle: baseSubtitle,
+      ...(language === 'ar'
+        ? subtitle.trim()
+          ? { subtitleAr: subtitle.trim() }
+          : {}
+        : initialData?.subtitleAr
+        ? { subtitleAr: initialData.subtitleAr }
+        : {}),
+      ...(language === 'en'
+        ? subtitle.trim()
+          ? { subtitleEn: subtitle.trim() }
+          : {}
+        : initialData?.subtitleEn
+        ? { subtitleEn: initialData.subtitleEn }
+        : {}),
+      description: baseDescription,
+      ...(language === 'ar'
+        ? description.trim()
+          ? { descriptionAr: description.trim() }
+          : {}
+        : initialData?.descriptionAr
+        ? { descriptionAr: initialData.descriptionAr }
+        : {}),
+      ...(language === 'en'
+        ? description.trim()
+          ? { descriptionEn: description.trim() }
+          : {}
+        : initialData?.descriptionEn
+        ? { descriptionEn: initialData.descriptionEn }
+        : {}),
+      shortDescription: baseShortDescription,
+      ...(language === 'ar'
+        ? shortDescription.trim()
+          ? { shortDescriptionAr: shortDescription.trim() }
+          : {}
+        : initialData?.shortDescriptionAr
+        ? { shortDescriptionAr: initialData.shortDescriptionAr }
+        : {}),
+      ...(language === 'en'
+        ? shortDescription.trim()
+          ? { shortDescriptionEn: shortDescription.trim() }
+          : {}
+        : initialData?.shortDescriptionEn
+        ? { shortDescriptionEn: initialData.shortDescriptionEn }
+        : {}),
       price: price === '' ? 0 : Number(price),
       compareAtPrice: compareAtPrice === '' ? undefined : Number(compareAtPrice),
       costPrice: costPrice === '' ? undefined : Number(costPrice),
@@ -265,22 +409,54 @@ export function ProductForm({ mode, initialData }: ProductFormProps) {
       images,
       sizes: activeSizes.length > 0 ? activeSizes : Object.keys(sizeInventory),
       sizeInventory,
-      colors: colors.length > 0 ? colors : undefined,
+      colors: normalizedColors,
       stockQuantity: totalStock,
       inStock: totalStock > 0 && inStock,
+      status: inStock ? 'active' : 'draft',
+      isActive: inStock,
       isFeatured,
       isNewArrival,
       isBestSeller,
       sku: sku.trim() || undefined,
-      materials: materials.trim() || undefined,
-      careInstructions: careInstructions.trim() || undefined,
+      materials: baseMaterials,
+      ...(language === 'ar'
+        ? materials.trim()
+          ? { materialsAr: materials.trim() }
+          : {}
+        : initialData?.materialsAr
+        ? { materialsAr: initialData.materialsAr }
+        : {}),
+      ...(language === 'en'
+        ? materials.trim()
+          ? { materialsEn: materials.trim() }
+          : {}
+        : initialData?.materialsEn
+        ? { materialsEn: initialData.materialsEn }
+        : {}),
+      careInstructions: baseCare,
+      ...(language === 'ar'
+        ? careInstructions.trim()
+          ? { careInstructionsAr: careInstructions.trim() }
+          : {}
+        : initialData?.careInstructionsAr
+        ? { careInstructionsAr: initialData.careInstructionsAr }
+        : {}),
+      ...(language === 'en'
+        ? careInstructions.trim()
+          ? { careInstructionsEn: careInstructions.trim() }
+          : {}
+        : initialData?.careInstructionsEn
+        ? { careInstructionsEn: initialData.careInstructionsEn }
+        : {}),
       fit: fit.trim() || undefined,
     };
 
-    const validation = validateProductForm(payload);
+    const validation = validateProductForm(payload, language);
     if (!validation.valid) {
       setErrors(validation.errors);
-      setSubmitError('Veuillez corriger les champs en rouge avant de valider.');
+      setSubmitError(
+        t('admin.product_form.validation_banner', 'Veuillez corriger les champs en rouge avant de valider.')
+      );
       window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
@@ -292,21 +468,30 @@ export function ProductForm({ mode, initialData }: ProductFormProps) {
 
       const res = await fetch(url, {
         method,
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'x-lang': language,
+        },
         body: JSON.stringify(payload),
       });
 
       const data = await res.json();
       if (!res.ok || !data.success) {
-        setSubmitError(data.error || 'Une erreur est survenue lors de l\'enregistrement.');
+        setSubmitError(
+          data.errorKey
+            ? t(data.errorKey, data.error)
+            : language === 'fr' && data.error
+            ? data.error
+            : t('admin.product_form.save_error', "Une erreur est survenue lors de l'enregistrement.")
+        );
         setSubmitting(false);
         return;
       }
 
       setSubmitSuccess(
         mode === 'create'
-          ? 'Produit créé avec succès ! Redirection en cours...'
-          : 'Produit mis à jour avec succès !'
+          ? t('admin.product_form.created_toast', 'Produit créé avec succès ! Redirection en cours...')
+          : t('admin.product_form.updated_toast', 'Produit mis à jour avec succès !')
       );
 
       setTimeout(() => {
@@ -315,30 +500,40 @@ export function ProductForm({ mode, initialData }: ProductFormProps) {
       }, 1200);
     } catch (err: any) {
       console.error('Submit failed:', err);
-      setSubmitError(err.message || 'Échec de connexion au serveur.');
+      setSubmitError(t('admin.product_form.connect_error', 'Échec de connexion au serveur.'));
       setSubmitting(false);
     }
   };
 
+  const localizedSubs = getLocalizedSubcategories(categoryId, language);
+  const currentSubLabel = subcategory ? getLocalizedSubcategory(subcategory, language) : '';
+  const hasCurrentSub = localizedSubs.some(
+    (s) => s.id === subcategory || (currentSubLabel && s.label === currentSubLabel)
+  );
+
   return (
     <form onSubmit={handleSubmit} className="space-y-8 max-w-5xl pb-16">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gold-500/15 pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-obsidian-200 pb-4">
         <div className="flex items-center gap-3">
           <Link
             href="/admin/products"
-            className="p-2 rounded-lg bg-obsidian-950 border border-gold-500/20 text-gold-400 hover:bg-obsidian-800 transition-colors"
+            className="p-2 rounded-lg bg-white border border-obsidian-200 text-gold-700 hover:bg-ivory-100 transition-colors"
           >
-            <ArrowLeft className="w-4 h-4" />
+            <ArrowLeft className="w-4 h-4 rtl:rotate-180" />
           </Link>
           <div>
-            <h1 className="font-cinzel text-xl sm:text-2xl font-bold text-ivory">
-              {mode === 'create' ? 'Nouveau Produit de Luxe' : `Éditer : ${initialData?.title}`}
-            </h1>
-            <p className="text-xs text-obsidian-300">
+            <h1 className="font-cinzel text-xl sm:text-2xl font-bold text-obsidian-950">
               {mode === 'create'
-                ? 'Ajout d\'une pièce exclusive au catalogue VIP TADJ'
-                : 'Mise à jour des prix, photographies et stocks par taille'}
+                ? t('admin.product_form.title_create', 'Nouveau Produit de Luxe')
+                : formatTranslation(t('admin.product_form.title_edit', 'Éditer : {title}'), {
+                    title: initialData ? getLocalizedProduct(initialData, language).title : '',
+                  })}
+            </h1>
+            <p className="text-xs text-obsidian-500">
+              {mode === 'create'
+                ? t('admin.product_form.sub_create', "Ajout d'une pièce exclusive au catalogue VIP TADJ")
+                : t('admin.product_form.sub_edit', 'Mise à jour des prix, photographies et stocks par taille')}
             </p>
           </div>
         </div>
@@ -346,24 +541,28 @@ export function ProductForm({ mode, initialData }: ProductFormProps) {
         <div className="flex items-center gap-3">
           <Link
             href="/admin/products"
-            className="px-4 py-2 rounded-lg bg-obsidian-950 border border-gold-500/20 text-xs text-obsidian-300 hover:text-ivory transition-colors"
+            className="px-4 py-2 rounded-lg bg-white border border-obsidian-200 text-xs text-obsidian-700 hover:text-obsidian-950 transition-colors"
           >
-            Annuler
+            {t('admin.product_form.btn_cancel', 'Annuler')}
           </Link>
           <button
             type="submit"
             disabled={submitting}
-            className="px-5 py-2 rounded-lg bg-gold-500 hover:bg-gold-400 text-obsidian-950 text-xs font-semibold uppercase tracking-wider flex items-center gap-2 transition-all shadow-luxury-subtle disabled:opacity-50"
+            className="px-5 py-2 rounded-lg bg-gold-500 hover:bg-gold-600 text-obsidian-950 text-xs font-semibold uppercase tracking-wider flex items-center gap-2 transition-all shadow-luxury-subtle disabled:opacity-50"
           >
             {submitting ? (
               <>
                 <div className="w-3.5 h-3.5 border-2 border-obsidian-950/20 border-t-obsidian-950 rounded-full animate-spin" />
-                <span>Enregistrement...</span>
+                <span>{t('admin.product_form.saving', 'Enregistrement...')}</span>
               </>
             ) : (
               <>
                 <Save className="w-4 h-4" />
-                <span>{mode === 'create' ? 'Publier le Produit' : 'Enregistrer'}</span>
+                <span>
+                  {mode === 'create'
+                    ? t('admin.product_form.btn_publish', 'Publier le Produit')
+                    : t('admin.product_form.btn_save', 'Enregistrer les Modifications')}
+                </span>
               </>
             )}
           </button>
@@ -372,186 +571,166 @@ export function ProductForm({ mode, initialData }: ProductFormProps) {
 
       {/* Feedback Messages */}
       {submitError && (
-        <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/30 flex items-center gap-3 text-rose-300 text-xs animate-fade-in">
-          <AlertCircle className="w-5 h-5 shrink-0 text-rose-400" />
+        <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 flex items-center gap-3 text-rose-700 text-xs animate-fade-in">
+          <AlertCircle className="w-5 h-5 shrink-0 text-rose-600" />
           <span>{submitError}</span>
         </div>
       )}
 
       {submitSuccess && (
-        <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center gap-3 text-emerald-300 text-xs animate-fade-in">
-          <CheckCircle2 className="w-5 h-5 shrink-0 text-emerald-400" />
+        <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center gap-3 text-emerald-800 text-xs animate-fade-in">
+          <CheckCircle2 className="w-5 h-5 shrink-0 text-emerald-600" />
           <span>{submitSuccess}</span>
         </div>
       )}
 
       {/* SECTION 1: Informations Générales */}
-      <div className="p-6 rounded-sm bg-obsidian-950 border border-gold-500/20 shadow-luxury-subtle space-y-5">
-        <h2 className="font-cinzel text-base font-bold text-gold-400 border-b border-gold-500/10 pb-2">
-          1. Informations Générales & Présentation
+      <div className="p-6 rounded-sm bg-white border border-obsidian-200 shadow-luxury-subtle space-y-5">
+        <h2 className="font-cinzel text-base font-bold text-gold-700 border-b border-obsidian-100 pb-2">
+          {t('admin.product_form.sec1', '1. Informations Générales & Présentation')}
         </h2>
 
         {/* Title */}
         <div className="space-y-1.5">
-          <label className="block text-xs font-semibold text-obsidian-300 uppercase tracking-wider">
-            Titre du Produit *
+          <label className="block text-xs font-semibold text-obsidian-700 uppercase tracking-wider">
+            {t('admin.product_form.label_title', 'Titre du Produit *')}
           </label>
           <input
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="Ex : Costume Deux Pièces en Laine Super 130s Lanificio Cerruti"
+            placeholder={t('admin.product_form.ph_title', 'Ex : Veste Saharienne en Coton & Lin Naturel')}
             className={cn(
-              'w-full px-4 py-2.5 rounded-lg bg-obsidian-900 border text-ivory text-sm focus:outline-none focus:ring-1 focus:ring-gold-500 transition-all',
-              errors.title ? 'border-rose-500 ring-1 ring-rose-500' : 'border-gold-500/20'
+              'w-full px-4 py-2.5 rounded-lg bg-white border text-obsidian-950 text-sm focus:outline-none focus:ring-1 focus:ring-gold-500 transition-all',
+              errors.title ? 'border-rose-500 ring-1 ring-rose-500' : 'border-obsidian-200'
             )}
           />
-          {errors.title && <p className="text-xs text-rose-400">{errors.title}</p>}
+          {errors.title && <p className="text-xs text-rose-600">{errors.title}</p>}
         </div>
 
         {/* Slug Generator */}
         <div className="space-y-1.5">
           <div className="flex items-center justify-between">
-            <label className="block text-xs font-semibold text-obsidian-300 uppercase tracking-wider">
-              Identifiant URL (Slug) *
+            <label className="block text-xs font-semibold text-obsidian-700 uppercase tracking-wider">
+              {t('admin.product_form.label_slug', 'Identifiant URL (Slug) *')}
             </label>
             <div className="flex items-center gap-2">
               <button
                 type="button"
                 onClick={() => setIsSlugLocked(!isSlugLocked)}
-                className="text-[11px] text-gold-400 hover:text-gold-300 flex items-center gap-1 min-h-[36px] px-2 py-1 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500"
+                className="text-[11px] text-gold-700 hover:text-gold-800 flex items-center gap-1 min-h-[36px] px-2 py-1 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500"
               >
                 {isSlugLocked ? <Lock className="w-3 h-3" /> : <Unlock className="w-3 h-3" />}
-                <span>{isSlugLocked ? 'Verrouillé (Auto)' : 'Manuel'}</span>
+                <span>
+                  {isSlugLocked
+                    ? t('admin.product_form.slug_locked', 'Verrouillé (Auto)')
+                    : t('admin.product_form.slug_manual', 'Manuel')}
+                </span>
               </button>
               <button
                 type="button"
-                onClick={() => setSlug(generateSlug(title))}
-                className="text-[11px] text-obsidian-300 hover:text-ivory flex items-center gap-1 min-h-[36px] px-2 py-1 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500"
+                onClick={() => setSlug(computeAutoSlug(title))}
+                className="text-[11px] text-obsidian-600 hover:text-obsidian-950 flex items-center gap-1 min-h-[36px] px-2 py-1 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500"
               >
                 <RotateCcw className="w-3 h-3" />
-                <span>Régénérer</span>
+                <span>{t('admin.product_form.slug_regenerate', 'Régénérer')}</span>
               </button>
             </div>
           </div>
-          <div className="flex items-center rounded-sm bg-obsidian-900 border border-gold-500/20 overflow-hidden px-3 py-2 text-xs text-obsidian-300 font-mono">
-            <span className="shrink-0 select-none">/product/</span>
+          <div
+            dir="ltr"
+            className="flex items-center rounded-sm bg-ivory-100 border border-obsidian-200 overflow-hidden px-3 py-2 text-xs text-obsidian-500 font-mono"
+          >
+            <span className="shrink-0 select-none">https://viptadj.dz/product/</span>
             <input
               type="text"
               value={slug}
               readOnly={isSlugLocked}
               onChange={(e) => setSlug(e.target.value)}
-              className="w-full bg-transparent text-gold-300 focus:outline-none px-1"
+              className="w-full bg-transparent text-gold-700 font-medium focus:outline-none px-1"
             />
           </div>
-          {errors.slug && <p className="text-xs text-rose-400">{errors.slug}</p>}
+          {errors.slug && <p className="text-xs text-rose-600">{errors.slug}</p>}
         </div>
 
         {/* Subtitle & SKU */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-1.5">
-            <label className="block text-xs font-semibold text-obsidian-300 uppercase tracking-wider">
-              Sous-titre / Exclusivité
+            <label className="block text-xs font-semibold text-obsidian-700 uppercase tracking-wider">
+              {t('admin.product_form.label_subtitle', 'Sous-titre / Exclusivité')}
             </label>
             <input
               type="text"
               value={subtitle}
               onChange={(e) => setSubtitle(e.target.value)}
-              placeholder="Ex : Édition Limitée Haute Façon"
-              className="w-full px-4 py-2.5 rounded-lg bg-obsidian-900 border border-gold-500/20 text-ivory text-sm focus:outline-none focus:ring-1 focus:ring-gold-500"
+              placeholder={t('admin.product_form.ph_subtitle', 'Ex : Édition Limitée Haute Façon')}
+              className="w-full px-4 py-2.5 rounded-lg bg-white border border-obsidian-200 text-obsidian-950 text-sm focus:outline-none focus:ring-1 focus:ring-gold-500"
             />
           </div>
 
           <div className="space-y-1.5">
-            <label className="block text-xs font-semibold text-obsidian-300 uppercase tracking-wider">
-              Référence SKU
+            <label className="block text-xs font-semibold text-obsidian-700 uppercase tracking-wider">
+              {t('admin.product_form.label_sku', 'Référence SKU')}
             </label>
             <input
               type="text"
               value={sku}
               onChange={(e) => setSku(e.target.value)}
-              placeholder="Ex : VT-SUIT-001"
-              className="w-full px-4 py-2.5 rounded-lg bg-obsidian-900 border border-gold-500/20 text-ivory text-sm font-mono focus:outline-none focus:ring-1 focus:ring-gold-500"
+              placeholder={t('admin.product_form.ph_sku', 'Ex : VT-VEST-001')}
+              className="w-full px-4 py-2.5 rounded-lg bg-white border border-obsidian-200 text-obsidian-950 text-sm font-mono focus:outline-none focus:ring-1 focus:ring-gold-500"
             />
           </div>
         </div>
 
         {/* Description */}
         <div className="space-y-1.5">
-          <label className="block text-xs font-semibold text-obsidian-300 uppercase tracking-wider">
-            Description Détaillée *
+          <label className="block text-xs font-semibold text-obsidian-700 uppercase tracking-wider">
+            {t('admin.product_form.label_description', 'Description Détaillée *')}
           </label>
           <textarea
             rows={4}
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            placeholder="Rédigez une description éditoriale haut de gamme décrivant la matière, la confection, et l'allure..."
+            placeholder={t(
+              'admin.product_form.ph_description',
+              "Rédigez une description éditoriale haut de gamme décrivant la matière, la confection, et l'allure..."
+            )}
             className={cn(
-              'w-full px-4 py-2.5 rounded-lg bg-obsidian-900 border text-ivory text-sm focus:outline-none focus:ring-1 focus:ring-gold-500 leading-relaxed',
-              errors.description ? 'border-rose-500 ring-1 ring-rose-500' : 'border-gold-500/20'
+              'w-full px-4 py-2.5 rounded-lg bg-white border text-obsidian-950 text-sm focus:outline-none focus:ring-1 focus:ring-gold-500 leading-relaxed',
+              errors.description ? 'border-rose-500 ring-1 ring-rose-500' : 'border-obsidian-200'
             )}
           />
-          {errors.description && <p className="text-xs text-rose-400">{errors.description}</p>}
-        </div>
-
-        {/* Materials, Care, Fit */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="space-y-1.5">
-            <label className="block text-xs font-semibold text-obsidian-300 uppercase tracking-wider">
-              Matières & Tissage
-            </label>
-            <input
-              type="text"
-              value={materials}
-              onChange={(e) => setMaterials(e.target.value)}
-              placeholder="Ex : 100% Laine Vierge Super 130s"
-              className="w-full px-3 py-2 rounded-lg bg-obsidian-900 border border-gold-500/20 text-ivory text-xs focus:outline-none focus:ring-1 focus:ring-gold-500"
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="block text-xs font-semibold text-obsidian-300 uppercase tracking-wider">
-              Entretien
-            </label>
-            <input
-              type="text"
-              value={careInstructions}
-              onChange={(e) => setCareInstructions(e.target.value)}
-              placeholder="Ex : Nettoyage à sec par spécialiste"
-              className="w-full px-3 py-2 rounded-lg bg-obsidian-900 border border-gold-500/20 text-ivory text-xs focus:outline-none focus:ring-1 focus:ring-gold-500"
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="block text-xs font-semibold text-obsidian-300 uppercase tracking-wider">
-              Coupe (Fit)
-            </label>
-            <select
-              value={fit}
-              onChange={(e) => setFit(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg bg-obsidian-900 border border-gold-500/20 text-ivory text-xs focus:outline-none focus:ring-1 focus:ring-gold-500"
-            >
-              <option value="Tailored Fit">Tailored Fit (Ajustée moderne)</option>
-              <option value="Slim Fit">Slim Fit (Cintrée)</option>
-              <option value="Classic Fit">Classic Fit (Coupe droite)</option>
-              <option value="Relaxed Fit">Relaxed Fit</option>
-            </select>
-          </div>
+          {errors.description && <p className="text-xs text-rose-600">{errors.description}</p>}
         </div>
       </div>
 
       {/* SECTION 2: Catégorisation Dynamique */}
-      <div className="p-6 rounded-sm bg-obsidian-950 border border-gold-500/20 shadow-luxury-subtle space-y-5">
-        <h2 className="font-cinzel text-base font-bold text-gold-400 border-b border-gold-500/10 pb-2">
-          2. Catégorie & Rayon VIP TADJ
+      <div className="p-6 rounded-sm bg-white border border-obsidian-200 shadow-luxury-subtle space-y-5">
+        <h2 className="font-cinzel text-base font-bold text-gold-700 border-b border-obsidian-100 pb-2">
+          {t('admin.product_form.sec2', '2. Catégorie & Rayon')}
         </h2>
 
         {/* Category Radio Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {[
-            { id: 'clothing', label: 'Vêtements', sub: 'Costumes, Blazers, Chemises, Manteaux', icon: Shirt },
-            { id: 'shoes', label: 'Chaussures', sub: 'Richelieus, Oxfords, Bottines, Cuir', icon: Footprints },
-            { id: 'accessories', label: 'Accessoires', sub: 'Cravates, Ceintures, Horlogerie', icon: Watch },
+            {
+              id: 'clothing' as const,
+              label: getLocalizedCategoryName('clothing', language),
+              sub: t('admin.product_form.cat_clothing_sub', 'Vestes, Chemises, Pantalons, Manteaux'),
+              icon: Shirt,
+            },
+            {
+              id: 'shoes' as const,
+              label: getLocalizedCategoryName('shoes', language),
+              sub: t('admin.product_form.cat_shoes_sub', 'Richelieus, Oxfords, Bottines, Cuir'),
+              icon: Footprints,
+            },
+            {
+              id: 'accessories' as const,
+              label: getLocalizedCategoryName('accessories', language),
+              sub: t('admin.product_form.cat_accessories_sub', 'Cravates, Ceintures, Horlogerie'),
+              icon: Watch,
+            },
           ].map((cat) => {
             const Icon = cat.icon;
             return (
@@ -560,21 +739,21 @@ export function ProductForm({ mode, initialData }: ProductFormProps) {
                 type="button"
                 onClick={() => handleCategoryChange(cat.id as ProductCategoryType)}
                 className={cn(
-                  'p-4 rounded-xl border text-left transition-all flex flex-col justify-between',
+                  'p-4 rounded-xl border text-start transition-all flex flex-col justify-between',
                   categoryId === cat.id
-                    ? 'bg-obsidian-900 border-gold-500 ring-1 ring-gold-500 text-gold-300 shadow-luxury-subtle'
-                    : 'bg-obsidian-900/40 border-gold-500/15 text-obsidian-300 hover:border-gold-500/30'
+                    ? 'bg-gold-50 border-gold-500 ring-1 ring-gold-500 text-gold-900 shadow-luxury-subtle'
+                    : 'bg-ivory-100/70 border-obsidian-200 text-obsidian-600 hover:border-gold-500/50'
                 )}
               >
                 <div className="flex items-center justify-between mb-2">
-                  <Icon className="w-6 h-6 text-gold-400" />
+                  <Icon className="w-6 h-6 text-gold-600" />
                   {categoryId === cat.id && (
-                    <span className="w-2 h-2 rounded-full bg-gold-400 animate-pulse" />
+                    <span className="w-2 h-2 rounded-full bg-gold-600 animate-pulse" />
                   )}
                 </div>
                 <div>
-                  <p className="text-sm font-bold text-ivory">{cat.label}</p>
-                  <p className="text-[11px] text-obsidian-300 mt-0.5">{cat.sub}</p>
+                  <p className="text-sm font-bold text-obsidian-950">{cat.label}</p>
+                  <p className="text-[11px] text-obsidian-500 mt-0.5">{cat.sub}</p>
                 </div>
               </button>
             );
@@ -583,39 +762,42 @@ export function ProductForm({ mode, initialData }: ProductFormProps) {
 
         {/* Subcategory Dropdown */}
         <div className="space-y-1.5">
-          <label className="block text-xs font-semibold text-obsidian-300 uppercase tracking-wider">
-            Sous-Catégorie Spécifique *
+          <label className="block text-xs font-semibold text-obsidian-700 uppercase tracking-wider">
+            {t('admin.product_form.label_subcategory', 'Sous-Catégorie Spécifique *')}
           </label>
           <select
             value={subcategory}
             onChange={(e) => setSubcategory(e.target.value)}
-            className="w-full px-4 py-2.5 rounded-lg bg-obsidian-900 border border-gold-500/20 text-ivory text-sm focus:outline-none focus:ring-1 focus:ring-gold-500"
+            className="w-full px-4 py-2.5 rounded-lg bg-white border border-obsidian-200 text-obsidian-950 text-sm focus:outline-none focus:ring-1 focus:ring-gold-500"
           >
-            {SUBCATEGORIES_BY_CATEGORY[categoryId].map((sub) => (
-              <option key={sub.value} value={sub.value}>
+            {localizedSubs.map((sub) => (
+              <option key={sub.id} value={sub.id}>
                 {sub.label}
               </option>
             ))}
+            {subcategory && !hasCurrentSub && (
+              <option value={subcategory}>{getLocalizedSubcategory(subcategory, language)}</option>
+            )}
           </select>
         </div>
       </div>
 
       {/* SECTION 3: Tarification en Dinars Algériens (DZD / DA) */}
-      <div className="p-6 rounded-sm bg-obsidian-950 border border-gold-500/20 shadow-luxury-subtle space-y-5">
-        <h2 className="font-cinzel text-base font-bold text-gold-400 border-b border-gold-500/10 pb-2">
-          3. Tarification en Dinars Algériens (DZD)
+      <div className="p-6 rounded-sm bg-white border border-obsidian-200 shadow-luxury-subtle space-y-5">
+        <h2 className="font-cinzel text-base font-bold text-gold-700 border-b border-obsidian-100 pb-2">
+          {t('admin.product_form.sec3', '3. Tarification en Dinars Algériens (DZD)')}
         </h2>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {/* Selling Price */}
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
-              <label className="block text-xs font-semibold text-obsidian-300 uppercase tracking-wider">
-                Prix de Vente (DA) *
+              <label className="block text-xs font-semibold text-obsidian-700 uppercase tracking-wider">
+                {t('admin.product_form.label_price', 'Prix de Vente (DA) *')}
               </label>
               {typeof price === 'number' && price > 0 && (
-                <span className="text-xs font-serif font-bold text-gold-400">
-                  {formatDZD(price)}
+                <span className="text-xs font-serif font-bold text-gold-700">
+                  {formatDZD(price, { locale: language })}
                 </span>
               )}
             </div>
@@ -625,23 +807,23 @@ export function ProductForm({ mode, initialData }: ProductFormProps) {
               step={1}
               value={price}
               onChange={(e) => setPrice(e.target.value === '' ? '' : parseInt(e.target.value, 10))}
-              placeholder="Ex : 48500"
+              placeholder={t('admin.product_form.ph_price', 'Ex : 48500')}
               className={cn(
-                'w-full px-4 py-2.5 rounded-lg bg-obsidian-900 border text-ivory text-sm font-mono focus:outline-none focus:ring-1 focus:ring-gold-500',
-                errors.price ? 'border-rose-500 ring-1 ring-rose-500' : 'border-gold-500/20'
+                'w-full px-4 py-2.5 rounded-lg bg-white border text-obsidian-950 text-sm font-mono focus:outline-none focus:ring-1 focus:ring-gold-500',
+                errors.price ? 'border-rose-500 ring-1 ring-rose-500' : 'border-obsidian-200'
               )}
             />
-            {errors.price && <p className="text-xs text-rose-400">{errors.price}</p>}
+            {errors.price && <p className="text-xs text-rose-600">{errors.price}</p>}
           </div>
 
           {/* Compare At Price (Strike-through) */}
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
-              <label className="block text-xs font-semibold text-obsidian-300 uppercase tracking-wider">
-                Prix d&apos;origine barré (DA)
+              <label className="block text-xs font-semibold text-obsidian-700 uppercase tracking-wider">
+                {t('admin.product_form.label_compare_price', "Prix d'origine barré (DA)")}
               </label>
               {discountPercent !== null && (
-                <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold">
+                <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold">
                   -{discountPercent}%
                 </span>
               )}
@@ -654,21 +836,21 @@ export function ProductForm({ mode, initialData }: ProductFormProps) {
               onChange={(e) =>
                 setCompareAtPrice(e.target.value === '' ? '' : parseInt(e.target.value, 10))
               }
-              placeholder="Ex : 55000"
+              placeholder={t('admin.product_form.ph_compare_price', 'Ex : 55000')}
               className={cn(
-                'w-full px-4 py-2.5 rounded-lg bg-obsidian-900 border text-ivory text-sm font-mono focus:outline-none focus:ring-1 focus:ring-gold-500',
-                errors.compareAtPrice ? 'border-rose-500 ring-1 ring-rose-500' : 'border-gold-500/20'
+                'w-full px-4 py-2.5 rounded-lg bg-white border text-obsidian-950 text-sm font-mono focus:outline-none focus:ring-1 focus:ring-gold-500',
+                errors.compareAtPrice ? 'border-rose-500 ring-1 ring-rose-500' : 'border-obsidian-200'
               )}
             />
             {errors.compareAtPrice && (
-              <p className="text-xs text-rose-400">{errors.compareAtPrice}</p>
+              <p className="text-xs text-rose-600">{errors.compareAtPrice}</p>
             )}
           </div>
 
           {/* Cost Price */}
           <div className="space-y-1.5">
-            <label className="block text-xs font-semibold text-obsidian-300 uppercase tracking-wider">
-              Coût de Revient (Interne)
+            <label className="block text-xs font-semibold text-obsidian-700 uppercase tracking-wider">
+              {t('admin.product_form.label_cost_price', 'Coût de Revient (Interne)')}
             </label>
             <input
               type="number"
@@ -676,22 +858,31 @@ export function ProductForm({ mode, initialData }: ProductFormProps) {
               step={1}
               value={costPrice}
               onChange={(e) => setCostPrice(e.target.value === '' ? '' : parseInt(e.target.value, 10))}
-              placeholder="Ex : 22000"
-              className="w-full px-4 py-2.5 rounded-lg bg-obsidian-900 border border-gold-500/20 text-ivory text-sm font-mono focus:outline-none focus:ring-1 focus:ring-gold-500"
+              placeholder={t('admin.product_form.ph_cost_price', 'Ex : 22000')}
+              className={cn(
+                'w-full px-4 py-2.5 rounded-lg bg-white border text-obsidian-950 text-sm font-mono focus:outline-none focus:ring-1 focus:ring-gold-500',
+                errors.costPrice ? 'border-rose-500 ring-1 ring-rose-500' : 'border-obsidian-200'
+              )}
             />
+            {errors.costPrice && (
+              <p className="text-xs text-rose-600">{errors.costPrice}</p>
+            )}
           </div>
         </div>
       </div>
 
       {/* SECTION 4: Matrice de Tailles & Gestion des Stocks */}
-      <div className="p-6 rounded-sm bg-obsidian-950 border border-gold-500/20 shadow-luxury-subtle space-y-5">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-gold-500/10 pb-2">
+      <div className="p-6 rounded-sm bg-white border border-obsidian-200 shadow-luxury-subtle space-y-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-obsidian-100 pb-2">
           <div>
-            <h2 className="font-cinzel text-base font-bold text-gold-400">
-              4. Matrice de Tailles & Inventaire Stock
+            <h2 className="font-cinzel text-base font-bold text-gold-700">
+              {t('admin.product_form.sec4', '4. Gestion des Stocks & Tailles')}
             </h2>
-            <p className="text-xs text-obsidian-300">
-              Gérez les disponibilités réelles par taille. Les tailles à 0 apparaîtront grisées sur la boutique.
+            <p className="text-xs text-obsidian-500">
+              {t(
+                'admin.product_form.stock_desc',
+                'Gérez les disponibilités réelles par taille. Les tailles à 0 apparaîtront grisées sur la boutique.'
+              )}
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -699,11 +890,15 @@ export function ProductForm({ mode, initialData }: ProductFormProps) {
               className={cn(
                 'px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider',
                 totalStock > 0
-                  ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                  : 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
+                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                  : 'bg-rose-50 text-rose-700 border border-rose-200'
               )}
             >
-              {totalStock > 0 ? `Stock Total : ${totalStock} unités` : 'Rupture de Stock'}
+              {totalStock > 0
+                ? formatTranslation(t('admin.product_form.total_stock_badge', 'Stock Total : {count} unités'), {
+                    count: totalStock,
+                  })
+                : t('pdp.stock.out_of_stock', 'Rupture de Stock')}
             </span>
           </div>
         </div>
@@ -711,7 +906,9 @@ export function ProductForm({ mode, initialData }: ProductFormProps) {
         {/* Clothing Toggle (Tailor vs Standard) */}
         {categoryId === 'clothing' && (
           <div className="flex items-center gap-2">
-            <span className="text-xs text-obsidian-300">Système de Tailles :</span>
+            <span className="text-xs text-obsidian-600">
+              {t('admin.product_form.size_system', 'Système de Tailles :')}
+            </span>
             <button
               type="button"
               onClick={() => {
@@ -722,10 +919,10 @@ export function ProductForm({ mode, initialData }: ProductFormProps) {
                 'px-2.5 py-1 rounded text-xs font-medium transition-colors',
                 clothingSizeType === 'tailor'
                   ? 'bg-gold-500 text-obsidian-950 font-semibold'
-                  : 'text-obsidian-300 hover:bg-obsidian-900'
+                  : 'text-obsidian-600 hover:bg-ivory-200'
               )}
             >
-              Tailleur Italien (48 - 56)
+              {t('admin.product_form.size_system_tailor', 'Tailleur Italien (48 - 56)')}
             </button>
             <button
               type="button"
@@ -737,10 +934,10 @@ export function ProductForm({ mode, initialData }: ProductFormProps) {
                 'px-2.5 py-1 rounded text-xs font-medium transition-colors',
                 clothingSizeType === 'standard'
                   ? 'bg-gold-500 text-obsidian-950 font-semibold'
-                  : 'text-obsidian-300 hover:bg-obsidian-900'
+                  : 'text-obsidian-600 hover:bg-ivory-200'
               )}
             >
-              Standard International (S - XXL)
+              {t('admin.product_form.size_system_standard', 'Standard International (S - XXL)')}
             </button>
           </div>
         )}
@@ -753,19 +950,23 @@ export function ProductForm({ mode, initialData }: ProductFormProps) {
               className={cn(
                 'p-3 rounded-xl border text-center space-y-2 transition-all',
                 qty > 0
-                  ? 'bg-obsidian-900 border-gold-500/30'
-                  : 'bg-obsidian-900/40 border-obsidian-800 opacity-60'
+                  ? 'bg-ivory-100 border-obsidian-200'
+                  : 'bg-obsidian-50 border-obsidian-200 opacity-60'
               )}
             >
               <div className="flex items-center justify-between">
-                <span className="font-cinzel text-sm font-bold text-ivory">{sizeKey}</span>
+                <span className="font-cinzel text-sm font-bold text-obsidian-950">
+                  {getLocalizedSize(sizeKey, language)}
+                </span>
                 <span
                   className={cn(
                     'text-[10px] px-1.5 py-0.5 rounded font-mono',
-                    qty > 0 ? 'text-emerald-400 bg-emerald-500/10' : 'text-rose-400 bg-rose-500/10'
+                    qty > 0 ? 'text-emerald-700 bg-emerald-50 border border-emerald-200' : 'text-rose-700 bg-rose-50 border border-rose-200'
                   )}
                 >
-                  {qty > 0 ? `${qty} en stock` : 'Épuisé'}
+                  {qty > 0
+                    ? formatTranslation(t('admin.product_form.size_in_stock', '{count} en stock'), { count: qty })
+                    : t('admin.product_form.size_out', 'Épuisé')}
                 </span>
               </div>
 
@@ -774,7 +975,7 @@ export function ProductForm({ mode, initialData }: ProductFormProps) {
                   type="button"
                   onClick={() => handleSizeStockChange(sizeKey, -1)}
                   disabled={qty <= 0}
-                  className="w-7 h-7 rounded bg-obsidian-950 hover:bg-obsidian-800 text-gold-400 disabled:opacity-30 flex items-center justify-center text-sm font-bold border border-gold-500/20"
+                  className="w-7 h-7 rounded bg-white hover:bg-ivory-200 text-gold-700 disabled:opacity-30 flex items-center justify-center text-sm font-bold border border-obsidian-200"
                 >
                   -
                 </button>
@@ -783,12 +984,12 @@ export function ProductForm({ mode, initialData }: ProductFormProps) {
                   min={0}
                   value={qty}
                   onChange={(e) => setExactSizeStock(sizeKey, parseInt(e.target.value || '0', 10))}
-                  className="w-12 text-center py-1 rounded bg-obsidian-950 border border-gold-500/20 text-ivory text-xs font-mono focus:outline-none focus:border-gold-500"
+                  className="w-12 text-center py-1 rounded bg-white border border-obsidian-200 text-obsidian-950 text-xs font-mono focus:outline-none focus:border-gold-500"
                 />
                 <button
                   type="button"
                   onClick={() => handleSizeStockChange(sizeKey, 1)}
-                  className="w-7 h-7 rounded bg-obsidian-950 hover:bg-obsidian-800 text-gold-400 flex items-center justify-center text-sm font-bold border border-gold-500/20"
+                  className="w-7 h-7 rounded bg-white hover:bg-ivory-200 text-gold-700 flex items-center justify-center text-sm font-bold border border-obsidian-200"
                 >
                   +
                 </button>
@@ -801,7 +1002,7 @@ export function ProductForm({ mode, initialData }: ProductFormProps) {
                     key={preset}
                     type="button"
                     onClick={() => setExactSizeStock(sizeKey, preset)}
-                    className="px-1 py-0.5 rounded text-[9px] bg-obsidian-950 text-obsidian-300 hover:text-gold-400 hover:bg-obsidian-800"
+                    className="px-1 py-0.5 rounded text-[9px] bg-white border border-obsidian-200 text-obsidian-600 hover:text-gold-700 hover:bg-gold-50"
                   >
                     {preset === 0 ? '0' : `+${preset}`}
                   </button>
@@ -813,85 +1014,96 @@ export function ProductForm({ mode, initialData }: ProductFormProps) {
       </div>
 
       {/* SECTION 4b: Gestion des Coloris & Variantes */}
-      <div className="p-6 rounded-sm bg-obsidian-950 border border-gold-500/20 shadow-luxury-subtle space-y-4">
-        <div className="flex items-center justify-between border-b border-gold-500/10 pb-2">
+      <div className="p-6 rounded-sm bg-white border border-obsidian-200 shadow-luxury-subtle space-y-4">
+        <div className="flex items-center justify-between border-b border-obsidian-100 pb-2">
           <div className="flex items-center gap-2">
-            <Palette className="w-5 h-5 text-gold-400" />
-            <h2 className="font-cinzel text-base font-bold text-gold-400">
-              4b. Coloris Disponibles &amp; Photos Associées
+            <Palette className="w-5 h-5 text-gold-600" />
+            <h2 className="font-cinzel text-base font-bold text-gold-700">
+              {t('admin.product_form.sec4b_colors', '4b. Coloris Disponibles & Photos Associées')}
             </h2>
           </div>
           <button
             type="button"
             onClick={() => {
+              const defaultHex = '#111111';
               setColors((prev) => [
                 ...prev,
-                { name: 'Nouveau Coloris', hex: '#111111', inStock: true, imageUrl: '' },
+                {
+                  name: getLocalizedColor(getColorNameFromHex(defaultHex), language),
+                  hex: defaultHex,
+                  inStock: true,
+                  imageUrl: '',
+                },
               ]);
             }}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gold-500/10 border border-gold-500/30 text-gold-300 text-xs hover:bg-gold-500/20 transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gold-50 border border-gold-500/40 text-gold-800 text-xs font-medium hover:bg-gold-100 transition-colors"
           >
             <Plus className="w-3.5 h-3.5" />
-            <span>Ajouter un Coloris</span>
+            <span>{t('admin.product_form.btn_add_color', 'Ajouter un Coloris')}</span>
           </button>
         </div>
 
-        <p className="text-xs text-obsidian-300">
-          Définissez les coloris disponibles pour cet article (ex: Noir Ébène, Marron Cognac). Lorsqu&apos;un client clique sur un coloris, la photo principale de la chaussure ou du vêtement s&apos;adapte automatiquement.
+        <p className="text-xs text-obsidian-500">
+          {t(
+            'admin.product_form.colors_desc',
+            "Définissez les coloris disponibles (ex: Noir Ébène, Marron Cognac). Lorsqu'un client clique sur un coloris, la photo principale s'adapte automatiquement."
+          )}
         </p>
 
-        {/* Quick Presets for Shoes and Suits */}
+        {/* Quick Presets for Shoes and Clothing */}
         <div className="flex flex-wrap items-center gap-2 pt-1 pb-2">
-          <span className="text-[11px] text-obsidian-300 font-medium">Modèles rapides :</span>
+          <span className="text-[11px] text-obsidian-500 font-medium">
+            {t('admin.product_form.quick_presets_label', 'Modèles rapides :')}
+          </span>
           <button
             type="button"
             onClick={() => {
               setColors([
                 {
-                  name: 'Marron Cognac',
+                  name: getLocalizedColor('Marron Cognac', language),
                   hex: '#8B4513',
                   inStock: true,
                   imageUrl: images[0]?.url || 'https://images.unsplash.com/photo-1617137984095-74e4e5e3613f',
                 },
                 {
-                  name: 'Noir Ébène',
+                  name: getLocalizedColor('Noir Ébène', language),
                   hex: '#111111',
                   inStock: true,
                   imageUrl: images[1]?.url || 'https://images.unsplash.com/photo-1533867617858-e7b97e060509',
                 },
               ]);
             }}
-            className="px-2.5 py-1 text-[11px] rounded bg-obsidian-900 border border-gold-500/20 text-gold-300 hover:bg-obsidian-800 transition-colors"
+            className="px-2.5 py-1 text-[11px] rounded bg-ivory-100 border border-obsidian-200 text-gold-800 hover:bg-gold-50 transition-colors"
           >
-            👞 Duo Souliers : Marron &amp; Noir
+            👞 {t('admin.product_form.preset_shoes_duo', 'Duo Souliers : Marron & Noir')}
           </button>
           <button
             type="button"
             onClick={() => {
               setColors([
                 {
-                  name: 'Noir Profond',
+                  name: getLocalizedColor('Noir Profond', language),
                   hex: '#111111',
                   inStock: true,
                   imageUrl: images[0]?.url || '',
                 },
                 {
-                  name: 'Bleu Nuit',
+                  name: getLocalizedColor('Bleu Nuit', language),
                   hex: '#1B2A4A',
                   inStock: true,
                   imageUrl: images[1]?.url || '',
                 },
                 {
-                  name: 'Gris Anthracite',
+                  name: getLocalizedColor('Gris Anthracite', language),
                   hex: '#36454F',
                   inStock: true,
                   imageUrl: images[2]?.url || '',
                 },
               ]);
             }}
-            className="px-2.5 py-1 text-[11px] rounded bg-obsidian-900 border border-gold-500/20 text-gold-300 hover:bg-obsidian-800 transition-colors"
+            className="px-2.5 py-1 text-[11px] rounded bg-ivory-100 border border-obsidian-200 text-gold-800 hover:bg-gold-50 transition-colors"
           >
-            👔 Trio Costumes : Noir, Bleu &amp; Gris
+            👔 {t('admin.product_form.preset_clothing_trio', 'Trio Couleurs : Noir, Bleu & Gris')}
           </button>
         </div>
 
@@ -905,53 +1117,81 @@ export function ProductForm({ mode, initialData }: ProductFormProps) {
         />
 
         {colors.length === 0 ? (
-          <div className="py-6 text-center border border-dashed border-gold-500/10 rounded-xl text-obsidian-300 text-xs">
-            Aucun coloris configuré pour ce produit. Cliquez sur &quot;Ajouter un Coloris&quot; ou utilisez un modèle rapide.
+          <div className="py-6 text-center border border-dashed border-obsidian-200 rounded-xl text-obsidian-500 text-xs">
+            {t(
+              'admin.product_form.no_colors',
+              'Aucun coloris configuré pour ce produit. Cliquez sur "Ajouter un Coloris" ou utilisez un modèle rapide.'
+            )}
           </div>
         ) : (
           <div className="space-y-3">
             {colors.map((colorItem, cIdx) => (
               <div
                 key={cIdx}
-                className="p-3.5 rounded-xl bg-obsidian-900/60 border border-gold-500/15 flex flex-col gap-2.5"
+                className="p-3.5 rounded-xl bg-ivory-100 border border-obsidian-200 flex flex-col gap-2.5"
               >
                 {/* Header Row: Color swatch, Name, Stock toggle, Delete */}
                 <div className="flex items-center justify-between gap-2.5 w-full">
                   <div className="flex items-center gap-2.5 flex-1 min-w-0">
                     {/* Visual Color Swatch */}
                     <div
-                      className="w-7 h-7 rounded-md border border-gold-500/40 overflow-hidden shrink-0 shadow-sm relative cursor-pointer"
+                      className="w-7 h-7 rounded-md border border-obsidian-300 overflow-hidden shrink-0 shadow-sm relative cursor-pointer"
                       style={{ backgroundColor: colorItem.hex }}
-                      title={`Couleur : ${colorItem.hex} (Cliquer pour changer)`}
+                      title={formatTranslation(
+                        t('admin.product_form.color_swatch_title', 'Couleur : {hex} (Cliquer pour changer)'),
+                        { hex: colorItem.hex }
+                      )}
                     >
                       <input
                         type="color"
                         value={colorItem.hex}
                         onChange={(e) => {
+                          const newHex = e.target.value;
+                          const autoName = getLocalizedColor(getColorNameFromHex(newHex), language);
                           const next = [...colors];
-                          next[cIdx].hex = e.target.value;
+                          next[cIdx].hex = newHex;
+                          next[cIdx].name = autoName;
                           setColors(next);
                         }}
                         className="opacity-0 absolute inset-0 w-full h-full cursor-pointer"
                       />
                     </div>
 
-                    {/* Name input */}
-                    <input
-                      type="text"
-                      value={colorItem.name}
-                      placeholder="Nom du coloris (ex: Noir Profond)"
-                      onChange={(e) => {
-                        const next = [...colors];
-                        next[cIdx].name = e.target.value;
-                        setColors(next);
-                      }}
-                      className="flex-1 min-w-[120px] px-2.5 py-1.5 text-xs rounded bg-obsidian-950 border border-gold-500/20 text-ivory placeholder-obsidian-500 focus:outline-none focus:border-gold-500"
-                    />
+                    {/* Name input with Auto-Naming Button */}
+                    <div className="flex items-center gap-1.5 flex-1 min-w-[140px]">
+                      <input
+                        type="text"
+                        value={colorItem.name}
+                        placeholder={t('admin.product_form.color_name_ph', 'Nom du coloris (ex: Noir Profond)')}
+                        onChange={(e) => {
+                          const next = [...colors];
+                          next[cIdx].name = e.target.value;
+                          setColors(next);
+                        }}
+                        className="flex-1 min-w-[100px] px-2.5 py-1.5 text-xs rounded bg-white border border-obsidian-200 text-obsidian-950 placeholder-obsidian-400 focus:outline-none focus:border-gold-500"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const autoName = getLocalizedColor(getColorNameFromHex(colorItem.hex), language);
+                          const next = [...colors];
+                          next[cIdx].name = autoName;
+                          setColors(next);
+                        }}
+                        title={formatTranslation(
+                          t('admin.product_form.color_auto_title', 'Détecter automatiquement le nom : {name}'),
+                          { name: getLocalizedColor(getColorNameFromHex(colorItem.hex), language) }
+                        )}
+                        className="px-2 py-1.5 rounded bg-gold-50 hover:bg-gold-100 text-gold-700 hover:text-gold-800 border border-gold-500/40 transition-colors shrink-0 flex items-center gap-1 text-[11px]"
+                      >
+                        <Sparkles className="w-3.5 h-3.5" />
+                        <span className="hidden sm:inline">{t('admin.product_form.color_auto_btn', 'Auto')}</span>
+                      </button>
+                    </div>
                   </div>
 
                   <div className="flex items-center gap-3 shrink-0">
-                    <label className="flex items-center gap-1.5 text-xs text-obsidian-300 cursor-pointer select-none">
+                    <label className="flex items-center gap-1.5 text-xs text-obsidian-600 cursor-pointer select-none">
                       <input
                         type="checkbox"
                         checked={colorItem.inStock}
@@ -962,7 +1202,9 @@ export function ProductForm({ mode, initialData }: ProductFormProps) {
                         }}
                         className="w-3.5 h-3.5 accent-gold-500 rounded"
                       />
-                      <span className="text-[11px] hidden sm:inline">En stock</span>
+                      <span className="text-[11px] hidden sm:inline">
+                        {t('admin.product_form.color_in_stock', 'En stock')}
+                      </span>
                     </label>
 
                     <button
@@ -970,9 +1212,9 @@ export function ProductForm({ mode, initialData }: ProductFormProps) {
                       onClick={() => {
                         setColors(colors.filter((_, idx) => idx !== cIdx));
                       }}
-                      className="p-1.5 rounded hover:bg-rose-500/10 text-obsidian-400 hover:text-rose-400 transition-colors"
-                      aria-label={`Supprimer ${colorItem.name}`}
-                      title="Supprimer ce coloris"
+                      className="p-1.5 rounded hover:bg-rose-50 text-obsidian-400 hover:text-rose-600 transition-colors"
+                      aria-label={`${t('admin.product_form.color_delete_title', 'Supprimer ce coloris')} ${getLocalizedColor(colorItem.name, language)}`.trim()}
+                      title={t('admin.product_form.color_delete_title', 'Supprimer ce coloris')}
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
@@ -980,13 +1222,16 @@ export function ProductForm({ mode, initialData }: ProductFormProps) {
                 </div>
 
                 {/* Photo Association Row */}
-                <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 pt-2 border-t border-gold-500/10 w-full">
+                <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 pt-2 border-t border-obsidian-200 w-full">
                   {/* Thumbnail preview if an image is assigned */}
                   {colorItem.imageUrl && (
-                    <div className="w-8 h-8 rounded border border-gold-500/40 overflow-hidden shrink-0 bg-obsidian-950">
+                    <div className="w-8 h-8 rounded border border-obsidian-200 overflow-hidden shrink-0 bg-white">
                       <img
-                        src={normalizeImageUrl(colorItem.imageUrl)}
-                        alt={colorItem.name}
+                        src={normalizeImageUrl(colorItem.imageUrl, {
+                          fallbackCategory: categoryId,
+                          language,
+                        })}
+                        alt={getLocalizedColor(colorItem.name, language)}
                         className="w-full h-full object-cover"
                       />
                     </div>
@@ -1001,24 +1246,34 @@ export function ProductForm({ mode, initialData }: ProductFormProps) {
                         next[cIdx].imageUrl = e.target.value;
                         setColors(next);
                       }}
-                      className="flex-1 min-w-[140px] px-2 py-1.5 text-xs rounded bg-obsidian-950 border border-gold-500/20 text-ivory focus:outline-none focus:border-gold-500 truncate"
-                      title="Associer une photo de la galerie à ce coloris"
+                      className="flex-1 min-w-[140px] px-2 py-1.5 text-xs rounded bg-white border border-obsidian-200 text-obsidian-950 focus:outline-none focus:border-gold-500 truncate"
+                      title={t('admin.product_form.color_photo_pick', 'Sélectionner une photo de la galerie...')}
                     >
                       <option value="">
-                        {colorItem.imageUrl ? '-- Retirer la photo --' : 'Sélectionner une photo de la galerie...'}
+                        {colorItem.imageUrl
+                          ? t('admin.product_form.color_photo_detach', '-- Retirer la photo --')
+                          : t('admin.product_form.color_photo_pick', 'Sélectionner une photo de la galerie...')}
                       </option>
                       {images.map((img, iIdx) => (
                         <option key={img.id || iIdx} value={img.url}>
-                          Photo #{iIdx + 1} {img.isPrimary ? '★' : ''} {img.alt ? `- ${img.alt.slice(0, 25)}` : ''}
+                          {`${t('admin.product_form.color_photo_btn', 'Photo')} #${iIdx + 1}${img.isPrimary ? ' ★' : ''}${
+                            img.alt && (language !== 'ar' || /[\u0600-\u06FF]/.test(img.alt))
+                              ? ` - ${img.alt.slice(0, 25)}`
+                              : ''
+                          }`}
                         </option>
                       ))}
                       {colorItem.imageUrl && !images.some((img) => img.url === colorItem.imageUrl) && (
-                        <option value={colorItem.imageUrl}>Photo personnalisée (Téléversée / Externe)</option>
+                        <option value={colorItem.imageUrl}>
+                          {t('admin.product_form.color_photo_custom', 'Photo personnalisée (Téléversée / Externe)')}
+                        </option>
                       )}
                     </select>
                   ) : (
-                    <span className="text-[11px] text-obsidian-400 flex-1 truncate">
-                      {colorItem.imageUrl ? 'Photo personnalisée liée' : 'Aucune photo dans la galerie (Section 5)'}
+                    <span className="text-[11px] text-obsidian-500 flex-1 truncate">
+                      {colorItem.imageUrl
+                        ? t('admin.product_form.color_photo_linked', 'Photo personnalisée liée')
+                        : t('admin.product_form.color_no_gallery', 'Aucune photo dans la galerie (Section 5)')}
                     </span>
                   )}
 
@@ -1030,15 +1285,15 @@ export function ProductForm({ mode, initialData }: ProductFormProps) {
                       colorFileInputRef.current?.click();
                     }}
                     disabled={uploadingColorIdx === cIdx}
-                    className="px-2.5 py-1.5 rounded bg-obsidian-950 hover:bg-gold-500/20 border border-gold-500/30 text-gold-400 text-xs flex items-center gap-1.5 shrink-0 transition-colors cursor-pointer"
-                    title="Téléverser une photo pour ce coloris depuis PC ou Mobile"
+                    className="px-2.5 py-1.5 rounded bg-white hover:bg-gold-50 border border-obsidian-200 text-gold-700 text-xs flex items-center gap-1.5 shrink-0 transition-colors cursor-pointer"
+                    title={t('admin.product_form.color_photo_upload_title', 'Téléverser une photo pour ce coloris')}
                   >
                     {uploadingColorIdx === cIdx ? (
                       <Loader2 className="w-3.5 h-3.5 animate-spin" />
                     ) : (
                       <UploadCloud className="w-3.5 h-3.5" />
                     )}
-                    <span>Photo</span>
+                    <span>{t('admin.product_form.color_photo_btn', 'Photo')}</span>
                   </button>
 
                   {/* Direct URL toggle button */}
@@ -1048,11 +1303,11 @@ export function ProductForm({ mode, initialData }: ProductFormProps) {
                     className={cn(
                       'p-1.5 rounded border text-xs flex items-center justify-center shrink-0 transition-colors',
                       urlInputOpenIdx === cIdx
-                        ? 'bg-gold-500/20 border-gold-500 text-gold-400'
-                        : 'bg-obsidian-950 border-gold-500/20 text-obsidian-400 hover:text-gold-300'
+                        ? 'bg-gold-50 border-gold-500 text-gold-700'
+                        : 'bg-white border-obsidian-200 text-obsidian-500 hover:text-gold-700'
                     )}
-                    title="Saisir ou modifier l'URL manuellement"
-                    aria-label="Saisir une URL"
+                    title={t('admin.product_form.color_url_title', "Saisir ou modifier l'URL manuellement")}
+                    aria-label={t('admin.product_form.color_url_title', "Saisir ou modifier l'URL manuellement")}
                   >
                     <Link2 className="w-3.5 h-3.5" />
                   </button>
@@ -1066,9 +1321,9 @@ export function ProductForm({ mode, initialData }: ProductFormProps) {
                         next[cIdx].imageUrl = '';
                         setColors(next);
                       }}
-                      className="p-1.5 rounded hover:bg-rose-500/10 text-obsidian-400 hover:text-rose-400 transition-colors shrink-0"
-                      title="Détacher la photo de ce coloris"
-                      aria-label="Détacher la photo"
+                      className="p-1.5 rounded hover:bg-rose-50 text-obsidian-400 hover:text-rose-600 transition-colors shrink-0"
+                      title={t('admin.product_form.color_detach_title', 'Détacher la photo de ce coloris')}
+                      aria-label={t('admin.product_form.color_detach_title', 'Détacher la photo de ce coloris')}
                     >
                       <X className="w-3.5 h-3.5" />
                     </button>
@@ -1080,21 +1335,22 @@ export function ProductForm({ mode, initialData }: ProductFormProps) {
                   <div className="flex items-center gap-1.5 pt-1">
                     <input
                       type="text"
+                      dir="ltr"
                       value={colorItem.imageUrl || ''}
-                      placeholder="URL directe de l'image (https://...)"
+                      placeholder={t('admin.product_form.color_url_ph', "URL directe de l'image (https://...)")}
                       onChange={(e) => {
                         const next = [...colors];
                         next[cIdx].imageUrl = e.target.value;
                         setColors(next);
                       }}
-                      className="flex-1 px-2.5 py-1 text-xs rounded bg-obsidian-950 border border-gold-500/30 text-ivory placeholder-obsidian-500 focus:outline-none focus:border-gold-500 font-mono"
+                      className="flex-1 px-2.5 py-1 text-xs rounded bg-white border border-obsidian-200 text-obsidian-950 placeholder-obsidian-400 focus:outline-none focus:border-gold-500 font-mono"
                     />
                     <button
                       type="button"
                       onClick={() => setUrlInputOpenIdx(null)}
-                      className="px-2 py-1 text-[10px] rounded bg-obsidian-950 border border-gold-500/20 text-obsidian-300 hover:text-ivory"
+                      className="px-2 py-1 text-[10px] rounded bg-white border border-obsidian-200 text-obsidian-600 hover:text-obsidian-950"
                     >
-                      Fermer
+                      {t('common.close', 'Fermer')}
                     </button>
                   </div>
                 )}
@@ -1105,9 +1361,9 @@ export function ProductForm({ mode, initialData }: ProductFormProps) {
       </div>
 
       {/* SECTION 5: Gestion des Visuels & Galerie d'Images */}
-      <div className="p-6 rounded-sm bg-obsidian-950 border border-gold-500/20 shadow-luxury-subtle space-y-5">
-        <h2 className="font-cinzel text-base font-bold text-gold-400 border-b border-gold-500/10 pb-2">
-          5. Visuels & Galerie Haute Définition
+      <div className="p-6 rounded-sm bg-white border border-obsidian-200 shadow-luxury-subtle space-y-5">
+        <h2 className="font-cinzel text-base font-bold text-gold-700 border-b border-obsidian-100 pb-2">
+          {t('admin.product_form.sec5', '5. Photographies & Coloris')}
         </h2>
 
         <AdminMediaUpload
@@ -1119,17 +1375,21 @@ export function ProductForm({ mode, initialData }: ProductFormProps) {
       </div>
 
       {/* SECTION 6: Visibilité & Badges */}
-      <div className="p-6 rounded-sm bg-obsidian-950 border border-gold-500/20 shadow-luxury-subtle space-y-4">
-        <h2 className="font-cinzel text-base font-bold text-gold-400 border-b border-gold-500/10 pb-2">
-          6. Visibilité & Badges sur la Boutique
+      <div className="p-6 rounded-sm bg-white border border-obsidian-200 shadow-luxury-subtle space-y-4">
+        <h2 className="font-cinzel text-base font-bold text-gold-700 border-b border-obsidian-100 pb-2">
+          {t('admin.product_form.sec6', '6. Visibilité & Badges')}
         </h2>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
           {/* In Stock Active */}
-          <label className="p-3 rounded-xl bg-obsidian-900 border border-gold-500/20 flex items-center justify-between cursor-pointer group">
+          <label className="p-3 rounded-xl bg-ivory-100 border border-obsidian-200 flex items-center justify-between cursor-pointer group">
             <div>
-              <p className="text-xs font-semibold text-ivory">Article Actif</p>
-              <p className="text-[10px] text-obsidian-300">Visible sur le catalogue</p>
+              <p className="text-xs font-semibold text-obsidian-950">
+                {t('admin.product_form.vis_active_title', 'Article Actif')}
+              </p>
+              <p className="text-[10px] text-obsidian-500">
+                {t('admin.product_form.vis_active_desc', 'Visible sur le catalogue')}
+              </p>
             </div>
             <input
               type="checkbox"
@@ -1140,10 +1400,14 @@ export function ProductForm({ mode, initialData }: ProductFormProps) {
           </label>
 
           {/* Featured */}
-          <label className="p-3 rounded-xl bg-obsidian-900 border border-gold-500/20 flex items-center justify-between cursor-pointer group">
+          <label className="p-3 rounded-xl bg-ivory-100 border border-obsidian-200 flex items-center justify-between cursor-pointer group">
             <div>
-              <p className="text-xs font-semibold text-ivory">Sélection Prestige</p>
-              <p className="text-[10px] text-obsidian-300">Mis en vedette accueil</p>
+              <p className="text-xs font-semibold text-obsidian-950">
+                {t('admin.product_form.vis_featured_title', 'Sélection Prestige')}
+              </p>
+              <p className="text-[10px] text-obsidian-500">
+                {t('admin.product_form.vis_featured_desc', 'Mis en vedette accueil')}
+              </p>
             </div>
             <input
               type="checkbox"
@@ -1154,10 +1418,14 @@ export function ProductForm({ mode, initialData }: ProductFormProps) {
           </label>
 
           {/* New Arrival */}
-          <label className="p-3 rounded-xl bg-obsidian-900 border border-gold-500/20 flex items-center justify-between cursor-pointer group">
+          <label className="p-3 rounded-xl bg-ivory-100 border border-obsidian-200 flex items-center justify-between cursor-pointer group">
             <div>
-              <p className="text-xs font-semibold text-ivory">Nouveauté</p>
-              <p className="text-[10px] text-obsidian-300">Badge &apos;Nouveau&apos; doré</p>
+              <p className="text-xs font-semibold text-obsidian-950">
+                {t('admin.product_form.vis_new_title', 'Nouveauté')}
+              </p>
+              <p className="text-[10px] text-obsidian-500">
+                {t('admin.product_form.vis_new_desc', "Badge 'Nouveau' doré")}
+              </p>
             </div>
             <input
               type="checkbox"
@@ -1168,10 +1436,14 @@ export function ProductForm({ mode, initialData }: ProductFormProps) {
           </label>
 
           {/* Best Seller */}
-          <label className="p-3 rounded-xl bg-obsidian-900 border border-gold-500/20 flex items-center justify-between cursor-pointer group">
+          <label className="p-3 rounded-xl bg-ivory-100 border border-obsidian-200 flex items-center justify-between cursor-pointer group">
             <div>
-              <p className="text-xs font-semibold text-ivory">Best-Seller</p>
-              <p className="text-[10px] text-obsidian-300">Pièce la plus prisée</p>
+              <p className="text-xs font-semibold text-obsidian-950">
+                {t('admin.product_form.vis_bestseller_title', 'Best-Seller')}
+              </p>
+              <p className="text-[10px] text-obsidian-500">
+                {t('admin.product_form.vis_bestseller_desc', 'Pièce la plus prisée')}
+              </p>
             </div>
             <input
               type="checkbox"
@@ -1184,27 +1456,31 @@ export function ProductForm({ mode, initialData }: ProductFormProps) {
       </div>
 
       {/* Bottom Save Bar */}
-      <div className="flex items-center justify-end gap-3 pt-4 border-t border-gold-500/15">
+      <div className="flex items-center justify-end gap-3 pt-4 border-t border-obsidian-200">
         <Link
           href="/admin/products"
-          className="px-4 py-2 rounded-lg bg-obsidian-950 border border-gold-500/20 text-xs text-obsidian-300 hover:text-ivory transition-colors"
+          className="px-4 py-2 rounded-lg bg-white border border-obsidian-200 text-xs text-obsidian-700 hover:text-obsidian-950 transition-colors"
         >
-          Annuler
+          {t('admin.product_form.btn_cancel', 'Annuler')}
         </Link>
         <button
           type="submit"
           disabled={submitting}
-          className="px-6 py-2.5 rounded-lg bg-gold-500 hover:bg-gold-400 text-obsidian-950 text-xs font-semibold uppercase tracking-wider flex items-center gap-2 transition-all shadow-luxury-subtle disabled:opacity-50"
+          className="px-6 py-2.5 rounded-lg bg-gold-500 hover:bg-gold-600 text-obsidian-950 text-xs font-semibold uppercase tracking-wider flex items-center gap-2 transition-all shadow-luxury-subtle disabled:opacity-50"
         >
           {submitting ? (
             <>
               <div className="w-3.5 h-3.5 border-2 border-obsidian-950/20 border-t-obsidian-950 rounded-full animate-spin" />
-              <span>Enregistrement...</span>
+              <span>{t('admin.product_form.saving', 'Enregistrement...')}</span>
             </>
           ) : (
             <>
               <Save className="w-4 h-4" />
-              <span>{mode === 'create' ? 'Publier le Produit' : 'Enregistrer les Modifications'}</span>
+              <span>
+                {mode === 'create'
+                  ? t('admin.product_form.btn_publish', 'Publier le Produit')
+                  : t('admin.product_form.btn_save', 'Enregistrer les Modifications')}
+              </span>
             </>
           )}
         </button>

@@ -25,7 +25,7 @@ export function OrderStatusBadge({
   const { t } = useLanguage();
   const config = STATUS_CONFIG[status] || {
     label: STATUS_LABELS_FR[status] || status,
-    badgeClass: 'bg-obsidian-800 text-obsidian-300 border-obsidian-700',
+    badgeClass: 'bg-obsidian-100 text-obsidian-700 border-obsidian-200',
     dotClass: 'bg-obsidian-400',
     iconName: 'Clock',
   };

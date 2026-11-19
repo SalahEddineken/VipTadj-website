@@ -1,5 +1,8 @@
+import type { fr } from './locales/fr';
+
 export type SupportedLanguage = 'fr' | 'en' | 'ar';
 export type Direction = 'ltr' | 'rtl';
+export type TranslationKey = keyof typeof fr;
 
 export interface LanguageContextType {
   language: SupportedLanguage;

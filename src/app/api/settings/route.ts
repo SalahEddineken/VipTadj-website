@@ -1,20 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDataStore } from '@/lib/data-provider';
-import { updateStoreSettingsSchema } from '@/lib/validations/settings';
-import { ALGERIAN_58_WILAYAS } from '@/lib/data/wilayas';
+import { validateStoreSettings } from '@/lib/validations/settings';
+import { ALGERIAN_68_WILAYAS } from '@/lib/data/wilayas';
+import { getTranslation } from '@/lib/i18n/locales';
+import { resolveApiLanguage, buildApiErrorResponse } from '@/app/api/_utils/api-i18n';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const lang = req ? resolveApiLanguage(req) : 'fr';
+
   try {
     const store = getDataStore();
     const settings = await store.getSettings();
 
-    // Ensure all 58 wilayas are present in wilayaShippingFees
+    // Ensure all 68 wilayas are present in wilayaShippingFees
     const fees = { ...(settings.wilayaShippingFees || {}) };
     let hasMissing = false;
 
-    for (const w of ALGERIAN_58_WILAYAS) {
+    for (const w of ALGERIAN_68_WILAYAS) {
       if (!fees[w.code]) {
         fees[w.code] = {
           homeFee: w.homeDeliveryFee,
@@ -32,48 +36,82 @@ export async function GET() {
     if (settings.freeShippingThreshold === undefined) {
       settings.freeShippingThreshold = 15000;
     }
+    if (!settings.communeShippingFees) {
+      settings.communeShippingFees = {};
+    }
 
-    return NextResponse.json({
-      success: true,
-      settings,
-    });
+    return NextResponse.json(
+      {
+        success: true,
+        settings,
+      },
+      {
+        headers: {
+          'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+        },
+      }
+    );
   } catch (error: any) {
     console.error('[API Settings GET Error]:', error);
-    return NextResponse.json(
-      { success: false, error: error.message || 'Erreur lors de la récupération des paramètres.' },
-      { status: 500 }
-    );
+    return buildApiErrorResponse(lang, {
+      status: 500,
+      errorCode: 'INTERNAL_ERROR',
+      errorKey: 'api.error.internal',
+      frFallback: error?.message || 'Erreur lors de la récupération des paramètres.',
+    });
   }
 }
 
 export async function PUT(req: NextRequest) {
-  try {
-    const body = await req.json();
-    const validation = updateStoreSettingsSchema.safeParse(body);
+  const lang = resolveApiLanguage(req);
 
-    if (!validation.success) {
-      const errors: Record<string, string> = {};
-      for (const issue of validation.error.issues) {
-        const field = issue.path[0] ? String(issue.path[0]) : 'general';
-        errors[field] = issue.message;
-      }
-      return NextResponse.json(
-        { success: false, error: 'Paramètres invalides.', errors },
-        { status: 400 }
-      );
+  try {
+    let body: any;
+    try {
+      body = await req.json();
+    } catch {
+      return buildApiErrorResponse(lang, {
+        status: 400,
+        errorCode: 'INVALID_JSON',
+        errorKey: 'api.error.invalid_json',
+      });
+    }
+
+    if (!body || typeof body !== 'object' || Array.isArray(body)) {
+      return buildApiErrorResponse(lang, {
+        status: 400,
+        errorCode: 'INVALID_SETTINGS',
+        errorKey: 'api.error.invalid_settings',
+      });
+    }
+
+    const validation = validateStoreSettings(body, lang);
+
+    if (!validation.valid || !validation.data) {
+      return buildApiErrorResponse(lang, {
+        status: 400,
+        errorCode: validation.errorCode || 'INVALID_SETTINGS',
+        errorKey: validation.errorKey || 'api.error.invalid_settings',
+        frFallback: validation.error || 'Paramètres invalides.',
+        extra: {
+          errors: validation.errors,
+          errorKeys: validation.errorKeys,
+          issues: validation.issues,
+        },
+      });
     }
 
     const store = getDataStore();
     const current = await store.getSettings();
 
-    // Deep merge wilayaShippingFees to preserve other 57 wilayas
+    // Deep merge wilayaShippingFees to preserve other wilayas
     const mergedFees = {
       ...(current.wilayaShippingFees || {}),
       ...(validation.data.wilayaShippingFees || {}),
     };
 
     // Update wilayasDelivery array in tandem if it exists
-    const updatedDeliveryArray = (current.wilayasDelivery || ALGERIAN_58_WILAYAS).map((w) => {
+    const updatedDeliveryArray = (current.wilayasDelivery || ALGERIAN_68_WILAYAS).map((w) => {
       const updatedFee = mergedFees[w.code];
       if (updatedFee) {
         return {
@@ -91,20 +129,32 @@ export async function PUT(req: NextRequest) {
       ...validation.data,
       wilayaShippingFees: mergedFees,
       wilayasDelivery: updatedDeliveryArray,
+      ...(validation.data.communeShippingFees !== undefined
+        ? { communeShippingFees: validation.data.communeShippingFees }
+        : {}),
     };
 
     const saved = await store.updateSettings(updatePayload);
 
-    return NextResponse.json({
-      success: true,
-      settings: saved,
-      message: 'Paramètres enregistrés avec succès.',
-    });
+    return NextResponse.json(
+      {
+        success: true,
+        settings: saved,
+        message: getTranslation(lang, 'admin.settings.saved_toast', 'Paramètres enregistrés avec succès.'),
+      },
+      {
+        headers: {
+          'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+        },
+      }
+    );
   } catch (error: any) {
     console.error('[API Settings PUT Error]:', error);
-    return NextResponse.json(
-      { success: false, error: error.message || 'Erreur lors de l\'enregistrement des paramètres.' },
-      { status: 500 }
-    );
+    return buildApiErrorResponse(lang, {
+      status: 500,
+      errorCode: 'INTERNAL_ERROR',
+      errorKey: 'api.error.internal',
+      frFallback: error?.message || "Erreur lors de l'enregistrement des paramètres.",
+    });
   }
 }

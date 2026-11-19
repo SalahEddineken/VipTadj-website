@@ -91,10 +91,10 @@ const config: Config = {
         },
       },
       fontFamily: {
-        serif: ['var(--font-serif)', 'Playfair Display', 'Georgia', 'serif'],
-        sans: ['var(--font-sans)', 'Plus Jakarta Sans', 'Inter', 'system-ui', 'sans-serif'],
-        cinzel: ['var(--font-cinzel)', 'Cinzel', 'Trajan Pro', 'serif'],
-        arabic: ['var(--font-arabic)', 'Tajawal', 'Cairo', 'Segoe UI', 'Tahoma', 'sans-serif'],
+        serif: ['Readex Pro', 'sans-serif'],
+        sans: ['Readex Pro', 'sans-serif'],
+        cinzel: ['Readex Pro', 'sans-serif'],
+        arabic: ['Readex Pro', 'sans-serif'],
       },
       letterSpacing: {
         tightest: '-0.04em',

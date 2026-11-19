@@ -7,10 +7,10 @@ import {
 
 describe('Tier 1: Checkout — Algerian 58 Wilayas Selector & Tariff Matrix (F-CHECK-01)', () => {
   // ==========================================
-  // Test 1: Complete 58 Wilayas Dataset
+  // Test 1: Complete 68 Wilayas Dataset
   // ==========================================
-  it('contains all 58 Algerian Wilayas in exact numerical sequence from 1 (Adrar) to 58 (El Meniaa)', () => {
-    expect(wilayasFixture).toHaveLength(58);
+  it('contains all 68 Algerian Wilayas in exact numerical sequence from 1 (Adrar) to 68 (Bou Saâda)', () => {
+    expect(wilayasFixture).toHaveLength(68);
 
     wilayasFixture.forEach((wilaya, index) => {
       expect(wilaya.code).toBe(index + 1);
@@ -24,6 +24,7 @@ describe('Tier 1: Checkout — Algerian 58 Wilayas Selector & Tariff Matrix (F-C
     expect(wilayasFixture[15].name).toBe('Alger');
     expect(wilayasFixture[30].name).toBe('Oran');
     expect(wilayasFixture[57].name).toBe('El Meniaa');
+    expect(wilayasFixture[67].name).toBe('Bou Saâda');
   });
 
   // ==========================================
@@ -48,19 +49,19 @@ describe('Tier 1: Checkout — Algerian 58 Wilayas Selector & Tariff Matrix (F-C
   // Test 3: Regional Fee Tiers Assignment
   // ==========================================
   it('assigns accurate regional delivery fee tiers across capital, coastal, and southern zones', () => {
-    // Alger (Capital): 400 DA
-    expect(getWilayaFee(16)).toBe(400);
+    // Alger (Capital): 700 DA
+    expect(getWilayaFee(16)).toBe(700);
 
-    // Blida & Tipaza (Centre / Metropole): 500 DA
-    expect(getWilayaFee(9)).toBe(500); // Blida
+    // Blida (Centre): 800 DA
+    expect(getWilayaFee(9)).toBe(800); // Blida
 
-    // Oran & Constantine (Major Coastal & East hubs): 600 DA
-    expect(getWilayaFee(31)).toBe(600); // Oran
-    expect(getWilayaFee(25)).toBe(600); // Constantine
+    // Oran & Constantine:
+    expect(getWilayaFee(31)).toBe(800); // Oran
+    expect(getWilayaFee(25)).toBe(700); // Constantine
 
-    // Grand Sud (Adrar, Tamanrasset, Biskra): 900 DA
-    expect(getWilayaFee(1)).toBe(900); // Adrar
-    expect(getWilayaFee(11)).toBe(900); // Tamanrasset
+    // Grand Sud / Oasis (Adrar, Tamanrasset, Biskra):
+    expect(getWilayaFee(1)).toBe(1650); // Adrar
+    expect(getWilayaFee(11)).toBe(1650); // Tamanrasset
     expect(getWilayaFee(7)).toBe(900); // Biskra
   });
 
@@ -99,7 +100,7 @@ describe('Tier 1: Checkout — Algerian 58 Wilayas Selector & Tariff Matrix (F-C
     const alger = getWilayaByCode(16);
     expect(alger?.deskFee).toBeDefined();
     expect(alger?.deskFee).toBeLessThan(alger!.fee);
-    expect(alger?.deskFee).toBe(250);
-    expect(alger?.fee).toBe(400);
+    expect(alger?.deskFee).toBe(550);
+    expect(alger?.fee).toBe(700);
   });
 });

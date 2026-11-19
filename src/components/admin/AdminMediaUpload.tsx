@@ -19,10 +19,13 @@ import {
 } from 'lucide-react';
 import { ProductImage, ProductCategoryType } from '@/types';
 import { normalizeImageUrl, isValidMediaUrl } from '@/lib/media/url-normalizer';
-import { CURATED_MENSWEAR_ASSETS, CuratedAsset } from '@/lib/media/curated-assets';
-import { GOOGLE_DRIVE_UPLOAD_GUIDE } from '@/lib/media/upload-service';
+import { CURATED_MENSWEAR_ASSETS, CuratedAsset, getLocalizedCuratedAsset } from '@/lib/media/curated-assets';
+import { getGoogleDriveUploadGuide, inspectMediaInput } from '@/lib/media/upload-service';
 import { compressImageFile } from '@/lib/media/client-image-compressor';
 import { cn } from '@/lib/utils/cn';
+import { useLanguage } from '@/lib/context/language-context';
+import { formatTranslation } from '@/lib/i18n/locales';
+import { getLocalizedCategoryName } from '@/lib/i18n/catalog-translations';
 
 export interface AdminMediaUploadProps {
   images: ProductImage[];
@@ -41,6 +44,9 @@ export function AdminMediaUpload({
   category = 'clothing',
   error,
 }: AdminMediaUploadProps) {
+  const { language, t } = useLanguage();
+  const driveGuideSteps = getGoogleDriveUploadGuide(language);
+
   const [activeTab, setActiveTab] = useState<'upload' | 'url' | 'library' | 'guide'>('upload');
   const [urlInput, setUrlInput] = useState('');
   const [altInput, setAltInput] = useState('');
@@ -103,25 +109,35 @@ export function AdminMediaUpload({
     setUrlError(null);
     const trimmed = urlInput.trim();
     if (!trimmed) {
-      setUrlError('Veuillez saisir une URL ou un lien Google Drive.');
+      setUrlError(t('admin.media.url_required', 'Veuillez saisir une URL ou un lien Google Drive.'));
       return;
     }
 
+    const inspection = inspectMediaInput(trimmed, language);
     if (!isValidMediaUrl(trimmed)) {
-      setUrlError('URL invalide ou non supportée. Utilisez un lien Google Drive, Cloudinary ou image direct.');
+      setUrlError(
+        !inspection.isValid && inspection.messageKey
+          ? t(inspection.messageKey, inspection.message)
+          : t('admin.media.url_invalid', 'URL invalide ou non supportée. Utilisez un lien Google Drive, Cloudinary ou image direct.')
+      );
       return;
     }
 
     if (images.length >= maxImages) {
-      setUrlError(`Nombre maximum d'images atteint (${maxImages}).`);
+      setUrlError(
+        formatTranslation(t('admin.media.max_reached', "Nombre maximum d'images atteint ({max})."), { max: maxImages })
+      );
       return;
     }
 
-    const normalized = normalizeImageUrl(trimmed);
+    const normalized = normalizeImageUrl(trimmed, {
+      fallbackCategory: category,
+      language,
+    });
     const newImage: ProductImage = {
       id: `img-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
       url: normalized,
-      alt: altInput.trim() || 'Photographie produit VIP TADJ',
+      alt: altInput.trim() || t('admin.product_form.color_photo_btn', 'Photo'),
       isPrimary: images.length === 0,
     };
 
@@ -138,7 +154,9 @@ export function AdminMediaUpload({
 
       const remainingSlots = maxImages - images.length;
       if (remainingSlots <= 0) {
-        alert(`Nombre maximum d'images atteint (${maxImages}).`);
+        alert(
+          formatTranslation(t('admin.media.max_reached', "Nombre maximum d'images atteint ({max})."), { max: maxImages })
+        );
         return;
       }
 
@@ -152,8 +170,11 @@ export function AdminMediaUpload({
           const rawFile = filesToProcess[i];
           setUploadStatus(
             filesToProcess.length > 1
-              ? `Traitement et optimisation (${i + 1}/${filesToProcess.length})...`
-              : 'Optimisation de la photo pour affichage haute définition...'
+              ? formatTranslation(t('admin.media.optimizing_multi', 'Traitement et optimisation ({current}/{total})...'), {
+                  current: i + 1,
+                  total: filesToProcess.length,
+                })
+              : t('admin.media.optimizing_one', 'Optimisation de la photo pour affichage haute définition...')
           );
 
           // Compress large camera photos in the browser (e.g. 12MB down to ~300KB)
@@ -170,12 +191,18 @@ export function AdminMediaUpload({
 
           setUploadStatus(
             filesToProcess.length > 1
-              ? `Téléversement (${i + 1}/${filesToProcess.length})...`
-              : 'Téléversement en cours sur le serveur VIP TADJ...'
+              ? formatTranslation(t('admin.media.uploading_multi', 'Téléversement ({current}/{total})...'), {
+                  current: i + 1,
+                  total: filesToProcess.length,
+                })
+              : t('admin.media.uploading_one', 'Téléversement en cours sur le serveur VIP TADJ...')
           );
 
           const res = await fetch('/api/media/upload', {
             method: 'POST',
+            headers: {
+              'x-lang': language,
+            },
             body: formData,
           });
 
@@ -184,7 +211,15 @@ export function AdminMediaUpload({
             newImages.push(data.image);
           } else {
             console.error('Upload error:', data.error);
-            alert(data.error || `Erreur lors du téléversement de ${rawFile.name}.`);
+            alert(
+              data.errorKey
+                ? t(data.errorKey, data.error)
+                : language === 'fr' && data.error
+                ? data.error
+                : formatTranslation(t('admin.media.upload_error_file', 'Erreur lors du téléversement de {name}.'), {
+                    name: rawFile.name,
+                  })
+            );
           }
         }
 
@@ -193,7 +228,7 @@ export function AdminMediaUpload({
         }
       } catch (err: any) {
         console.error('Upload failed:', err);
-        alert('Échec de la communication avec le serveur média.');
+        alert(t('admin.media.upload_comm_error', 'Échec de la communication avec le serveur média.'));
       } finally {
         setIsUploading(false);
         setUploadStatus(null);
@@ -201,7 +236,7 @@ export function AdminMediaUpload({
         if (cameraInputRef.current) cameraInputRef.current.value = '';
       }
     },
-    [maxImages, images, altInput, onChange]
+    [maxImages, images, altInput, onChange, language, t]
   );
 
   // Add from File Upload input
@@ -242,7 +277,9 @@ export function AdminMediaUpload({
   // Add from Curated Library
   const handleAddCurated = (asset: CuratedAsset) => {
     if (images.length >= maxImages) {
-      alert(`Nombre maximum d'images atteint (${maxImages}).`);
+      alert(
+        formatTranslation(t('admin.media.max_reached', "Nombre maximum d'images atteint ({max})."), { max: maxImages })
+      );
       return;
     }
 
@@ -250,10 +287,11 @@ export function AdminMediaUpload({
       return;
     }
 
+    const localizedAsset = getLocalizedCuratedAsset(asset, language);
     const newImage: ProductImage = {
       id: `asset-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
       url: asset.url,
-      alt: asset.alt || asset.title,
+      alt: localizedAsset.alt || localizedAsset.title,
       isPrimary: images.length === 0,
     };
 
@@ -264,6 +302,17 @@ export function AdminMediaUpload({
     if (libraryFilter === 'all') return true;
     return asset.category === libraryFilter;
   });
+
+  const getDisplayImageAlt = (img: ProductImage, idx: number) => {
+    const matchedCurated = CURATED_MENSWEAR_ASSETS.find((a) => a.url === img.url);
+    if (matchedCurated) {
+      return getLocalizedCuratedAsset(matchedCurated, language).alt;
+    }
+    if (language === 'ar' && (!img.alt || !/[\u0600-\u06FF]/.test(img.alt))) {
+      return `${t('admin.product_form.color_photo_btn', 'Photo')} #${idx + 1}`;
+    }
+    return img.alt || t('admin.product_form.color_photo_btn', 'Photo');
+  };
 
   return (
     <div className="space-y-4">
@@ -289,11 +338,14 @@ export function AdminMediaUpload({
 
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
         <div>
-          <label className="block text-xs font-semibold text-gold-400 uppercase tracking-wider">
-            Galerie de Photos du Produit ({images.length}/{maxImages})
+          <label className="block text-xs font-semibold text-gold-700 uppercase tracking-wider">
+            {formatTranslation(t('admin.media.title', 'Galerie de Photos du Produit ({count}/{max})'), {
+              count: images.length,
+              max: maxImages,
+            })}
           </label>
-          <p className="text-[11px] text-obsidian-400">
-            Téléversez vos photos directement depuis votre ordinateur ou smartphone.
+          <p className="text-[11px] text-obsidian-500">
+            {t('admin.media.subtitle', 'Téléversez vos photos directement depuis votre ordinateur ou smartphone.')}
           </p>
         </div>
 
@@ -302,31 +354,31 @@ export function AdminMediaUpload({
           type="button"
           onClick={() => fileInputRef.current?.click()}
           disabled={disabled || isUploading || images.length >= maxImages}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gold-500 hover:bg-gold-400 text-obsidian-950 text-xs font-semibold uppercase tracking-wider transition-all disabled:opacity-50 self-start sm:self-auto shadow-sm"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gold-500 hover:bg-gold-600 text-obsidian-950 text-xs font-semibold uppercase tracking-wider transition-all disabled:opacity-50 self-start sm:self-auto shadow-sm"
         >
           {isUploading ? (
             <>
               <Loader2 className="w-3.5 h-3.5 animate-spin" />
-              <span>Téléversement...</span>
+              <span>{t('admin.settings.uploading', 'Téléversement...')}</span>
             </>
           ) : (
             <>
               <UploadCloud className="w-3.5 h-3.5" />
-              <span>Choisir photo (PC / Téléphone)</span>
+              <span>{t('admin.media.choose_photo_btn', 'Choisir photo (PC / Téléphone)')}</span>
             </>
           )}
         </button>
       </div>
 
       {error && (
-        <div className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/30 flex items-center gap-2 text-rose-300 text-xs">
-          <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
+        <div className="p-3 rounded-lg bg-rose-50 border border-rose-200 flex items-center gap-2 text-rose-700 text-xs">
+          <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
           <span>{error}</span>
         </div>
       )}
 
       {/* Tabs */}
-      <div className="flex flex-wrap items-center gap-2 border-b border-gold-500/15 pb-2">
+      <div className="flex flex-wrap items-center gap-2 border-b border-obsidian-200 pb-2">
         <button
           type="button"
           onClick={() => setActiveTab('upload')}
@@ -334,11 +386,11 @@ export function AdminMediaUpload({
             'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors',
             activeTab === 'upload'
               ? 'bg-gold-500 text-obsidian-950 font-semibold'
-              : 'text-obsidian-300 hover:text-ivory hover:bg-obsidian-900'
+              : 'text-obsidian-600 hover:text-obsidian-950 hover:bg-ivory-100'
           )}
         >
           <UploadCloud className="w-3.5 h-3.5" />
-          <span>Téléverser depuis l&apos;appareil</span>
+          <span>{t('admin.media.tab_upload', "Téléverser depuis l'appareil")}</span>
         </button>
 
         <button
@@ -348,11 +400,11 @@ export function AdminMediaUpload({
             'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors',
             activeTab === 'url'
               ? 'bg-gold-500 text-obsidian-950 font-semibold'
-              : 'text-obsidian-300 hover:text-ivory hover:bg-obsidian-900'
+              : 'text-obsidian-600 hover:text-obsidian-950 hover:bg-ivory-100'
           )}
         >
           <LinkIcon className="w-3.5 h-3.5" />
-          <span>Coller un lien (Drive / CDN)</span>
+          <span>{t('admin.media.tab_url', 'Coller un lien (Drive / CDN)')}</span>
         </button>
 
         <button
@@ -362,25 +414,29 @@ export function AdminMediaUpload({
             'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors',
             activeTab === 'library'
               ? 'bg-gold-500 text-obsidian-950 font-semibold'
-              : 'text-obsidian-300 hover:text-ivory hover:bg-obsidian-900'
+              : 'text-obsidian-600 hover:text-obsidian-950 hover:bg-ivory-100'
           )}
         >
           <Sparkles className="w-3.5 h-3.5" />
-          <span>Bibliothèque Prestige ({CURATED_MENSWEAR_ASSETS.length})</span>
+          <span>
+            {formatTranslation(t('admin.media.tab_library', 'Bibliothèque Prestige ({count})'), {
+              count: CURATED_MENSWEAR_ASSETS.length,
+            })}
+          </span>
         </button>
 
         <button
           type="button"
           onClick={() => setActiveTab('guide')}
           className={cn(
-            'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ml-auto',
+            'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ms-auto',
             activeTab === 'guide'
-              ? 'bg-obsidian-800 text-gold-400 border border-gold-500/30'
-              : 'text-obsidian-400 hover:text-gold-300'
+              ? 'bg-gold-50 text-gold-800 border border-gold-500/40'
+              : 'text-obsidian-500 hover:text-gold-700'
           )}
         >
           <HelpCircle className="w-3.5 h-3.5" />
-          <span>Guide Google Drive</span>
+          <span>{t('admin.media.tab_guide', 'Guide Google Drive')}</span>
         </button>
       </div>
 
@@ -393,29 +449,29 @@ export function AdminMediaUpload({
           className={cn(
             'p-6 sm:p-8 rounded-xl border-2 border-dashed transition-all text-center space-y-4',
             isDragging
-              ? 'border-gold-400 bg-gold-500/10 scale-[1.01]'
-              : 'border-gold-500/30 bg-obsidian-950/70 hover:border-gold-500/50'
+              ? 'border-gold-500 bg-gold-50 scale-[1.01]'
+              : 'border-obsidian-200 bg-ivory-100/70 hover:border-gold-500/60'
           )}
         >
-          <div className="w-14 h-14 mx-auto rounded-full bg-gold-500/10 border border-gold-500/30 flex items-center justify-center text-gold-400">
+          <div className="w-14 h-14 mx-auto rounded-full bg-gold-50 border border-gold-500/40 flex items-center justify-center text-gold-700">
             {isUploading ? (
-              <Loader2 className="w-7 h-7 animate-spin text-gold-400" />
+              <Loader2 className="w-7 h-7 animate-spin text-gold-700" />
             ) : (
               <UploadCloud className="w-7 h-7" />
             )}
           </div>
 
           <div className="space-y-1">
-            <p className="text-sm font-semibold text-ivory">
+            <p className="text-sm font-semibold text-obsidian-950">
               {isDragging
-                ? 'Relâchez les images pour les téléverser immédiatement'
-                : 'Glissez-déposez vos photos ou choisissez depuis votre appareil'}
+                ? t('admin.media.drop_active', 'Relâchez les images pour les téléverser immédiatement')
+                : t('admin.media.drop_idle', 'Glissez-déposez vos photos ou choisissez depuis votre appareil')}
             </p>
-            <p className="text-xs text-obsidian-400">
-              Compatible PC (Windows, Mac) et Téléphones (Android, iPhone) • PNG, JPG, WEBP
+            <p className="text-xs text-obsidian-500">
+              {t('admin.media.drop_formats', 'Compatible PC (Windows, Mac) et Téléphones (Android, iPhone) • PNG, JPG, WEBP')}
             </p>
             {uploadStatus && (
-              <p className="text-xs text-gold-400 font-medium animate-pulse pt-2">
+              <p className="text-xs text-gold-700 font-medium animate-pulse pt-2">
                 {uploadStatus}
               </p>
             )}
@@ -426,10 +482,10 @@ export function AdminMediaUpload({
               type="button"
               onClick={() => fileInputRef.current?.click()}
               disabled={disabled || isUploading || images.length >= maxImages}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-gold-500 hover:bg-gold-400 text-obsidian-950 text-xs font-bold uppercase tracking-wider transition-all disabled:opacity-50 shadow-md cursor-pointer"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-gold-500 hover:bg-gold-600 text-obsidian-950 text-xs font-bold uppercase tracking-wider transition-all disabled:opacity-50 shadow-sm cursor-pointer"
             >
               <ImageIcon className="w-4 h-4" />
-              <span>{isUploading ? 'Téléversement...' : 'Parcourir les fichiers'}</span>
+              <span>{isUploading ? t('admin.settings.uploading', 'Téléversement...') : t('admin.media.browse_btn', 'Parcourir les fichiers')}</span>
             </button>
 
             {/* Direct Camera Button (especially useful on mobile phones) */}
@@ -437,64 +493,68 @@ export function AdminMediaUpload({
               type="button"
               onClick={() => cameraInputRef.current?.click()}
               disabled={disabled || isUploading || images.length >= maxImages}
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-obsidian-900 hover:bg-obsidian-800 border border-gold-500/30 text-gold-400 text-xs font-semibold uppercase tracking-wider transition-colors disabled:opacity-50 cursor-pointer"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-white hover:bg-ivory-200 border border-obsidian-200 text-obsidian-800 text-xs font-semibold uppercase tracking-wider transition-colors disabled:opacity-50 cursor-pointer"
             >
               <Camera className="w-4 h-4" />
-              <span>Prendre une photo</span>
+              <span>{t('admin.media.camera_btn', 'Prendre une photo')}</span>
             </button>
           </div>
 
           <p className="text-[11px] text-obsidian-500">
-            Sélection multiple autorisée (jusqu&apos;à {maxImages} photos par produit). Compression intelligente intégrée pour un chargement instantané.
+            {formatTranslation(
+              t('admin.media.multi_hint', "Sélection multiple autorisée (jusqu'à {max} photos par produit). Compression intelligente intégrée."),
+              { max: maxImages }
+            )}
           </p>
         </div>
       )}
 
       {/* Tab 2: URL / Google Drive */}
       {activeTab === 'url' && (
-        <div className="p-4 rounded-xl bg-obsidian-950 border border-gold-500/20 space-y-3">
+        <div className="p-4 rounded-xl bg-ivory-100 border border-obsidian-200 space-y-3">
           <div className="space-y-1">
-            <label className="block text-xs font-medium text-obsidian-300">
-              Lien direct de l&apos;image ou lien de partage Google Drive
+            <label className="block text-xs font-medium text-obsidian-700">
+              {t('admin.media.url_label', "Lien direct de l'image ou lien de partage Google Drive")}
             </label>
             <input
               type="url"
+              dir="ltr"
               value={urlInput}
               onChange={(e) => setUrlInput(e.target.value)}
-              placeholder="https://drive.google.com/file/d/... ou https://images.unsplash.com/..."
-              className="w-full px-3.5 py-2 rounded-lg bg-obsidian-900 border border-gold-500/20 text-ivory text-xs placeholder:text-obsidian-600 focus:outline-none focus:border-gold-500 transition-all"
+              placeholder={`https://drive.google.com/file/d/... ${t('common.or', 'ou')} https://images.unsplash.com/...`}
+              className="w-full px-3.5 py-2 rounded-lg bg-white border border-obsidian-200 text-obsidian-950 text-xs placeholder:text-obsidian-400 focus:outline-none focus:border-gold-500 transition-all"
             />
           </div>
 
           <div className="space-y-1">
-            <label className="block text-xs font-medium text-obsidian-300">
-              Description alternative (Alt pour SEO & Accessibilité)
+            <label className="block text-xs font-medium text-obsidian-700">
+              {t('admin.media.alt_label', 'Description alternative (Alt pour SEO & Accessibilité)')}
             </label>
             <input
               type="text"
               value={altInput}
               onChange={(e) => setAltInput(e.target.value)}
-              placeholder="Ex : Veste de costume en velours noir col châle"
-              className="w-full px-3.5 py-2 rounded-lg bg-obsidian-900 border border-gold-500/20 text-ivory text-xs placeholder:text-obsidian-600 focus:outline-none focus:border-gold-500 transition-all"
+              placeholder={t('admin.media.alt_ph', 'Ex : Veste élégante en velours noir ou chemise en lin')}
+              className="w-full px-3.5 py-2 rounded-lg bg-white border border-obsidian-200 text-obsidian-950 text-xs placeholder:text-obsidian-400 focus:outline-none focus:border-gold-500 transition-all"
             />
           </div>
 
-          {urlError && <p className="text-xs text-rose-400">{urlError}</p>}
+          {urlError && <p className="text-xs text-rose-700">{urlError}</p>}
 
           <button
             type="button"
             onClick={handleAddUrl}
             disabled={disabled || images.length >= maxImages}
-            className="px-4 py-2 rounded-lg bg-gold-500 hover:bg-gold-400 text-obsidian-950 text-xs font-semibold uppercase tracking-wider transition-colors disabled:opacity-50"
+            className="px-4 py-2 rounded-lg bg-gold-500 hover:bg-gold-600 text-obsidian-950 text-xs font-semibold uppercase tracking-wider transition-colors disabled:opacity-50"
           >
-            Ajouter à la galerie
+            {t('admin.media.add_to_gallery', 'Ajouter à la galerie')}
           </button>
         </div>
       )}
 
       {/* Tab 3: Curated Library */}
       {activeTab === 'library' && (
-        <div className="p-4 rounded-xl bg-obsidian-950 border border-gold-500/20 space-y-3">
+        <div className="p-4 rounded-xl bg-ivory-100 border border-obsidian-200 space-y-3">
           <div className="flex items-center gap-2">
             {(['all', 'clothing', 'shoes', 'accessories'] as const).map((cat) => (
               <button
@@ -504,49 +564,46 @@ export function AdminMediaUpload({
                 className={cn(
                   'px-2.5 py-1 rounded text-[11px] font-medium transition-colors',
                   libraryFilter === cat
-                    ? 'bg-gold-500/20 text-gold-400 border border-gold-500/40 font-semibold'
-                    : 'text-obsidian-400 hover:text-ivory'
+                    ? 'bg-gold-50 text-gold-800 border border-gold-500/40 font-semibold'
+                    : 'text-obsidian-600 hover:text-obsidian-950'
                 )}
               >
                 {cat === 'all'
-                  ? 'Tous'
-                  : cat === 'clothing'
-                  ? 'Vêtements'
-                  : cat === 'shoes'
-                  ? 'Chaussures'
-                  : 'Accessoires'}
+                  ? t('admin.media.filter_all', 'Tous')
+                  : getLocalizedCategoryName(cat, language)}
               </button>
             ))}
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 max-h-64 overflow-y-auto pr-1">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 max-h-64 overflow-y-auto pe-1">
             {filteredAssets.map((asset) => {
               const isSelected = images.some((img) => img.url === asset.url);
+              const localizedAsset = getLocalizedCuratedAsset(asset, language);
               return (
                 <div
                   key={asset.id}
                   onClick={() => !isSelected && handleAddCurated(asset)}
                   className={cn(
-                    'relative rounded-lg overflow-hidden border transition-all cursor-pointer group bg-obsidian-900',
+                    'relative rounded-lg overflow-hidden border transition-all cursor-pointer group bg-white',
                     isSelected
-                      ? 'border-emerald-500/50 opacity-60 cursor-not-allowed'
-                      : 'border-gold-500/20 hover:border-gold-500'
+                      ? 'border-emerald-500 opacity-60 cursor-not-allowed'
+                      : 'border-obsidian-200 hover:border-gold-500'
                   )}
                 >
                   <div className="relative aspect-[3/4] w-full">
                     <img
                       src={asset.url}
-                      alt={asset.alt}
+                      alt={localizedAsset.alt}
                       className="w-full h-full object-cover"
                       loading="lazy"
                     />
                   </div>
-                  <div className="p-1.5 bg-obsidian-950/90 text-[10px]">
-                    <p className="text-ivory font-medium truncate">{asset.title}</p>
-                    <p className="text-obsidian-400 truncate">{asset.subcategory}</p>
+                  <div className="p-1.5 bg-white text-[10px]">
+                    <p className="text-obsidian-950 font-medium truncate">{localizedAsset.title}</p>
+                    <p className="text-obsidian-500 truncate">{localizedAsset.subcategory}</p>
                   </div>
                   {isSelected && (
-                    <div className="absolute top-1.5 right-1.5 p-1 rounded-full bg-emerald-500 text-obsidian-950">
+                    <div className="absolute top-1.5 end-1.5 p-1 rounded-full bg-emerald-500 text-white">
                       <Check className="w-3 h-3" />
                     </div>
                   )}
@@ -559,32 +616,36 @@ export function AdminMediaUpload({
 
       {/* Tab 4: Guide Google Drive */}
       {activeTab === 'guide' && (
-        <div className="p-4 rounded-xl bg-obsidian-950 border border-gold-500/20 space-y-3 text-xs">
-          <div className="flex items-center justify-between border-b border-gold-500/15 pb-2">
-            <h4 className="font-semibold text-gold-400 font-cinzel">
-              Hébergement Gratuit Google Drive : Guide d&apos;intégration
+        <div className="p-4 rounded-xl bg-ivory-100 border border-obsidian-200 space-y-3 text-xs">
+          <div className="flex items-center justify-between border-b border-obsidian-200 pb-2">
+            <h4 className="font-semibold text-gold-700 font-cinzel">
+              {t('admin.media.guide_title', "Hébergement Gratuit Google Drive : Guide d'intégration")}
             </h4>
             <a
               href="https://drive.google.com"
               target="_blank"
               rel="noreferrer"
-              className="text-gold-400 hover:text-gold-300 flex items-center gap-1 text-[11px]"
+              className="text-gold-700 hover:text-gold-800 flex items-center gap-1 text-[11px] font-medium"
             >
-              <span>Ouvrir Google Drive</span>
-              <ExternalLink className="w-3 h-3" />
+              <span>{t('admin.media.guide_open_drive', 'Ouvrir Google Drive')}</span>
+              <ExternalLink className="w-3 h-3 rtl:-scale-x-100" />
             </a>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {GOOGLE_DRIVE_UPLOAD_GUIDE.map((step) => (
-              <div key={step.step} className="p-3 rounded-lg bg-obsidian-900 border border-gold-500/10 space-y-1">
+            {driveGuideSteps.map((step) => (
+              <div key={step.step} className="p-3 rounded-lg bg-white border border-obsidian-200 space-y-1">
                 <div className="flex items-center gap-2">
-                  <span className="w-5 h-5 rounded-full bg-gold-500/20 text-gold-400 text-[11px] font-bold flex items-center justify-center shrink-0">
+                  <span className="w-5 h-5 rounded-full bg-gold-100 text-gold-800 text-[11px] font-bold flex items-center justify-center shrink-0">
                     {step.step}
                   </span>
-                  <span className="font-medium text-ivory">{step.title}</span>
+                  <span className="font-medium text-obsidian-950">{step.title}</span>
                 </div>
-                <p className="text-obsidian-300 text-[11px] leading-relaxed">{step.instruction}</p>
-                {step.tip && <p className="text-amber-400/90 text-[10px] italic">Astuce : {step.tip}</p>}
+                <p className="text-obsidian-600 text-[11px] leading-relaxed">{step.instruction}</p>
+                {step.tip && (
+                  <p className="text-amber-700 text-[10px] italic">
+                    {t('admin.media.guide_tip_prefix', 'Astuce :')} {step.tip}
+                  </p>
+                )}
               </div>
             ))}
           </div>
@@ -594,39 +655,42 @@ export function AdminMediaUpload({
       {/* Gallery Thumbnail Grid */}
       {images.length > 0 && (
         <div className="space-y-2 pt-2">
-          <p className="text-xs font-medium text-obsidian-300">
-            Photos associées au produit ({images.length}/{maxImages}) :
+          <p className="text-xs font-medium text-obsidian-700">
+            {formatTranslation(t('admin.media.associated_photos', 'Photos associées au produit ({count}/{max}) :'), {
+              count: images.length,
+              max: maxImages,
+            })}
           </p>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
             {images.map((img, idx) => (
               <div
                 key={img.id || idx}
                 className={cn(
-                  'relative rounded-xl overflow-hidden border bg-obsidian-950 flex flex-col group transition-all',
-                  img.isPrimary ? 'border-gold-500 ring-1 ring-gold-500 shadow-luxury-subtle' : 'border-gold-500/20'
+                  'relative rounded-xl overflow-hidden border bg-white flex flex-col group transition-all',
+                  img.isPrimary ? 'border-gold-500 ring-1 ring-gold-500 shadow-luxury-subtle' : 'border-obsidian-200'
                 )}
               >
                 {/* Image display */}
-                <div className="relative aspect-[3/4] w-full bg-obsidian-900">
+                <div className="relative aspect-[3/4] w-full bg-ivory-100">
                   <img
                     src={img.url}
-                    alt={img.alt || 'Visuel produit'}
+                    alt={getDisplayImageAlt(img, idx)}
                     className="w-full h-full object-cover"
                   />
 
                   {/* Primary Badge or Action */}
                   {img.isPrimary ? (
-                    <div className="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-gold-500 text-obsidian-950 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 shadow-md">
+                    <div className="absolute top-2 start-2 px-2 py-0.5 rounded-full bg-gold-500 text-obsidian-950 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 shadow-md">
                       <Star className="w-3 h-3 fill-obsidian-950" />
-                      <span>Photo Principale</span>
+                      <span>{t('admin.media.primary_badge', 'Photo Principale')}</span>
                     </div>
                   ) : (
                     <button
                       type="button"
                       onClick={() => setPrimaryImage(img.id)}
-                      className="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-obsidian-900/90 hover:bg-gold-500 hover:text-obsidian-950 text-gold-400 text-[10px] font-semibold border border-gold-500/30 opacity-90 sm:opacity-0 group-hover:opacity-100 transition-all cursor-pointer"
+                      className="absolute top-2 start-2 px-2 py-0.5 rounded-full bg-white/95 hover:bg-gold-500 hover:text-obsidian-950 text-gold-700 text-[10px] font-semibold border border-gold-500/40 opacity-90 sm:opacity-0 group-hover:opacity-100 transition-all cursor-pointer shadow-sm"
                     >
-                      Définir principale
+                      {t('admin.media.set_primary_btn', 'Définir principale')}
                     </button>
                   )}
 
@@ -634,42 +698,47 @@ export function AdminMediaUpload({
                   <button
                     type="button"
                     onClick={() => removeImage(img.id)}
-                    className="absolute top-2 right-2 p-1.5 rounded-full bg-obsidian-900/90 hover:bg-rose-500 text-obsidian-300 hover:text-white opacity-90 sm:opacity-0 group-hover:opacity-100 transition-all border border-obsidian-700 hover:border-rose-500 cursor-pointer"
-                    title="Supprimer cette photo"
+                    className="absolute top-2 end-2 p-1.5 rounded-full bg-white/95 hover:bg-rose-600 text-obsidian-600 hover:text-white opacity-90 sm:opacity-0 group-hover:opacity-100 transition-all border border-obsidian-200 hover:border-rose-600 cursor-pointer shadow-sm"
+                    title={t('admin.media.delete_photo_title', 'Supprimer cette photo')}
+                    aria-label={t('admin.media.delete_photo_title', 'Supprimer cette photo')}
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
                 </div>
 
                 {/* Alt & Reorder Footer */}
-                <div className="p-2 space-y-1.5 bg-obsidian-900 border-t border-gold-500/10">
+                <div className="p-2 space-y-1.5 bg-ivory-100 border-t border-obsidian-200">
                   <input
                     type="text"
                     value={img.alt}
                     onChange={(e) => updateAltText(img.id, e.target.value)}
-                    placeholder="Description alt..."
-                    className="w-full px-2 py-1 rounded bg-obsidian-950 border border-gold-500/20 text-ivory text-[10px] focus:outline-none focus:border-gold-500"
+                    placeholder={t('admin.media.alt_ph_short', 'Description alt...')}
+                    className="w-full px-2 py-1 rounded bg-white border border-obsidian-200 text-obsidian-950 text-[10px] focus:outline-none focus:border-gold-500"
                   />
-                  <div className="flex items-center justify-between text-[10px] text-obsidian-400">
-                    <span className="font-mono">#{idx + 1} {img.url.startsWith('/uploads/') ? '(Fichier local)' : ''}</span>
+                  <div className="flex items-center justify-between text-[10px] text-obsidian-500">
+                    <span className="font-mono">
+                      #{idx + 1} {img.url.startsWith('/uploads/') ? t('admin.media.local_file_tag', '(Fichier local)') : ''}
+                    </span>
                     <div className="flex items-center gap-1">
                       <button
                         type="button"
                         onClick={() => moveImage(idx, 'left')}
                         disabled={idx === 0}
-                        className="p-1 rounded hover:bg-obsidian-800 disabled:opacity-30 disabled:hover:bg-transparent"
-                        title="Déplacer vers la gauche"
+                        className="p-1 rounded hover:bg-ivory-200 disabled:opacity-30 disabled:hover:bg-transparent"
+                        title={t('admin.media.move_prev_title', 'Déplacer vers le début')}
+                        aria-label={t('admin.media.move_prev_title', 'Déplacer vers le début')}
                       >
-                        <ArrowLeft className="w-3 h-3" />
+                        <ArrowLeft className="w-3 h-3 rtl:rotate-180" />
                       </button>
                       <button
                         type="button"
                         onClick={() => moveImage(idx, 'right')}
                         disabled={idx === images.length - 1}
-                        className="p-1 rounded hover:bg-obsidian-800 disabled:opacity-30 disabled:hover:bg-transparent"
-                        title="Déplacer vers la droite"
+                        className="p-1 rounded hover:bg-ivory-200 disabled:opacity-30 disabled:hover:bg-transparent"
+                        title={t('admin.media.move_next_title', 'Déplacer vers la fin')}
+                        aria-label={t('admin.media.move_next_title', 'Déplacer vers la fin')}
                       >
-                        <ArrowRight className="w-3 h-3" />
+                        <ArrowRight className="w-3 h-3 rtl:rotate-180" />
                       </button>
                     </div>
                   </div>

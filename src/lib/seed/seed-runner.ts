@@ -36,7 +36,7 @@ export async function runCatalogSeed(dataStore: IDataStore, force = true): Promi
 
   const isOutcomeSuccess = seedOutcome.success;
   const isIdempotentSkip = !force && !isOutcomeSuccess;
-  const defaultSuccessMessage = `Catalogue VIP TADJ peuplé avec succès (${SEED_PRODUCTS.length} produits, ${SEED_CATEGORIES.length} catégories, 58 wilayas configurées).`;
+  const defaultSuccessMessage = `Catalogue VIP TADJ peuplé avec succès (${SEED_PRODUCTS.length} produits, ${SEED_CATEGORIES.length} catégories, 68 wilayas configurées).`;
   const defaultSkippedMessage = seedOutcome.message || 'Peuplement ignoré : le catalogue est déjà initialisé (utilisez force=true pour réinitialiser).';
 
   const result: SeedResult = {

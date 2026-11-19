@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useState, useMemo, useCallback } from 'react';
+import React, { createContext, useContext, useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { SupportedLanguage, Direction, LanguageContextType } from '../i18n/types';
 import { getTranslation } from '../i18n/locales';
 
@@ -22,9 +22,9 @@ const defaultLanguageContext: LanguageContextType = {
 
 const LanguageContext = createContext<LanguageContextType>(defaultLanguageContext);
 
-function getInitialLanguage(): SupportedLanguage {
+function getStoredLanguage(): SupportedLanguage | null {
   if (typeof window === 'undefined') {
-    return 'fr';
+    return null;
   }
 
   try {
@@ -52,20 +52,20 @@ function getInitialLanguage(): SupportedLanguage {
     // Ignore localStorage/cookie errors in strict sandboxes
   }
 
-  return 'fr';
+  return null;
 }
 
 export function LanguageProvider({
   children,
-  initialLanguage = 'fr',
+  initialLanguage = 'ar',
 }: {
   children: React.ReactNode;
   initialLanguage?: SupportedLanguage;
 }) {
   const [language, setLanguageState] = useState<SupportedLanguage>(() => {
-    // In Vitest / JSDOM unit tests, respect pre-configured localStorage immediately
+    // In Vitest / JSDOM unit tests, respect pre-configured localStorage/cookie while preserving explicit initialLanguage when empty
     if (typeof window !== 'undefined' && process.env.NODE_ENV === 'test') {
-      return getInitialLanguage();
+      return getStoredLanguage() ?? initialLanguage;
     }
     return initialLanguage;
   });
@@ -112,15 +112,17 @@ export function LanguageProvider({
     [applyLanguageToDom]
   );
 
-  // Sync DOM and attach storage listener on mount
+  const initialLanguageRef = useRef<SupportedLanguage>(language);
+
+  // Sync DOM and attach storage listener on mount only
   useEffect(() => {
-    // If client localStorage has a preference differing from SSR initialLanguage, sync it post-hydration
-    const clientLang = getInitialLanguage();
-    if (clientLang && clientLang !== language) {
+    // If client localStorage/cookie has an explicit stored preference differing from initial state, sync it post-hydration
+    const clientLang = getStoredLanguage();
+    if (clientLang && clientLang !== initialLanguageRef.current) {
       setLanguageState(clientLang);
       applyLanguageToDom(clientLang);
     } else {
-      applyLanguageToDom(language);
+      applyLanguageToDom(initialLanguageRef.current);
     }
 
     const handleStorage = (event: StorageEvent) => {
@@ -136,7 +138,7 @@ export function LanguageProvider({
     return () => {
       window.removeEventListener('storage', handleStorage);
     };
-  }, [applyLanguageToDom, language]);
+  }, [applyLanguageToDom]);
 
   const t = useCallback(
     (key: string, fallback?: string) => {

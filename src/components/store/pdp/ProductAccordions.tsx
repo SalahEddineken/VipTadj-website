@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { Product } from '@/types';
 import { useLanguage } from '@/lib/context/language-context';
-import { getLocalizedProduct } from '@/lib/i18n/catalog-translations';
+import { getLocalizedProduct, getLocalizedFit } from '@/lib/i18n/catalog-translations';
 
 export interface ProductAccordionsProps {
   product: Product;
@@ -62,7 +62,8 @@ export function ProductAccordions({
             )}
             {localizedProduct.fit && (
               <p>
-                <strong className="text-obsidian-950">{t('pdp.accordion.fit', 'Coupe :')}</strong> {localizedProduct.fit}
+                <strong className="text-obsidian-950">{t('pdp.accordion.fit', 'Coupe :')}</strong>{' '}
+                {getLocalizedFit(localizedProduct.fit, language)}
               </p>
             )}
             <ul className="list-disc list-inside space-y-1 text-neutral-600 pt-1">
@@ -108,7 +109,7 @@ export function ProductAccordions({
                   )
                 : t(
                     'pdp.accordion.sizes_clothing',
-                    "Nos costumes et vestes bénéficient d'une silhouette semi-ajustée (Drop 6/7) mettant en valeur la carrure sans entraver le mouvement."
+                    "Nos vêtements et vestes bénéficient d'une coupe équilibrée mettant en valeur la carrure sans entraver le mouvement."
                   )}
             </p>
             {onOpenSizeGuide && (
@@ -124,7 +125,7 @@ export function ProductAccordions({
         </div>
       </div>
 
-      {/* 3. Livraison 58 Wilayas & Retours */}
+      {/* 3. Livraison 68 Wilayas & Retours */}
       <div className="py-4">
         <button
           type="button"
@@ -133,7 +134,7 @@ export function ProductAccordions({
           aria-controls="accordion-shipping"
           className="w-full flex items-center justify-between text-start font-serif uppercase tracking-wider text-sm text-obsidian-950 font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 rounded py-1"
         >
-          <span>{t('pdp.accordion.shipping', 'Livraison 58 Wilayas & Retours')}</span>
+          <span>{t('pdp.accordion.shipping', 'Livraison 68 Wilayas & Retours')}</span>
           <ChevronDown
             className={`w-4 h-4 text-gold-700 transition-transform duration-300 ${
               openSection === 'shipping' ? 'rotate-180' : ''
@@ -183,7 +184,7 @@ export function ProductAccordions({
           aria-controls="accordion-care"
           className="w-full flex items-center justify-between text-start font-serif uppercase tracking-wider text-sm text-obsidian-950 font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 rounded py-1"
         >
-          <span>{t('pdp.accordion.care', 'Entretien & Nettoyage Sartorial')}</span>
+          <span>{t('pdp.accordion.care', 'Entretien & Nettoyage')}</span>
           <ChevronDown
             className={`w-4 h-4 text-gold-700 transition-transform duration-300 ${
               openSection === 'care' ? 'rotate-180' : ''
@@ -208,9 +209,9 @@ export function ProductAccordions({
               </ul>
             ) : (
               <ul className="list-disc list-inside space-y-1 text-neutral-600">
-                <li>{t('pdp.accordion.care_suits1', "Nettoyage à sec exclusivement auprès d'un teinturier spécialisé en confections nobles.")}</li>
-                <li>{t('pdp.accordion.care_suits2', "Ne jamais repasser au contact direct : utiliser une pattemouille et de la vapeur douce.")}</li>
-                <li>{t('pdp.accordion.care_suits3', "Conserver sous housse respirante VIP TADJ sur un cintre aux épaules larges.")}</li>
+                <li>{t('pdp.accordion.care_suits1', "Nettoyage délicat ou à sec selon les étiquettes de composition des matières nobles.")}</li>
+                <li>{t('pdp.accordion.care_suits2', "Repassage à température modérée avec pattemouille et vapeur douce.")}</li>
+                <li>{t('pdp.accordion.care_suits3', "Conserver sur cintre adapté ou plié avec soin à l'abri de l'humidité.")}</li>
               </ul>
             )}
           </div>

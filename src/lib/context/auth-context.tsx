@@ -6,6 +6,8 @@ import { AdminUser, AdminRole } from '@/types';
 import { isFirebaseConfigured } from '@/lib/firebase/config';
 import { getFirebaseAuth } from '@/lib/firebase/client';
 import { signInWithEmailAndPassword, signOut as fbSignOut } from 'firebase/auth';
+import { SupportedLanguage } from '@/lib/i18n/types';
+import { getTranslation } from '@/lib/i18n/locales';
 
 export const PRIMARY_STORAGE_KEY = 'vip_tadj_admin_auth';
 export const SECONDARY_STORAGE_KEY = 'vip_admin_session';
@@ -26,7 +28,7 @@ export interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   authMode: 'firebase' | 'mock';
-  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  login: (email: string, password: string) => Promise<{ success: boolean; error?: string; errorKey?: string }>;
   logout: () => Promise<void>;
   touchSession: () => void;
 }
@@ -36,10 +38,10 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 // Standalone Session Helpers (usable inside and outside React components)
 export function getStoredSession(): StoredAdminSession | null {
   if (typeof window === 'undefined') return null;
-  const raw = localStorage.getItem(PRIMARY_STORAGE_KEY) || localStorage.getItem(SECONDARY_STORAGE_KEY);
-  if (!raw) return null;
-
   try {
+    const raw = localStorage.getItem(PRIMARY_STORAGE_KEY) || localStorage.getItem(SECONDARY_STORAGE_KEY);
+    if (!raw) return null;
+
     const session = JSON.parse(raw);
     if (
       !session ||
@@ -66,15 +68,23 @@ export function getStoredSession(): StoredAdminSession | null {
 
 export function saveStoredSession(session: StoredAdminSession): void {
   if (typeof window === 'undefined') return;
-  const serialized = JSON.stringify(session);
-  localStorage.setItem(PRIMARY_STORAGE_KEY, serialized);
-  localStorage.setItem(SECONDARY_STORAGE_KEY, serialized);
+  try {
+    const serialized = JSON.stringify(session);
+    localStorage.setItem(PRIMARY_STORAGE_KEY, serialized);
+    localStorage.setItem(SECONDARY_STORAGE_KEY, serialized);
+  } catch {
+    // Graceful fallback if storage quota exceeded or disabled
+  }
 }
 
 export function clearStoredSession(): void {
   if (typeof window === 'undefined') return;
-  localStorage.removeItem(PRIMARY_STORAGE_KEY);
-  localStorage.removeItem(SECONDARY_STORAGE_KEY);
+  try {
+    localStorage.removeItem(PRIMARY_STORAGE_KEY);
+    localStorage.removeItem(SECONDARY_STORAGE_KEY);
+  } catch {
+    // Ignore storage deletion errors
+  }
 }
 
 export function checkAdminAccess(pathname: string): { allowed: boolean; redirectUrl?: string } {
@@ -105,10 +115,48 @@ export const MOCK_ADMIN_CREDENTIALS = {
     id: 'vt-adm-super-01',
     email: 'admin@viptadj.dz',
     displayName: 'Direction Générale VIP TADJ',
+    displayNameAr: 'الإدارة العامة VIP TADJ',
+    displayNameEn: 'VIP TADJ General Management',
     role: 'superadmin' as AdminRole,
     isActive: true,
   },
 };
+
+export function getLocalizedAdminDisplayName(
+  user: AdminUser | null | undefined,
+  language: SupportedLanguage = 'fr'
+): string {
+  if (!user) {
+    return getTranslation(language, 'admin.sidebar.default_admin_name', 'Administrateur');
+  }
+  if (language === 'ar') {
+    if (user.displayNameAr) return user.displayNameAr;
+    if (
+      user.displayName === MOCK_ADMIN_CREDENTIALS.user.displayName ||
+      user.displayName === 'Directeur Général VIP TADJ'
+    ) {
+      return MOCK_ADMIN_CREDENTIALS.user.displayNameAr;
+    }
+    if (!user.displayName || user.displayName === 'Administrateur') {
+      return getTranslation('ar', 'admin.sidebar.default_admin_name', 'المدير');
+    }
+    return user.displayName;
+  }
+  if (language === 'en') {
+    if (user.displayNameEn) return user.displayNameEn;
+    if (
+      user.displayName === MOCK_ADMIN_CREDENTIALS.user.displayName ||
+      user.displayName === 'Directeur Général VIP TADJ'
+    ) {
+      return MOCK_ADMIN_CREDENTIALS.user.displayNameEn;
+    }
+    if (!user.displayName || user.displayName === 'Administrateur') {
+      return getTranslation('en', 'admin.sidebar.default_admin_name', 'Administrator');
+    }
+    return user.displayName;
+  }
+  return user.displayName || getTranslation('fr', 'admin.sidebar.default_admin_name', 'Administrateur');
+}
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AdminUser | null>(null);
@@ -117,25 +165,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
 
   const syncStateFromStorage = useCallback(() => {
-    const session = getStoredSession();
-    const isAdmin =
-      session !== null &&
-      session.isAuthenticated === true &&
-      (session.role === 'admin' ||
-        session.role === 'superadmin' ||
-        session.user?.role === 'admin' ||
-        session.user?.role === 'superadmin');
+    try {
+      const session = getStoredSession();
+      const isAdmin =
+        session !== null &&
+        session.isAuthenticated === true &&
+        (session.role === 'admin' ||
+          session.role === 'superadmin' ||
+          session.user?.role === 'admin' ||
+          session.user?.role === 'superadmin');
 
-    if (isAdmin && session.user) {
-      const adminUser: AdminUser = {
-        ...session.user,
-        role: (session.user.role || session.role || 'admin') as AdminRole,
-      };
-      setUser(adminUser);
-    } else {
+      if (isAdmin && session.user) {
+        const adminUser: AdminUser = {
+          ...session.user,
+          role: (session.user.role || session.role || 'admin') as AdminRole,
+        };
+        setUser(adminUser);
+      } else {
+        setUser(null);
+      }
+    } catch {
       setUser(null);
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   }, []);
 
   useEffect(() => {
@@ -171,7 +224,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const login = useCallback(
-    async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
+    async (email: string, password: string): Promise<{ success: boolean; error?: string; errorKey?: string }> => {
       setIsLoading(true);
       const cleanEmail = email.trim().toLowerCase();
 
@@ -222,7 +275,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             return { success: true };
           } catch {
             setIsLoading(false);
-            return { success: false, error: 'Identifiants Firebase invalides.' };
+            return {
+              success: false,
+              error: 'Identifiants Firebase invalides.',
+              errorKey: 'auth.error.invalid_firebase',
+            };
           }
         }
       }
@@ -231,6 +288,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return {
         success: false,
         error: 'Identifiants invalides. Utilisez les identifiants de démonstration.',
+        errorKey: 'auth.error.invalid_credentials',
       };
     },
     []

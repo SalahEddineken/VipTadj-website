@@ -1,4 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
+import { NextRequest } from 'next/server';
+import { PATCH as patchProductAPI, PUT as putProductAPI } from '@/app/api/products/[id]/route';
+import { getDataStore } from '@/lib/data-provider';
 import { mockDataProvider } from '../../helpers/mockDataProvider';
 import { Product } from '@/types';
 
@@ -160,5 +163,105 @@ describe('Tier 1: Admin — Product Authoring & Size Matrix Form (F-ADM-04)', ()
     expect(validatePricing(45000)).toBe(true); // Regular price without promo
     expect(validatePricing(45000, 45000)).toBe(false); // Invalid equal
     expect(validatePricing(45000, 40000)).toBe(false); // Invalid lower compareAtPrice
+  });
+
+  // ==========================================
+  // Test 7: PATCH / PUT /api/products/[id] Numeric Coercion & Hardening
+  // ==========================================
+  it('accepts valid string numeric updates and nullable compareAtPrice on PATCH / PUT /api/products/[id]', async () => {
+    const store = getDataStore();
+    await store.reset?.();
+    const products = await store.getProducts({});
+    const target = products[0];
+    expect(target).toBeDefined();
+
+    const patchReq = new NextRequest(`http://localhost:3000/api/products/${target.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', 'x-lang': 'ar' },
+      body: JSON.stringify({
+        price: '15000',
+        compareAtPrice: '60000',
+        costPrice: '10000',
+        stockQuantity: '5',
+      }),
+    });
+
+    const patchRes = await patchProductAPI(patchReq, { params: { id: target.id } });
+    expect(patchRes.status).toBe(200);
+    const patchData = await patchRes.json();
+    expect(patchData.success).toBe(true);
+    expect(patchData.product.price).toBe(15000);
+    expect(patchData.product.compareAtPrice).toBe(60000);
+    expect(patchData.product.costPrice).toBe(10000);
+    expect(patchData.product.stockQuantity).toBe(5);
+
+    const clearCompareReq = new NextRequest(`http://localhost:3000/api/products/${target.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ compareAtPrice: null }),
+    });
+    const clearCompareRes = await putProductAPI(clearCompareReq, { params: { id: target.id } });
+    expect(clearCompareRes.status).toBe(200);
+    const clearData = await clearCompareRes.json();
+    expect(clearData.success).toBe(true);
+    expect(clearData.product.compareAtPrice).toBeNull();
+  });
+
+  it('rejects malformed, empty-string, array, boolean, negative, and non-nullable null numeric payloads on PATCH /api/products/[id] with zero mutation', async () => {
+    const store = getDataStore();
+    await store.reset?.();
+    const products = await store.getProducts({});
+    const target = products[0];
+    expect(target).toBeDefined();
+
+    const invalidPayloads: Record<string, unknown>[] = [
+      { price: [] },
+      { price: [15000] },
+      { price: true },
+      { price: false },
+      { price: '' },
+      { price: '   ' },
+      { price: null },
+      { price: -500 },
+      { compareAtPrice: [] },
+      { compareAtPrice: true },
+      { compareAtPrice: '' },
+      { compareAtPrice: '   ' },
+      { compareAtPrice: -100 },
+      { costPrice: [] },
+      { costPrice: true },
+      { costPrice: '' },
+      { costPrice: '   ' },
+      { costPrice: null },
+      { costPrice: -10 },
+      { stockQuantity: [] },
+      { stockQuantity: true },
+      { stockQuantity: false },
+      { stockQuantity: '' },
+      { stockQuantity: '   ' },
+      { stockQuantity: null },
+      { stockQuantity: -1 },
+    ];
+
+    for (const payload of invalidPayloads) {
+      for (const lang of ['ar', 'fr', 'en'] as const) {
+        const req = new NextRequest(`http://localhost:3000/api/products/${target.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json', 'x-lang': lang },
+          body: JSON.stringify(payload),
+        });
+        const res = await patchProductAPI(req, { params: { id: target.id } });
+        expect(res.status).toBe(400);
+        const data = await res.json();
+        expect(data.success).toBe(false);
+        expect(typeof data.error).toBe('string');
+        expect(data.error.length).toBeGreaterThan(0);
+        expect(data.errorCode).toBeDefined();
+        expect(data.errorKey).toBeDefined();
+      }
+    }
+
+    const after = await store.getProductById(target.id);
+    expect(after).toEqual(target);
   });
 });

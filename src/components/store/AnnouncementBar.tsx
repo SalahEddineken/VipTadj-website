@@ -3,9 +3,12 @@
 import React from 'react';
 import { Sparkles, Phone } from 'lucide-react';
 import { useLanguage } from '@/lib/context/language-context';
+import { useStoreSettings } from '@/lib/context/store-settings-context';
+import { formatTelLink } from '@/lib/utils/phoneUtils';
 
 export function AnnouncementBar() {
   const { t } = useLanguage();
+  const { phone } = useStoreSettings();
 
   return (
     <aside
@@ -20,15 +23,15 @@ export function AnnouncementBar() {
           </span>
         </span>
         <span suppressHydrationWarning className="hidden md:inline text-neutral-300">
-          {t('announcement.shipping', 'Livraison 58 Wilayas • Paiement à la Livraison (COD)')}
+          {t('announcement.shipping', 'Livraison 68 Wilayas • Paiement à la Livraison (COD)')}
         </span>
         <a
-          href="tel:+213550000000"
+          href={formatTelLink(phone)}
           className="min-h-[44px] flex items-center justify-center gap-1.5 py-1 px-2 text-gold-400 hover:text-gold-200 transition-colors ltr-protect focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 w-full md:w-auto mx-auto md:mx-0"
           dir="ltr"
         >
           <Phone className="w-3 h-3 flex-shrink-0" />
-          <span className="font-sans tabular-nums text-xs">+213 (0) 550 00 00 00</span>
+          <span className="font-sans tabular-nums text-xs">{phone}</span>
         </a>
       </div>
     </aside>

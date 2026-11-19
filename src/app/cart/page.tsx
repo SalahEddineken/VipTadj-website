@@ -19,18 +19,29 @@ import { StorefrontLayout } from '@/components/store/StorefrontLayout';
 import { useCart } from '@/lib/context/cart-context';
 import { formatDZD } from '@/lib/utils/formatDZD';
 import { useLanguage } from '@/lib/context/language-context';
-import { getLocalizedColor } from '@/lib/i18n/catalog-translations';
+import { getLocalizedColor, getLocalizedSize } from '@/lib/i18n/catalog-translations';
+import { getLocalizedCartItemTitle } from '@/components/store/cart-item-localization';
 
 export default function CartPage() {
   const cart = useCart();
   const { language, t } = useLanguage();
+
+  if (!cart.isHydrated) {
+    return (
+      <StorefrontLayout>
+        <div className="luxury-container py-24 flex-1 flex flex-col items-center justify-center min-h-[50vh]">
+          <div className="w-8 h-8 border-2 border-gold-600 border-t-transparent rounded-full animate-spin" />
+        </div>
+      </StorefrontLayout>
+    );
+  }
 
   return (
     <StorefrontLayout>
       <div className="luxury-container py-8 md:py-14 space-y-8 flex-1">
         {/* Breadcrumb */}
         <nav
-          aria-label="Breadcrumb"
+          aria-label={t('pdp.breadcrumb.aria_label', "Fil d'Ariane")}
           className="text-xs uppercase tracking-[0.2em] text-obsidian-600 flex items-center gap-2"
         >
           <Link href="/" className="hover:text-gold-700 transition-colors">
@@ -46,11 +57,13 @@ export default function CartPage() {
             <h1 className="luxury-cinzel-title text-2xl sm:text-3xl md:text-4xl text-obsidian-950 text-balance text-start">
               {t('cart.page.title', 'Mon Panier')}
             </h1>
-            <p className="text-xs text-obsidian-600 font-sans tracking-wider uppercase mt-1 text-start">
-              {cart.itemCount > 1
-                ? t('cart.count.plural', '{count} articles d\'exception').replace('{count}', String(cart.itemCount))
-                : t('cart.count.single', '1 article d\'exception')}
-            </p>
+            {cart.itemCount > 0 && (
+              <p className="text-xs text-obsidian-600 font-sans tracking-wider uppercase mt-1 text-start">
+                {cart.itemCount > 1
+                  ? t('cart.count.plural', '{count} articles d\'exception').replace('{count}', String(cart.itemCount))
+                  : t('cart.count.single', '{count} article d\'exception').replace('{count}', String(cart.itemCount))}
+              </p>
+            )}
           </div>
 
           <Link
@@ -70,7 +83,7 @@ export default function CartPage() {
               {cart.isFreeShipping ? (
                 <span className="text-emerald-700 font-semibold flex items-center gap-1.5">
                   <Sparkles className="w-3.5 h-3.5 text-gold-700 shrink-0" />
-                  <span>{t('cart.shipping_meter.qualified', 'Félicitations ! Vous bénéficiez de la livraison offerte sur les 58 Wilayas.')}</span>
+                  <span>{t('cart.shipping_meter.qualified', 'Félicitations ! Vous bénéficiez de la livraison offerte sur les 68 Wilayas.')}</span>
                 </span>
               ) : (
                 <span>
@@ -81,7 +94,7 @@ export default function CartPage() {
                 </span>
               )}
             </span>
-            <span className="font-semibold text-gold-800 font-sans tabular-nums">{cart.progressPercentage}%</span>
+            <span dir="ltr" className="font-semibold text-gold-800 font-sans tabular-nums">{cart.progressPercentage}%</span>
           </div>
           <div className="h-2 w-full bg-sand-200 overflow-hidden">
             <div
@@ -104,7 +117,7 @@ export default function CartPage() {
               <p className="text-sm text-sand-800 font-sans">
                 {t(
                   'cart.empty.desc',
-                  'Explorez nos collections de costumes, souliers en cuir et accessoires sartoriaux pour composer votre vestiaire d\'exception.'
+                  'Explorez nos collections de vêtements d\'exception, souliers en cuir et accessoires élégants pour composer votre vestiaire idéal.'
                 )}
               </p>
             </div>
@@ -132,6 +145,8 @@ export default function CartPage() {
                 <ul className="divide-y divide-sand-200">
                   {cart.items.map((item) => {
                     const lineId = item.id || `${item.productId}-${item.selectedSize}`;
+                    const localizedTitle = getLocalizedCartItemTitle(item, language);
+                    const localizedSize = getLocalizedSize(item.selectedSize, language);
                     const localizedColorName = item.selectedColor
                       ? getLocalizedColor(item.selectedColor, language) || item.selectedColor
                       : null;
@@ -147,7 +162,7 @@ export default function CartPage() {
                             {item.image ? (
                               <Image
                                 src={item.image}
-                                alt={item.title}
+                                alt={localizedTitle}
                                 fill
                                 sizes="80px"
                                 className="object-cover"
@@ -163,11 +178,11 @@ export default function CartPage() {
                               href={item.slug ? `/catalog/clothing/${item.slug}` : '/catalog'}
                               className="font-medium text-sm text-obsidian-900 hover:text-gold-700 transition-colors line-clamp-2"
                             >
-                              {item.title}
+                              {localizedTitle}
                             </Link>
                             <div className="flex flex-wrap items-center gap-2 text-xs text-obsidian-600">
                               <span className="bg-sand-100 px-2.5 py-0.5 rounded text-xs font-medium text-obsidian-800">
-                                {t('cart.item.size', 'Taille :')} {item.selectedSize}
+                                {t('cart.item.size', 'Taille :')} {localizedSize}
                               </span>
                               {localizedColorName && (
                                 <span className="bg-sand-100 px-2.5 py-0.5 rounded text-xs font-medium text-obsidian-800">
@@ -243,7 +258,7 @@ export default function CartPage() {
                           <button
                             type="button"
                             onClick={() => cart.removeItem(item.id || item.productId, item.selectedSize, item.selectedColor)}
-                            aria-label={`${t('cart.item.remove', 'Supprimer')} ${item.title}`}
+                            aria-label={`${t('cart.item.remove', 'Supprimer')} ${localizedTitle}`}
                             className="text-obsidian-600 hover:text-red-600 transition-colors p-2 min-w-[44px] min-h-[44px] flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 rounded"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -300,7 +315,7 @@ export default function CartPage() {
                     <span className="font-medium text-obsidian-800">
                       {cart.isFreeShipping ? (
                         <span className="text-emerald-700 font-bold uppercase tracking-wider">
-                          {t('cart.summary.shipping_free', 'Offerte (58 Wilayas)')}
+                          {t('cart.summary.shipping_free', 'Gratuite')}
                         </span>
                       ) : (
                         <span className="text-sand-800">
@@ -341,7 +356,7 @@ export default function CartPage() {
                   </div>
                   <div className="flex items-center gap-2">
                     <Truck className="w-4 h-4 text-gold-700 flex-shrink-0" />
-                    <span>{t('cart.reassurance.shipping', 'Expédition express 58 Wilayas sous 24h à 72h')}</span>
+                    <span>{t('cart.reassurance.shipping', 'Expédition express 68 Wilayas sous 24h à 72h')}</span>
                   </div>
                 </div>
               </div>

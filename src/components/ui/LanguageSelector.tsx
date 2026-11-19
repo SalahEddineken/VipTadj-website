@@ -135,14 +135,14 @@ export function LanguageSelector({
           aria-haspopup="listbox"
           aria-expanded={isOpen}
           aria-label={t('lang.selector.label', 'Sélectionner la langue')}
-          className="flex items-center gap-2 px-2.5 py-1.5 min-h-[44px] text-xs font-medium text-sand-300 bg-obsidian-900 border border-gold-500/20 rounded hover:border-gold-500/50 hover:text-gold-400 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500"
+          className="flex items-center gap-2 px-2.5 py-1.5 min-h-[44px] text-xs font-medium text-obsidian-800 bg-white border border-obsidian-200 rounded hover:border-gold-500/60 hover:text-gold-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500"
         >
-          <Globe className="w-3.5 h-3.5 text-gold-400" />
+          <Globe className="w-3.5 h-3.5 text-gold-600" />
           <span className="font-semibold uppercase tracking-wider">
-            {currentOption.code}
+            {currentOption.code.toUpperCase()}
           </span>
           <ChevronDown
-            className={`w-3 h-3 text-sand-400 transition-transform duration-200 ${
+            className={`w-3 h-3 text-obsidian-400 transition-transform duration-200 ${
               isOpen ? 'rotate-180' : ''
             }`}
           />
@@ -152,7 +152,7 @@ export function LanguageSelector({
           <div
             role="listbox"
             aria-label={t('lang.selector.label', 'Sélectionner la langue')}
-            className="absolute bottom-full mb-1.5 start-0 z-50 min-w-[140px] bg-obsidian-950 border border-gold-500/30 rounded shadow-xl py-1 backdrop-blur-sm"
+            className="absolute bottom-full mb-1.5 start-0 z-50 min-w-[140px] bg-white border border-obsidian-200 rounded shadow-xl py-1"
           >
             {SUPPORTED_LANGUAGES.map((opt) => {
               const isActive = language === opt.code;
@@ -168,12 +168,12 @@ export function LanguageSelector({
                   }}
                   className={`w-full flex items-center justify-between px-3 py-1.5 text-xs text-start transition-colors ${
                     isActive
-                      ? 'bg-gold-500/15 text-gold-400 font-semibold'
-                      : 'text-sand-300 hover:bg-obsidian-900 hover:text-ivory'
+                      ? 'bg-gold-50 text-gold-800 font-semibold'
+                      : 'text-obsidian-700 hover:bg-ivory-100 hover:text-obsidian-950'
                   }`}
                 >
                   <span>{opt.nativeName}</span>
-                  {isActive && <Check className="w-3.5 h-3.5 text-gold-400" />}
+                  {isActive && <Check className="w-3.5 h-3.5 text-gold-600" />}
                 </button>
               );
             })}
@@ -232,7 +232,7 @@ export function LanguageSelector({
               >
                 <div className="flex items-center gap-2.5">
                   <span className="w-6 text-[11px] font-sans font-semibold tracking-wider text-sand-800 uppercase">
-                    {opt.code}
+                    {opt.code.toUpperCase()}
                   </span>
                   <span>{opt.nativeName}</span>
                 </div>

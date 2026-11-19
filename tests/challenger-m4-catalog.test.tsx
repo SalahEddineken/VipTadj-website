@@ -587,18 +587,19 @@ describe('CHALLENGER M4-2 — ADVERSARIAL STRESS & EMPIRICAL VERIFICATION', () =
   // 3. 58 WILAYA DELIVERY FEE SETTINGS & FREE SHIPPING (F-ADM-06)
   // =========================================================================
   describe('3. 58 Wilaya Delivery Fee Settings & Free Shipping', () => {
-    describe('3.1 Deep Merge Resilience (Partial Updates do NOT wipe out 57 wilayas)', () => {
-      it('guarantees that updating Wilaya 16 does NOT wipe out the other 57 Algerian wilayas', async () => {
+    describe('3.1 Deep Merge Resilience (Partial Updates do NOT wipe out 67 wilayas)', () => {
+      it('guarantees that updating Wilaya 16 does NOT wipe out the other 67 Algerian wilayas', async () => {
         // Step 1: Query initial settings via GET /api/settings
         const getRes1 = await getSettingsAPI();
         expect(getRes1.status).toBe(200);
         const initialData = await getRes1.json();
         const initialWilayaKeys = Object.keys(initialData.settings.wilayaShippingFees || {});
-        expect(initialWilayaKeys.length).toBe(58);
+        expect(initialWilayaKeys.length).toBe(68);
         expect(initialData.settings.wilayaShippingFees[16]).toBeDefined();
         expect(initialData.settings.wilayaShippingFees[31]).toBeDefined(); // Oran
         expect(initialData.settings.wilayaShippingFees[25]).toBeDefined(); // Constantine
         expect(initialData.settings.wilayaShippingFees[58]).toBeDefined(); // El Meniaa
+        expect(initialData.settings.wilayaShippingFees[68]).toBeDefined(); // Bou Saada
 
         // Step 2: PUT an update targeting ONLY Wilaya 16 (Alger)
         const partialUpdatePayload = {
@@ -629,11 +630,11 @@ describe('CHALLENGER M4-2 — ADVERSARIAL STRESS & EMPIRICAL VERIFICATION', () =
         const updatedFees = updatedData.settings.wilayaShippingFees;
         const updatedWilayaKeys = Object.keys(updatedFees || {});
 
-        // CRITICAL INVARIANT: Count MUST be 58, NOT 1!
+        // CRITICAL INVARIANT: Count MUST be 68, NOT 1!
         expect(
           updatedWilayaKeys.length,
           `Adversarial failure: updating Wilaya 16 wiped out other wilayas! Count: ${updatedWilayaKeys.length}`
-        ).toBe(58);
+        ).toBe(68);
 
         // Wilaya 16 must have the new values
         expect(updatedFees[16].homeFee).toBe(450);
@@ -643,6 +644,7 @@ describe('CHALLENGER M4-2 — ADVERSARIAL STRESS & EMPIRICAL VERIFICATION', () =
         expect(updatedFees[1]).toBeDefined();  // Adrar
         expect(updatedFees[31]).toBeDefined(); // Oran
         expect(updatedFees[58]).toBeDefined(); // El Meniaa
+        expect(updatedFees[68]).toBeDefined(); // Bou Saada
         expect(updatedFees[31].homeFee).toBeGreaterThan(0);
       });
 
@@ -669,7 +671,7 @@ describe('CHALLENGER M4-2 — ADVERSARIAL STRESS & EMPIRICAL VERIFICATION', () =
 
         const deliveryList = putData.settings.wilayasDelivery;
         expect(Array.isArray(deliveryList)).toBe(true);
-        expect(deliveryList.length).toBe(58);
+        expect(deliveryList.length).toBe(68);
 
         const oranItem = deliveryList.find((w: any) => w.code === 31);
         expect(oranItem).toBeDefined();
@@ -742,12 +744,12 @@ describe('CHALLENGER M4-2 — ADVERSARIAL STRESS & EMPIRICAL VERIFICATION', () =
     });
 
     describe('3.4 Wilaya Code Boundaries & Settings Schema', () => {
-      it('gracefully handles boundary codes (0, 59, negative, null, undefined) with default fallback', () => {
-        expect(calculateDeliveryFee(5000, 0, 15000)).toBe(600);
-        expect(calculateDeliveryFee(5000, 59, 15000)).toBe(600);
-        expect(calculateDeliveryFee(5000, -1, 15000)).toBe(600);
-        expect(calculateDeliveryFee(5000, null, 15000)).toBe(600);
-        expect(calculateDeliveryFee(5000, undefined, 15000)).toBe(600);
+      it('gracefully handles boundary codes (0, 69, negative, null, undefined) with default fallback', () => {
+        expect(calculateDeliveryFee(5000, 0, 15000)).toBe(800);
+        expect(calculateDeliveryFee(5000, 69, 15000)).toBe(800);
+        expect(calculateDeliveryFee(5000, -1, 15000)).toBe(800);
+        expect(calculateDeliveryFee(5000, null, 15000)).toBe(800);
+        expect(calculateDeliveryFee(5000, undefined, 15000)).toBe(800);
       });
 
       it('strictly rejects negative delivery fees in settings validation schema', () => {
@@ -1068,7 +1070,7 @@ describe('CHALLENGER M4-2 — ADVERSARIAL STRESS & EMPIRICAL VERIFICATION', () =
         const putData = await putRes.json();
         expect(putData.success).toBe(true);
         expect(putData.settings.maintenanceMode).toBe(true);
-        expect(Object.keys(putData.settings.wilayaShippingFees || {}).length).toBe(58);
+        expect(Object.keys(putData.settings.wilayaShippingFees || {}).length).toBe(68);
       });
     });
   });

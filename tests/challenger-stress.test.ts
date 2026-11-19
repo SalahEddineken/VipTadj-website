@@ -256,18 +256,18 @@ describe('CHALLENGER 2 — ADVERSARIAL STRESS & EMPIRICAL VERIFICATION', () => {
       }
     });
 
-    it('verifies all 58 Algerian Wilayas are accounted for strictly without duplicates or gaps', () => {
-      expect(ALGERIAN_WILAYAS.length).toBe(58);
+    it('verifies all 68 Algerian Wilayas are accounted for strictly without duplicates or gaps', () => {
+      expect(ALGERIAN_WILAYAS.length).toBe(68);
 
       const codes = ALGERIAN_WILAYAS.map((w) => w.code).sort((a, b) => a - b);
-      for (let i = 0; i < 58; i++) {
+      for (let i = 0; i < 68; i++) {
         expect(codes[i]).toBe(i + 1);
       }
 
-      // Verify delivery config and shipping fees have all 58 keys
-      expect(SEED_WILAYAS_DELIVERY.length).toBe(58);
-      expect(Object.keys(SEED_WILAYA_SHIPPING_FEES).length).toBe(58);
-      for (let c = 1; c <= 58; c++) {
+      // Verify delivery config and shipping fees have all 68 keys
+      expect(SEED_WILAYAS_DELIVERY.length).toBe(68);
+      expect(Object.keys(SEED_WILAYA_SHIPPING_FEES).length).toBe(68);
+      for (let c = 1; c <= 68; c++) {
         const fee = SEED_WILAYA_SHIPPING_FEES[c];
         expect(fee).toBeDefined();
         expect(fee.homeFee).toBeGreaterThan(0);
@@ -281,7 +281,7 @@ describe('CHALLENGER 2 — ADVERSARIAL STRESS & EMPIRICAL VERIFICATION', () => {
       expect(DEFAULT_STORE_SETTINGS.phone).toBeDefined();
       expect(DEFAULT_STORE_SETTINGS.email).toContain('@');
       expect(DEFAULT_STORE_SETTINGS.freeShippingThreshold).toBe(50000);
-      expect(DEFAULT_STORE_SETTINGS.wilayasDelivery.length).toBe(58);
+      expect(DEFAULT_STORE_SETTINGS.wilayasDelivery.length).toBe(68);
     });
   });
 });

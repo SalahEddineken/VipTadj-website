@@ -5,6 +5,10 @@ import {
   getLocalizedSubcategory,
   getLocalizedColor,
   getLocalizedSize,
+  PRODUCT_TRANSLATIONS,
+  SUBCATEGORY_TRANSLATIONS,
+  CATEGORY_TRANSLATIONS,
+  normalizeCategoryKey,
 } from '@/lib/i18n/catalog-translations';
 
 export interface CategoryMeta {
@@ -21,10 +25,10 @@ export const CATEGORY_DEFINITIONS: Record<string, CategoryMeta> = {
     id: 'clothing',
     slug: 'vetements',
     name: 'Vêtements',
-    subtitle: 'Costumes, Blazers & Confection Sartoriale',
+    subtitle: 'Vestes, Chemises & Prêt-à-Porter',
     description:
-      'L\'art du sur-mesure et de la coupe d\'apparat. Des laines vierges d\'exception Super 130s, des boutonnières façon tailleur et des finitions semi-entoilées d\'une distinction souveraine.',
-    heroImage: 'https://images.unsplash.com/photo-1594938298603-c8148c4dae35?auto=format&fit=crop&q=80&w=1600',
+      'L\'art du vestiaire masculin contemporain. Des matières nobles sélectionnées avec soin, des coupes modernes et des finitions d\'une distinction souveraine.',
+    heroImage: 'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?auto=format&fit=crop&q=80&w=1600',
   },
   shoes: {
     id: 'shoes',
@@ -113,7 +117,7 @@ export {
 
 export const SUBCATEGORIES_BY_CATEGORY: Record<string, { id: string; label: string }[]> = {
   clothing: [
-    { id: 'costumes', label: 'Costumes' },
+    { id: 'vestes', label: 'Vestes & Blousons' },
     { id: 'blazers', label: 'Blazers' },
     { id: 'chemises', label: 'Chemises' },
     { id: 'manteaux', label: 'Manteaux' },
@@ -130,7 +134,7 @@ export const SUBCATEGORIES_BY_CATEGORY: Record<string, { id: string; label: stri
     { id: 'sneakers', label: 'Baskets de Luxe' },
   ],
   accessories: [
-    { id: 'montres', label: 'Horlogerie' },
+    { id: 'montres', label: 'Montres' },
     { id: 'cravates', label: 'Cravates' },
     { id: 'ceintures', label: 'Ceintures' },
     { id: 'boutons-de-manchette', label: 'Boutons de manchette' },
@@ -169,22 +173,108 @@ export const DEFAULT_FILTER_STATE: CatalogFilterState = {
   sortBy: 'featured',
 };
 
+function normalizeSearchText(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[\u064B-\u065F\u0670]/g, '')
+    .replace(/[أإآٱ]/g, 'ا')
+    .replace(/ى/g, 'ي')
+    .replace(/ة/g, 'ه');
+}
+
+/**
+ * Evaluates whether a product is active and visible in the public customer storefront.
+ * When the status of a product is OFF (draft, inactive, or toggled off in admin),
+ * it is completely hidden from the shop.
+ */
+export function isProductVisibleInShop(p: Product | null | undefined): boolean {
+  if (!p) return false;
+  if (p.status === 'draft' || p.status === 'archived') return false;
+  if (p.isActive === false) return false;
+  if (p.inStock === false && p.status !== 'active') return false;
+  return true;
+}
+
 /**
  * Pure client-side filtering function matching server and data-provider logic.
+ * Supports French, English, and Arabic (with Arabic letter normalization) without RegExp overhead.
  */
-export function filterProducts(products: Product[], filters: CatalogFilterState): Product[] {
-  let result = [...products];
+export function filterProducts(
+  products: Product[],
+  filters: CatalogFilterState,
+  language?: SupportedLanguage
+): Product[] {
+  // Always hide products whose status is off from storefront catalog and search
+  let result = products.filter(isProductVisibleInShop);
+  void language;
 
-  // 1. Search Query (Title, Description, Subcategory, Materials, Tags)
+  // 1. Search Query (Direct fields, *Ar/*En fields, translations, subcategories, categories, colors)
   if (filters.searchQuery.trim()) {
-    const q = filters.searchQuery.toLowerCase().trim();
+    const q = normalizeSearchText(filters.searchQuery.trim());
     result = result.filter((p) => {
-      const matchTitle = p.title.toLowerCase().includes(q);
-      const matchDesc = p.description.toLowerCase().includes(q);
-      const matchSub = p.subcategory.toLowerCase().includes(q);
-      const matchMaterials = p.materials ? p.materials.toLowerCase().includes(q) : false;
-      const matchTags = Array.isArray(p.tags) && p.tags.some((t) => t.toLowerCase().includes(q));
-      return matchTitle || matchDesc || matchSub || matchMaterials || matchTags;
+      const candidates: (string | undefined)[] = [
+        p.title,
+        p.description,
+        p.subtitle,
+        p.shortDescription,
+        p.subcategory,
+        p.materials,
+        p.titleAr,
+        p.titleEn,
+        p.descriptionAr,
+        p.descriptionEn,
+        p.subtitleAr,
+        p.subtitleEn,
+        p.shortDescriptionAr,
+        p.shortDescriptionEn,
+        p.materialsAr,
+        p.materialsEn,
+      ];
+
+      if (Array.isArray(p.tags)) {
+        for (const tag of p.tags) {
+          candidates.push(tag);
+        }
+      }
+
+      const prodTrans = PRODUCT_TRANSLATIONS[p.id];
+      if (prodTrans) {
+        candidates.push(
+          prodTrans.en?.title,
+          prodTrans.en?.description,
+          prodTrans.en?.subtitle,
+          prodTrans.en?.materials,
+          prodTrans.ar?.title,
+          prodTrans.ar?.description,
+          prodTrans.ar?.subtitle,
+          prodTrans.ar?.materials
+        );
+      }
+
+      const subKey = p.subcategory ? p.subcategory.toLowerCase().trim() : '';
+      const subTrans = SUBCATEGORY_TRANSLATIONS[subKey];
+      if (subTrans) {
+        candidates.push(subTrans.fr, subTrans.en, subTrans.ar);
+      }
+
+      const catTrans = CATEGORY_TRANSLATIONS[normalizeCategoryKey(p.categoryId)];
+      if (catTrans) {
+        candidates.push(catTrans.fr?.name, catTrans.en?.name, catTrans.ar?.name);
+      }
+
+      if (Array.isArray(p.colors)) {
+        for (const c of p.colors) {
+          if (c?.name) {
+            candidates.push(
+              c.name,
+              getLocalizedColor(c.name, 'en'),
+              getLocalizedColor(c.name, 'ar')
+            );
+          }
+        }
+      }
+
+      return candidates.some((field) => field && normalizeSearchText(field).includes(q));
     });
   }
 

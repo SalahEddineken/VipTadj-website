@@ -43,8 +43,12 @@ export function formatAlgerianPhone(phone: string | null | undefined): string {
   if (!phone) return '';
   let cleaned = phone.replace(/[\s\-\.\(\)]/g, '');
 
-  if (cleaned.startsWith('+213')) {
+  if (/^\+2130[567]\d{8}$/.test(cleaned)) {
+    cleaned = cleaned.substring(4);
+  } else if (cleaned.startsWith('+213')) {
     cleaned = '0' + cleaned.substring(4);
+  } else if (/^002130[567]\d{8}$/.test(cleaned)) {
+    cleaned = cleaned.substring(5);
   } else if (cleaned.startsWith('00213')) {
     cleaned = '0' + cleaned.substring(5);
   }
@@ -66,7 +70,10 @@ export function formatTelLink(rawPhone: string | null | undefined): string {
   const cleaned = rawPhone.replace(/[\s\-\.\(\)]/g, '');
   if (!cleaned) return 'tel:';
 
-  // Already prefixed with +213
+  // Already prefixed with +213 (strip optional national trunk '0', e.g. +213 (0) 550 00 00 00)
+  if (/^\+2130[567]\d{8}$/.test(cleaned)) {
+    return `tel:+213${cleaned.substring(5)}`;
+  }
   if (cleaned.startsWith('+213')) {
     return `tel:${cleaned}`;
   }
@@ -74,7 +81,10 @@ export function formatTelLink(rawPhone: string | null | undefined): string {
   if (cleaned.startsWith('+')) {
     return `tel:${cleaned}`;
   }
-  // 00213 prefix
+  // 00213 prefix (strip optional national trunk '0', e.g. 00213 (0) 550 00 00 00)
+  if (/^002130[567]\d{8}$/.test(cleaned)) {
+    return `tel:+213${cleaned.substring(6)}`;
+  }
   if (cleaned.startsWith('00213')) {
     return `tel:+${cleaned.substring(2)}`;
   }
@@ -99,6 +109,12 @@ export function normalizePhoneForWhatsApp(rawPhone: string | null | undefined): 
   const cleaned = rawPhone.replace(/[\s\-\.\(\)]/g, '');
   if (!cleaned) return '';
 
+  if (/^\+2130[567]\d{8}$/.test(cleaned)) {
+    return `213${cleaned.substring(5)}`;
+  }
+  if (/^002130[567]\d{8}$/.test(cleaned)) {
+    return `213${cleaned.substring(6)}`;
+  }
   if (cleaned.startsWith('+')) {
     return cleaned.substring(1);
   }

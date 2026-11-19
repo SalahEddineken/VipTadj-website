@@ -36,9 +36,9 @@ describe('Data Provider & Domain Contracts', () => {
     });
 
     it('filters products by subcategory', async () => {
-      const suits = await store.getProducts({ subcategory: 'costumes' });
-      expect(suits.length).toBeGreaterThan(0);
-      expect(suits.every((p) => p.subcategory === 'costumes')).toBe(true);
+      const jackets = await store.getProducts({ subcategory: 'vestes' });
+      expect(jackets.length).toBeGreaterThan(0);
+      expect(jackets.every((p) => p.subcategory === 'vestes')).toBe(true);
     });
 
     it('filters products by inStock and featured flags', async () => {
@@ -74,10 +74,10 @@ describe('Data Provider & Domain Contracts', () => {
     });
 
     it('fetches a product by unique slug', async () => {
-      const product = await store.getProductBySlug('costume-deux-pieces-laine-italienne');
+      const product = await store.getProductBySlug('veste-saharienne-elegante-coton-lin');
       expect(product).not.toBeNull();
-      expect(product?.slug).toBe('costume-deux-pieces-laine-italienne');
-      expect(product?.price).toBe(48500);
+      expect(product?.slug).toBe('veste-saharienne-elegante-coton-lin');
+      expect(product?.price).toBe(38500);
     });
 
     it('returns null for non-existent product slug', async () => {
@@ -199,14 +199,15 @@ describe('Data Provider & Domain Contracts', () => {
     });
   });
 
-  describe('Store Settings & 58 Wilayas Matrix', () => {
-    it('returns store settings with all 58 Algerian wilayas configured', async () => {
+  describe('Store Settings & 68 Wilayas Matrix', () => {
+    it('returns store settings with all 68 Algerian wilayas configured', async () => {
       const settings = await store.getSettings();
       expect(settings.storeName).toBe('VIP TADJ');
       expect(settings.currency).toBe('DZD');
-      expect(settings.wilayasDelivery.length).toBe(58);
+      expect(settings.wilayasDelivery.length).toBe(68);
       expect(settings.wilayasDelivery.find((w) => w.code === 16)?.homeDeliveryFee).toBe(400);
       expect(settings.wilayasDelivery.find((w) => w.code === 31)?.homeDeliveryFee).toBe(600);
+      expect(settings.wilayasDelivery.find((w) => w.code === 68)?.homeDeliveryFee).toBe(600);
     });
 
     it('updates store settings cleanly', async () => {

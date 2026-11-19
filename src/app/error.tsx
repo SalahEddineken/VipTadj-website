@@ -3,6 +3,7 @@
 import React, { useEffect } from 'react';
 import Link from 'next/link';
 import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
+import { useLanguage } from '@/lib/context/language-context';
 
 export default function GlobalErrorPage({
   error,
@@ -11,6 +12,8 @@ export default function GlobalErrorPage({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const { t } = useLanguage();
+
   useEffect(() => {
     console.error('[VIP TADJ Application Error]:', error);
   }, [error]);
@@ -26,14 +29,17 @@ export default function GlobalErrorPage({
         {/* Message */}
         <div className="space-y-2">
           <h1 className="font-cinzel text-xl sm:text-2xl font-semibold text-ivory tracking-wide">
-            Une interruption est survenue
+            {t('error.title', 'Une interruption est survenue')}
           </h1>
           <p className="text-sm text-obsidian-300 max-w-sm mx-auto leading-relaxed">
-            {"Nous n'avons pas pu charger cette page. Veuillez réessayer ou revenir à l'accueil de la boutique."}
+            {t(
+              'error.desc',
+              "Nous n'avons pas pu charger cette page. Veuillez réessayer ou revenir à l'accueil de la boutique."
+            )}
           </p>
           {error.digest && (
             <p className="text-[10px] text-obsidian-500 font-mono">
-              Réf : {error.digest}
+              {t('error.ref_prefix', 'Réf :')} {error.digest}
             </p>
           )}
         </div>
@@ -46,14 +52,14 @@ export default function GlobalErrorPage({
             className="w-full sm:w-auto px-6 py-3 rounded-lg bg-gold-500 hover:bg-gold-400 text-obsidian-950 font-medium text-sm transition-all flex items-center justify-center gap-2 shadow-gold-sm"
           >
             <RefreshCw className="w-4 h-4" />
-            <span>Réessayer</span>
+            <span>{t('error.retry', 'Réessayer')}</span>
           </button>
           <Link
             href="/"
             className="w-full sm:w-auto px-6 py-3 rounded-lg bg-obsidian-900 hover:bg-obsidian-850 border border-gold-500/30 text-gold-400 hover:text-ivory font-medium text-sm transition-colors flex items-center justify-center gap-2"
           >
             <Home className="w-4 h-4" />
-            <span>Accueil</span>
+            <span>{t('nav.home', 'Accueil')}</span>
           </Link>
         </div>
       </div>

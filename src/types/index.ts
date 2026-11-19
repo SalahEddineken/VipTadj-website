@@ -34,10 +34,18 @@ export interface ProductSizeStock {
 export interface Product {
   id: string;
   title: string;                 // e.g. "Costume Deux Pièces en Laine Italienne Super 130s"
+  titleAr?: string;
+  titleEn?: string;
   slug: string;                  // e.g. "costume-deux-pieces-laine-italienne"
   subtitle?: string;             // e.g. "Édition Limitée Sartoriale"
+  subtitleAr?: string;
+  subtitleEn?: string;
   description: string;           // Rich French editorial description
+  descriptionAr?: string;
+  descriptionEn?: string;
   shortDescription?: string;     // Excerpt for quick-view and summary cards
+  shortDescriptionAr?: string;
+  shortDescriptionEn?: string;
   price: number;                 // Integer in DZD (e.g. 48500 = 48,500 DA)
   compareAtPrice?: number;       // Original strike-through price in DZD
   costPrice?: number;            // Admin cost price for margin calculation
@@ -50,11 +58,17 @@ export interface Product {
   sizeInventory?: Record<string, number>; // Size-to-stock mapping: { "48": 4, "50": 2, "52": 0 }
   colors?: ProductColor[];
   materials?: string;            // e.g. "100% Laine Vierge Lanificio Cerruti Super 130s"
+  materialsAr?: string;
+  materialsEn?: string;
   careInstructions?: string;     // e.g. "Nettoyage à sec par un spécialiste uniquement"
+  careInstructionsAr?: string;
+  careInstructionsEn?: string;
   fit?: 'Slim Fit' | 'Classic Fit' | 'Tailored Fit' | 'Relaxed Fit' | string;
   sku?: string;                  // e.g. "VIP-SUIT-001"
   stockQuantity: number;         // Total aggregate inventory units
   inStock: boolean;              // True if stockQuantity > 0
+  status?: 'active' | 'draft' | 'archived'; // Product publication status: 'active' (visible) | 'draft' (hidden)
+  isActive?: boolean;            // Master activation switch
   isFeatured: boolean;           // Displayed in homepage Hero / Curated selection
   isNewArrival: boolean;         // Displays "Nouvelle Collection" badge
   isBestSeller?: boolean;        // Displays "Best-Seller" badge
@@ -71,6 +85,8 @@ export interface ProductFilter {
   categorySlug?: string;
   subcategory?: string;
   inStock?: boolean;
+  status?: 'active' | 'draft' | 'archived';
+  isActive?: boolean;
   featured?: boolean;
   newArrival?: boolean;
   minPrice?: number;
@@ -86,16 +102,26 @@ export interface ProductFilter {
 export interface SubCategory {
   id: string;
   name: string;        // e.g. "Costumes & Smokings"
+  nameAr?: string;
+  nameEn?: string;
   slug: string;        // e.g. "costumes"
   description?: string;
+  descriptionAr?: string;
+  descriptionEn?: string;
 }
 
 export interface Category {
   id: ProductCategoryType | string; // 'clothing' | 'shoes' | 'accessories'
   name: string;            // "Vêtements", "Chaussures", "Accessoires"
-  nameEn?: string;         // "Clothing", "Shoes", "Accessories"
+  nameEn?: string;         // "Clothing", "Footwear", "Accessories"
+  nameAr?: string;         // "ملابس وأزياء", "أحذية", "إكسسوارات"
+  subtitle?: string;
+  subtitleAr?: string;
+  subtitleEn?: string;
   slug: string;            // "vetements", "chaussures", "accessoires"
   description: string;
+  descriptionAr?: string;
+  descriptionEn?: string;
   image?: string;          // Catalog preview image URL
   bannerImage?: string;    // High-res editorial banner URL
   displayOrder?: number;
@@ -136,7 +162,7 @@ export interface CustomerShippingInfo {
   wilaya: string;          // e.g. "16 - Alger" or "Alger"
   wilayaCode: number;      // Official Algerian Wilaya number: 1 to 58
   commune: string;         // e.g. "Hydra", "Sidi M'Hamed", "Oran Centre"
-  address: string;         // Full street address or landmark
+  address?: string;        // Full street address or landmark (optional for home delivery, omitted for desk)
   notes?: string;          // Delivery instructions (e.g. "Appeler avant d'arriver")
   deliveryType?: 'home' | 'desk'; // Home delivery vs Stop Desk pickup
 }
@@ -192,10 +218,18 @@ export interface OrderFilter {
   offset?: number;
 }
 
-// 4. STORE SETTINGS & 58 WILAYAS CONFIGURATION
+// 4. STORE SETTINGS & 68 WILAYAS CONFIGURATION
+
+export interface AlgerianCommune {
+  name: string;            // French name: "Hydra", "Oran Centre"
+  nameAr: string;          // Arabic name: "حيدرة", "وهران المركز"
+  wilayaCode: number;      // 1 to 68
+  postalCode?: string;     // e.g. "16035"
+  daira?: string;          // e.g. "Bir Mourad Raïs"
+}
 
 export interface WilayaDeliveryConfig {
-  code: number;            // 1 to 58
+  code: number;            // 1 to 68
   name: string;            // French name: "Alger", "Oran", "Constantine"
   nameAr?: string;         // Arabic name: "الجزائر", "وهران", "قسنطينة"
   fee?: number;            // Standard / Home fee in DZD
@@ -204,6 +238,28 @@ export interface WilayaDeliveryConfig {
   zone?: string;           // e.g. "alger", "hauts-plateaux", "sud", "nord"
   estimatedDays: string;   // e.g. "24h - 48h"
   isAvailable: boolean;
+}
+
+export interface HeroVideoConfig {
+  enabled: boolean;
+  videoUrl: string;
+  posterUrl?: string;
+  overlayOpacity?: number; // 0 - 100 percentage
+  playbackRate?: number;   // 0.25 - 2.0 speed multiplier (default 1.0)
+}
+
+export interface FeaturedSectionConfig {
+  enabled: boolean;
+  title?: string;          // French title: "Créations Emblématiques"
+  titleAr?: string;        // Arabic title: "تشكيلاتنا المختارة"
+  titleEn?: string;        // English title: "Curated Collections"
+  productIds?: string[];   // Explicit ordered list of product IDs to display
+}
+
+export interface CommuneShippingFeeOverride {
+  homeFee?: number;
+  deskFee?: number;
+  active?: boolean;
 }
 
 export interface StoreSettings {
@@ -219,12 +275,15 @@ export interface StoreSettings {
   freeShippingThreshold?: number; // e.g. 30000 (Free shipping above 30,000 DA)
   announcementBar?: {
     enabled: boolean;
-    text: string;          // "Livraison Express 58 Wilayas | Paiement à la réception"
+    text: string;          // "Livraison Express 68 Wilayas | Paiement à la réception"
     link?: string;
   };
+  heroVideo?: HeroVideoConfig;
+  featuredSection?: FeaturedSectionConfig;
   orderNotificationAudio?: boolean; // Audio chime for incoming orders
-  wilayasDelivery: WilayaDeliveryConfig[]; // Full 58 Wilayas configuration
+  wilayasDelivery: WilayaDeliveryConfig[]; // Full 68 Wilayas configuration
   wilayaShippingFees: Record<number, { homeFee: number; deskFee: number; active: boolean }>;
+  communeShippingFees?: Record<string, CommuneShippingFeeOverride>; // Keyed by "${wilayaCode}:${commune.name}"
   maintenanceMode?: boolean;
   updatedAt?: string;
 }
@@ -237,6 +296,8 @@ export interface AdminUser {
   id: string;              // Firebase Auth UID
   email: string;
   displayName?: string;
+  displayNameAr?: string;
+  displayNameEn?: string;
   role: AdminRole;
   isActive?: boolean;
   createdAt?: string;

@@ -20,11 +20,11 @@ describe('Tier 1: Admin — 58 Wilaya Delivery Fee Settings (F-ADM-06)', () => {
     expect(settings.wilayaShippingFees).toBeDefined();
 
     const configuredWilayas = Object.keys(settings.wilayaShippingFees);
-    expect(configuredWilayas).toHaveLength(58);
+    expect(configuredWilayas).toHaveLength(68);
 
     // Verify Algiers defaults
-    expect(settings.wilayaShippingFees[16].homeFee).toBe(400);
-    expect(settings.wilayaShippingFees[16].deskFee).toBe(250);
+    expect(settings.wilayaShippingFees[16].homeFee).toBe(700);
+    expect(settings.wilayaShippingFees[16].deskFee).toBe(550);
     expect(settings.wilayaShippingFees[16].active).toBe(true);
   });
 
@@ -87,7 +87,7 @@ describe('Tier 1: Admin — 58 Wilaya Delivery Fee Settings (F-ADM-06)', () => {
     // Verify checkout shipping fee logic with new threshold:
     // Subtotal of 18,000 DA is no longer free under 25,000 DA threshold
     const feeUnderNewThreshold = calculateDeliveryFee(18000, 16, 25000);
-    expect(feeUnderNewThreshold).toBe(400);
+    expect(feeUnderNewThreshold).toBe(700);
 
     // Subtotal of 26,000 DA qualifies for free shipping
     const feeQualified = calculateDeliveryFee(26000, 16, 25000);
@@ -135,5 +135,28 @@ describe('Tier 1: Admin — 58 Wilaya Delivery Fee Settings (F-ADM-06)', () => {
     const refreshed = await mockDataProvider.getSettings();
     expect(refreshed.phone).toBe('+213550112233');
     expect(refreshed.email).toBe('contact@viptadj.dz');
+  });
+
+  // ==========================================
+  // Test 7: Featured Section Configuration
+  // ==========================================
+  it('allows configuring and persisting the featured collection showcase (تشكيلاتنا المختارة)', async () => {
+    const updated = await mockDataProvider.updateSettings({
+      featuredSection: {
+        enabled: true,
+        title: 'Sélection Sartoriale',
+        titleAr: 'تشكيلاتنا المختارة الحصرية',
+        titleEn: 'Exclusive Curated Selection',
+        productIds: ['prod-blazer-royal-bordeaux', 'prod-suit-01'],
+      },
+    });
+
+    expect(updated.featuredSection).toBeDefined();
+    expect(updated.featuredSection?.titleAr).toBe('تشكيلاتنا المختارة الحصرية');
+    expect(updated.featuredSection?.productIds).toEqual(['prod-blazer-royal-bordeaux', 'prod-suit-01']);
+
+    const refreshed = await mockDataProvider.getSettings();
+    expect(refreshed.featuredSection?.titleAr).toBe('تشكيلاتنا المختارة الحصرية');
+    expect(refreshed.featuredSection?.productIds).toHaveLength(2);
   });
 });

@@ -1,7 +1,11 @@
 import Link from 'next/link';
 import { Compass, Home, ShoppingBag } from 'lucide-react';
+import { getServerLanguage } from '@/app/_utils/server-lang';
+import { getTranslation } from '@/lib/i18n/locales';
 
 export default function NotFound() {
+  const lang = getServerLanguage();
+
   return (
     <div className="min-h-[75vh] flex items-center justify-center px-4 py-16 bg-obsidian-950 text-ivory">
       <div className="max-w-md w-full text-center space-y-6">
@@ -16,10 +20,14 @@ export default function NotFound() {
             404
           </p>
           <h1 className="font-cinzel text-xl sm:text-2xl font-semibold text-ivory tracking-wide">
-            Page Introuvable | الصفحة غير موجودة
+            {getTranslation(lang, 'not_found.title', 'Page Introuvable')}
           </h1>
           <p className="text-sm text-obsidian-300 max-w-sm mx-auto leading-relaxed">
-            {"La pièce d'exception que vous recherchez semble introuvable ou a été déplacée dans notre catalogue."}
+            {getTranslation(
+              lang,
+              'not_found.desc',
+              "La pièce d'exception que vous recherchez semble introuvable ou a été déplacée dans notre catalogue."
+            )}
           </p>
         </div>
 
@@ -30,21 +38,21 @@ export default function NotFound() {
             className="w-full sm:w-auto px-6 py-3 rounded-lg bg-gold-500 hover:bg-gold-400 text-obsidian-950 font-medium text-sm transition-all duration-300 flex items-center justify-center gap-2 shadow-gold-sm hover:shadow-gold-md"
           >
             <ShoppingBag className="w-4 h-4" />
-            <span>Explorer le Catalogue</span>
+            <span>{getTranslation(lang, 'not_found.cta_catalog', 'Explorer le Catalogue')}</span>
           </Link>
           <Link
             href="/"
             className="w-full sm:w-auto px-6 py-3 rounded-lg bg-obsidian-900 hover:bg-obsidian-850 border border-gold-500/30 text-gold-400 hover:text-ivory font-medium text-sm transition-colors flex items-center justify-center gap-2"
           >
             <Home className="w-4 h-4" />
-            <span>Accueil</span>
+            <span>{getTranslation(lang, 'nav.home', 'Accueil')}</span>
           </Link>
         </div>
 
         {/* Subtitle brand accent */}
         <div className="pt-6 border-t border-gold-500/10">
           <p className="font-cinzel text-xs tracking-widest text-gold-500/60 uppercase">
-            VIP TADJ — Haute Élégance Masculine
+            {getTranslation(lang, 'not_found.brand_footer', 'VIP TADJ — Haute Élégance Masculine')}
           </p>
         </div>
       </div>

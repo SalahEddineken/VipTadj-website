@@ -24,6 +24,12 @@ import {
   generateWhatsAppConfirmLink,
 } from '@/lib/utils/contactUtils';
 import { useLanguage } from '@/lib/context/language-context';
+import { useStoreSettings } from '@/lib/context/store-settings-context';
+import { getLocalizedSize, getLocalizedColor } from '@/lib/i18n/catalog-translations';
+import { getLocalizedCartItemTitle } from '@/components/store/cart-item-localization';
+import { getStatusLabel, STATUS_CONFIG } from '@/lib/utils/orderStateMachine';
+import { getWilayaByCode } from '@/lib/data/wilayas';
+import { findCommune } from '@/lib/data/communes';
 
 export interface OrderSuccessViewProps {
   order: Order;
@@ -31,17 +37,38 @@ export interface OrderSuccessViewProps {
 
 export function OrderSuccessView({ order }: OrderSuccessViewProps) {
   const { language, t } = useLanguage();
+  const { phone: storePhone, whatsappNumber } = useStoreSettings();
 
   const formattedPhone = formatAlgerianPhone(order.customer.phone);
   const telLink = formatTelLink(order.customer.phone);
-  const whatsAppUrl = generateWhatsAppConfirmLink(order);
+  const whatsAppUrl = generateWhatsAppConfirmLink(order, whatsappNumber || undefined, language);
+
+  const wilayaObj = order.customer.wilayaCode
+    ? getWilayaByCode(order.customer.wilayaCode)
+    : undefined;
+  const communeObj =
+    order.customer.wilayaCode && order.customer.commune
+      ? findCommune(order.customer.wilayaCode, order.customer.commune)
+      : undefined;
+
+  const wilayaDisplay =
+    language === 'ar'
+      ? wilayaObj?.nameAr || order.customer.wilaya
+      : wilayaObj?.name || order.customer.wilaya;
+  const communeDisplay =
+    language === 'ar'
+      ? communeObj?.nameAr || order.customer.commune
+      : communeObj?.name || order.customer.commune;
 
   return (
     <main className="min-h-screen bg-sand-50/30 py-10 md:py-16">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
         
         {/* Breadcrumb */}
-        <nav className="flex items-center gap-2 text-xs uppercase tracking-widest text-neutral-500">
+        <nav
+          aria-label={t('pdp.breadcrumb.aria_label', "Fil d'Ariane")}
+          className="flex items-center gap-2 text-xs uppercase tracking-widest text-neutral-500"
+        >
           <Link href="/" className="hover:text-gold-700 transition-colors">
             {t('nav.home', 'Accueil')}
           </Link>
@@ -82,7 +109,7 @@ export function OrderSuccessView({ order }: OrderSuccessViewProps) {
               <span className="text-neutral-500 uppercase tracking-wider">
                 {t('success.hero.order_num', 'N° Commande :')}
               </span>
-              <span className="font-sans tabular-nums text-sm sm:text-base font-bold text-gold-700 bg-gold-500/10 px-3 py-1 border border-gold-500/20">
+              <span dir="ltr" className="font-sans tabular-nums text-sm sm:text-base font-bold text-gold-700 bg-gold-500/10 px-3 py-1 border border-gold-500/20">
                 {order.orderNumber}
               </span>
             </div>
@@ -90,8 +117,13 @@ export function OrderSuccessView({ order }: OrderSuccessViewProps) {
               <span className="text-neutral-500 uppercase tracking-wider">
                 {t('success.hero.status_label', 'Statut :')}
               </span>
-              <span className="px-3 py-1 uppercase tracking-widest text-[11px] font-semibold bg-amber-500/10 text-amber-700 border border-amber-500/30 rounded-full">
-                {t('success.hero.status_val', 'En attente de validation')}
+              <span
+                className={`px-3 py-1 uppercase tracking-widest text-[11px] font-semibold border rounded-full ${
+                  STATUS_CONFIG[order.status]?.badgeClass ||
+                  'bg-amber-500/10 text-amber-700 border-amber-500/30'
+                }`}
+              >
+                {getStatusLabel(order.status, language)}
               </span>
             </div>
             <div className="flex items-center gap-2">
@@ -132,14 +164,14 @@ export function OrderSuccessView({ order }: OrderSuccessViewProps) {
               className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-3.5 py-2.5 bg-obsidian-900 text-white font-semibold tracking-wider sm:tracking-[0.15em] uppercase hover:bg-gold-700 transition-colors"
             >
               <PhoneCall className="w-3.5 h-3.5" />
-              {t('success.call_banner.verify_phone', 'Vérifier mon numéro')} ({formattedPhone})
+              {t('success.call_banner.verify_phone', 'Vérifier mon numéro')} (<span dir="ltr">{formattedPhone}</span>)
             </a>
-            <span className="text-neutral-400 text-xs">ou</span>
+            <span className="text-neutral-400 text-xs">{t('common.or', 'ou')}</span>
             <a
-              href="tel:+213550123456"
+              href={formatTelLink(storePhone)}
               className="inline-flex items-center gap-1.5 text-neutral-600 hover:text-gold-700 transition-colors underline underline-offset-4"
             >
-              {t('success.call_banner.concierge_contact', 'Contacter notre conciergerie :')} +213 550 12 34 56
+              {t('success.call_banner.concierge_contact', 'Contacter notre conciergerie :')} <span dir="ltr">{storePhone}</span>
             </a>
           </div>
         </section>
@@ -188,7 +220,7 @@ export function OrderSuccessView({ order }: OrderSuccessViewProps) {
                   </h3>
                 </div>
                 <span className="text-[11px] font-sans tabular-nums text-neutral-400">
-                  ID: {order.id}
+                  {t('error.ref_prefix', 'Réf :')} {order.id}
                 </span>
               </div>
 
@@ -208,10 +240,22 @@ export function OrderSuccessView({ order }: OrderSuccessViewProps) {
                   </span>
                   <a
                     href={telLink}
+                    dir="ltr"
                     className="font-sans tabular-nums font-medium text-gold-700 hover:underline ltr-protect inline-block"
                   >
                     {formattedPhone}
                   </a>
+                  {order.customer.secondaryPhone && (
+                    <div className="mt-1">
+                      <a
+                        href={formatTelLink(order.customer.secondaryPhone)}
+                        dir="ltr"
+                        className="font-sans tabular-nums text-xs text-neutral-600 hover:text-gold-700 hover:underline ltr-protect inline-block"
+                      >
+                        {formatAlgerianPhone(order.customer.secondaryPhone)}
+                      </a>
+                    </div>
+                  )}
                 </div>
 
                 <div>
@@ -219,10 +263,10 @@ export function OrderSuccessView({ order }: OrderSuccessViewProps) {
                     {t('success.dossier.destination', 'Destination')}
                   </span>
                   <span className="text-obsidian-900">
-                    {t('checkout.field.wilaya', 'Wilaya')} {order.customer.wilayaCode} - {order.customer.wilaya}
+                    {t('checkout.field.wilaya', 'Wilaya')} {order.customer.wilayaCode} - {wilayaDisplay}
                   </span>
                   <span className="block text-xs text-neutral-500">
-                    {t('checkout.field.commune', 'Commune :')} {order.customer.commune}
+                    {t('checkout.field.commune', 'Commune')} : {communeDisplay}
                   </span>
                 </div>
 
@@ -238,14 +282,16 @@ export function OrderSuccessView({ order }: OrderSuccessViewProps) {
                   </span>
                 </div>
 
-                <div className="sm:col-span-2">
-                  <span className="block text-xs uppercase tracking-wider text-neutral-500 mb-1">
-                    {t('success.dossier.detailed_address', 'Adresse détaillée')}
-                  </span>
-                  <span className="text-obsidian-900 leading-relaxed">
-                    {order.customer.address}
-                  </span>
-                </div>
+                {order.customer.address ? (
+                  <div className="sm:col-span-2">
+                    <span className="block text-xs uppercase tracking-wider text-neutral-500 mb-1">
+                      {t('success.dossier.detailed_address', 'Adresse détaillée')}
+                    </span>
+                    <span className="text-obsidian-900 leading-relaxed">
+                      {order.customer.address}
+                    </span>
+                  </div>
+                ) : null}
 
                 {order.customer.notes && (
                   <div className="sm:col-span-2 bg-sand-50 p-3.5 border-s-2 border-gold-500 text-xs">
@@ -275,51 +321,61 @@ export function OrderSuccessView({ order }: OrderSuccessViewProps) {
               </div>
 
               <div className="divide-y divide-sand-200">
-                {order.items.map((item, idx) => (
-                  <div
-                    key={`${item.productId}-${item.selectedSize}-${idx}`}
-                    className="py-4 first:pt-0 last:pb-0 flex items-center justify-between gap-4"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="relative w-16 h-20 bg-sand-100 overflow-hidden shrink-0 border border-sand-200">
-                        <Image
-                          src={item.image || 'https://images.unsplash.com/photo-1594938298603-c8148c4dae35'}
-                          alt={item.title}
-                          fill
-                          className="object-cover object-top"
-                        />
-                      </div>
+                {order.items.map((item, idx) => {
+                  const localizedTitle = getLocalizedCartItemTitle(item, language);
+                  const localizedSize = getLocalizedSize(item.selectedSize, language);
 
-                      <div className="space-y-1">
-                        <h4 className="font-serif text-sm font-semibold text-obsidian-900 line-clamp-2">
-                          {item.title}
-                        </h4>
-                        <div className="flex items-center gap-3 text-xs text-neutral-500">
-                          <span className="inline-block bg-sand-100 px-2 py-0.5 border border-sand-300 font-sans tabular-nums text-[11px]">
-                            {t('success.items.size', 'Taille')} {item.selectedSize}
-                          </span>
-                          <span>
-                            {t('success.items.qty', 'Quantité :')}{' '}
-                            <strong className="font-sans tabular-nums text-obsidian-900">
-                              {item.quantity}
-                            </strong>
-                          </span>
+                  return (
+                    <div
+                      key={`${item.productId}-${item.selectedSize}-${idx}`}
+                      className="py-4 first:pt-0 last:pb-0 flex items-center justify-between gap-4"
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="relative w-16 h-20 bg-sand-100 overflow-hidden shrink-0 border border-sand-200">
+                          <Image
+                            src={item.image || 'https://images.unsplash.com/photo-1594938298603-c8148c4dae35'}
+                            alt={localizedTitle}
+                            fill
+                            className="object-cover object-top"
+                          />
+                        </div>
+
+                        <div className="space-y-1">
+                          <h4 className="font-serif text-sm font-semibold text-obsidian-900 line-clamp-2">
+                            {localizedTitle}
+                          </h4>
+                          <div className="flex flex-wrap items-center gap-2 text-xs text-neutral-500">
+                            <span className="inline-block bg-sand-100 px-2 py-0.5 border border-sand-300 font-sans tabular-nums text-[11px]">
+                              {t('success.items.size', 'Taille')} {localizedSize}
+                            </span>
+                            {item.selectedColor && (
+                              <span className="inline-block bg-sand-100 px-2 py-0.5 border border-sand-300 text-[11px]">
+                                {t('checkout.summary.color_label', 'Couleur :')} {getLocalizedColor(item.selectedColor, language)}
+                              </span>
+                            )}
+                            <span>
+                              {t('success.items.qty', 'Quantité :')}{' '}
+                              <strong className="font-sans tabular-nums text-obsidian-900">
+                                {item.quantity}
+                              </strong>
+                            </span>
+                          </div>
                         </div>
                       </div>
-                    </div>
 
-                    <div className="text-end shrink-0">
-                      <span className="font-serif text-sm font-bold text-obsidian-900">
-                        {formatDZD(item.price * item.quantity, { locale: language })}
-                      </span>
-                      {item.quantity > 1 && (
-                        <span className="block text-[11px] font-sans tabular-nums text-neutral-500">
-                          ({formatDZD(item.price, { locale: language })} / unité)
+                      <div className="text-end shrink-0">
+                        <span className="font-serif text-sm font-bold text-obsidian-900">
+                          {formatDZD(item.price * item.quantity, { locale: language })}
                         </span>
-                      )}
+                        {item.quantity > 1 && (
+                          <span className="block text-[11px] font-sans tabular-nums text-neutral-500">
+                            ({formatDZD(item.price, { locale: language })} {t('success.items.per_unit', '/ unité')})
+                          </span>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
 
@@ -343,7 +399,7 @@ export function OrderSuccessView({ order }: OrderSuccessViewProps) {
                 </div>
 
                 <div className="flex justify-between items-center text-neutral-600">
-                  <span>{t('success.recap.shipping', 'Frais de livraison')} ({order.customer.wilaya}) :</span>
+                  <span>{t('success.recap.shipping', 'Frais de livraison')} ({wilayaDisplay}) :</span>
                   <span className="font-sans tabular-nums font-medium">
                     {order.deliveryFee === 0 ? (
                       <span className="text-emerald-700 font-semibold">

@@ -5,26 +5,69 @@ import { ZoomIn, ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { ProductImage, ProductColor } from '@/types';
 import { normalizeImageUrl } from '@/lib/media/url-normalizer';
 import { useLanguage } from '@/lib/context/language-context';
+import { getLocalizedColor } from '@/lib/i18n/catalog-translations';
 
 export interface ProductGalleryProps {
   images: ProductImage[];
   title: string;
   categoryId?: string;
   selectedColor?: ProductColor | string | null;
+  colors?: ProductColor[];
 }
 
-export function ProductGallery({ images, title, categoryId, selectedColor }: ProductGalleryProps) {
-  const { t } = useLanguage();
+export function ProductGallery({ images, title, categoryId, selectedColor, colors }: ProductGalleryProps) {
+  const { language, t } = useLanguage();
   const safeImages = useMemo(() => {
-    return images && images.length > 0 ? images : [
-      {
-        id: 'default',
-        url: 'https://images.unsplash.com/photo-1594938298603-c8148c4dae35',
-        alt: title,
-        isPrimary: true,
-      },
-    ];
-  }, [images, title]);
+    const baseImages: ProductImage[] =
+      images && images.length > 0
+        ? [...images]
+        : [
+            {
+              id: 'default',
+              url: 'https://images.unsplash.com/photo-1594938298603-c8148c4dae35',
+              alt: title,
+              isPrimary: true,
+            },
+          ];
+
+    const hasUrl = (targetUrl: string) => {
+      const normalizedTarget = normalizeImageUrl(targetUrl);
+      return baseImages.some(
+        (img) => img.url === targetUrl || normalizeImageUrl(img.url) === normalizedTarget
+      );
+    };
+
+    // Ensure any color-attached imageUrl is present in the gallery even if not in product.images
+    if (Array.isArray(colors)) {
+      colors.forEach((col, idx) => {
+        if (col.imageUrl && col.imageUrl.trim() && !hasUrl(col.imageUrl)) {
+          const localizedColName = getLocalizedColor(col.name, language) || col.name;
+          baseImages.push({
+            id: `color-img-${idx}`,
+            url: col.imageUrl,
+            alt: `${title} - ${localizedColName}`,
+            isPrimary: false,
+            color: col.name,
+          });
+        }
+      });
+    }
+
+    if (typeof selectedColor === 'object' && selectedColor?.imageUrl && selectedColor.imageUrl.trim()) {
+      if (!hasUrl(selectedColor.imageUrl)) {
+        const localizedSelectedCol = getLocalizedColor(selectedColor.name, language) || selectedColor.name;
+        baseImages.push({
+          id: 'selected-color-img',
+          url: selectedColor.imageUrl,
+          alt: `${title} - ${localizedSelectedCol}`,
+          isPrimary: false,
+          color: selectedColor.name,
+        });
+      }
+    }
+
+    return baseImages;
+  }, [images, title, colors, selectedColor, language]);
 
   // Primary image starts first
   const primaryIdx = safeImages.findIndex((img) => img.isPrimary);
@@ -39,7 +82,15 @@ export function ProductGallery({ images, title, categoryId, selectedColor }: Pro
     width: 1200,
     quality: 90,
     fallbackCategory: categoryId,
+    language,
   });
+
+  const activeAlt =
+    language === 'fr'
+      ? activeImage.alt || title
+      : activeImage.color
+      ? `${title} - ${getLocalizedColor(activeImage.color, language) || activeImage.color}`
+      : title;
 
   // Switch active gallery image when color selection changes
   useEffect(() => {
@@ -48,14 +99,22 @@ export function ProductGallery({ images, title, categoryId, selectedColor }: Pro
     const colorImageUrl =
       typeof selectedColor === 'object' && selectedColor ? selectedColor.imageUrl : undefined;
 
-    // 1. Try matching image by exact color property
-    let matchIdx = safeImages.findIndex(
-      (img) => img.color && colorName && img.color.toLowerCase() === colorName.toLowerCase()
-    );
+    // 1. Try matching by direct imageUrl first (most specific from admin panel color attachment)
+    let matchIdx = -1;
+    if (colorImageUrl && colorImageUrl.trim()) {
+      const normalizedColorUrl = normalizeImageUrl(colorImageUrl);
+      matchIdx = safeImages.findIndex(
+        (img) =>
+          img.url === colorImageUrl ||
+          normalizeImageUrl(img.url) === normalizedColorUrl
+      );
+    }
 
-    // 2. Try matching by direct imageUrl
-    if (matchIdx === -1 && colorImageUrl) {
-      matchIdx = safeImages.findIndex((img) => img.url === colorImageUrl);
+    // 2. Try matching image by exact color property
+    if (matchIdx === -1 && colorName) {
+      matchIdx = safeImages.findIndex(
+        (img) => img.color && colorName && img.color.toLowerCase() === colorName.toLowerCase()
+      );
     }
 
     // 3. Try matching by alt text containing color name
@@ -97,8 +156,15 @@ export function ProductGallery({ images, title, categoryId, selectedColor }: Pro
               width: 200,
               quality: 75,
               fallbackCategory: categoryId,
+              language,
             });
             const isActive = idx === activeIdx;
+            const thumbAlt =
+              language === 'fr'
+                ? img.alt || `${title} vignette ${idx + 1}`
+                : img.color
+                ? `${title} - ${getLocalizedColor(img.color, language) || img.color} (${idx + 1})`
+                : `${title} — ${idx + 1}`;
 
             return (
               <button
@@ -114,7 +180,7 @@ export function ProductGallery({ images, title, categoryId, selectedColor }: Pro
               >
                 <img
                   src={thumbUrl}
-                  alt={img.alt || `${title} vignette ${idx + 1}`}
+                  alt={thumbAlt}
                   className="w-full h-full object-cover object-center"
                 />
               </button>
@@ -127,7 +193,7 @@ export function ProductGallery({ images, title, categoryId, selectedColor }: Pro
       <div className="relative flex-1 aspect-[3/4] bg-sand-100 border border-sand-200 overflow-hidden shadow-luxury-subtle group">
         <img
           src={heroUrl}
-          alt={activeImage.alt || title}
+          alt={activeAlt}
           className="w-full h-full object-cover object-center transition-transform duration-500 group-hover:scale-[1.02]"
         />
 
@@ -143,7 +209,7 @@ export function ProductGallery({ images, title, categoryId, selectedColor }: Pro
 
         {/* Image Counter indicator */}
         {safeImages.length > 1 && (
-          <div className="absolute bottom-4 start-4 px-2.5 py-1 bg-obsidian-950/80 backdrop-blur-sm text-ivory text-xs tracking-widest font-sans tabular-nums uppercase">
+          <div dir="ltr" className="absolute bottom-4 start-4 px-2.5 py-1 bg-obsidian-950/80 backdrop-blur-sm text-ivory text-xs tracking-widest font-sans tabular-nums uppercase">
             {activeIdx + 1} / {safeImages.length}
           </div>
         )}
@@ -182,8 +248,13 @@ export function ProductGallery({ images, title, categoryId, selectedColor }: Pro
           {/* Main Fullscreen Image */}
           <div className="max-w-4xl max-h-[85vh] relative flex items-center justify-center">
             <img
-              src={normalizeImageUrl(activeImage.url, { width: 1600, quality: 95 })}
-              alt={activeImage.alt || title}
+              src={normalizeImageUrl(activeImage.url, {
+                width: 1600,
+                quality: 95,
+                fallbackCategory: categoryId,
+                language,
+              })}
+              alt={activeAlt}
               className="max-h-[85vh] max-w-full object-contain"
             />
           </div>

@@ -45,8 +45,13 @@ export function ColorSelector({
         aria-label={t('pdp.color.select_aria', 'Sélectionnez un coloris')}
         className="flex flex-wrap items-center gap-3"
       >
-        {colors.map((col) => {
-          const isSelected = selectedColor?.name === col.name;
+        {colors.map((col, idx) => {
+          const isSelected = selectedColor
+            ? selectedColor === col ||
+              (selectedColor.hex.toLowerCase() === col.hex.toLowerCase() &&
+                (selectedColor.imageUrl || '') === (col.imageUrl || '') &&
+                selectedColor.name === col.name)
+            : idx === 0;
           const localizedColorName = getLocalizedColor(col.name, language) || col.name;
           const isLight =
             col.hex.toLowerCase() === '#ffffff' ||
@@ -56,7 +61,7 @@ export function ColorSelector({
 
           return (
             <button
-              key={col.name}
+              key={`${col.name}-${col.hex}-${idx}`}
               type="button"
               role="radio"
               aria-checked={isSelected}

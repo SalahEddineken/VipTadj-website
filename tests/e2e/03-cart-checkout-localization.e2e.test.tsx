@@ -134,7 +134,7 @@ describe('E2E Test Suite 03: Cart & Direct COD Checkout Localization (Tiers 1, 2
       assertArabicRTLDocument();
 
       // Open dropdown
-      const triggerBtn = screen.getByRole('button', { name: /wilaya/i });
+      const triggerBtn = screen.getByRole('button', { name: /wilaya|ولاية/i });
       fireEvent.click(triggerBtn);
 
       // Search input is focused and accepts Arabic query
@@ -242,7 +242,7 @@ describe('E2E Test Suite 03: Cart & Direct COD Checkout Localization (Tiers 1, 2
 
     it('E2E-T2-WIL-04: out-of-range wilaya code handles safely', () => {
       expect(getWilayaByCode(0)).toBeUndefined();
-      expect(getWilayaByCode(59)).toBeUndefined();
+      expect(getWilayaByCode(69)).toBeUndefined();
       expect(getWilayaByCode(99)).toBeUndefined();
     });
   });

@@ -16,27 +16,40 @@ describe('Tier 2: Boundary & Corner Cases — Algerian Wilaya Limits (wilaya-lim
     expect(adrar?.name).toBe('Adrar');
     expect(adrar?.code).toBe(1);
     expect(adrar?.zone).toBe('sud');
-    expect(adrar?.fee).toBe(900);
-    expect(adrar?.deskFee).toBe(500);
-    expect(adrar?.estimatedDays).toBe('72h - 96h');
+    expect(adrar?.fee).toBe(1650);
+    expect(adrar?.deskFee).toBe(1450);
+    expect(adrar?.estimatedDays).toBe('96h - 120h');
 
-    expect(getWilayaFee(1)).toBe(900);
+    expect(getWilayaFee(1)).toBe(1650);
   });
 
   // ==========================================
-  // 2. Upper Boundary: Wilaya 58 (El Meniaa)
+  // 2. Upper Boundary: Wilaya 68 (Bou Saâda) and Wilaya 58 (El Meniaa)
   // ==========================================
-  it('validates upper boundary Wilaya 58 (El Meniaa) specifications', () => {
+  it('validates Wilaya 58 (El Meniaa) specifications', () => {
     const elMeniaa = getWilayaByCode(58);
     expect(elMeniaa).toBeDefined();
     expect(elMeniaa?.name).toBe('El Meniaa');
     expect(elMeniaa?.code).toBe(58);
     expect(elMeniaa?.zone).toBe('sud');
-    expect(elMeniaa?.fee).toBe(900);
-    expect(elMeniaa?.deskFee).toBe(600);
-    expect(elMeniaa?.estimatedDays).toBe('72h - 96h');
+    expect(elMeniaa?.fee).toBe(1150);
+    expect(elMeniaa?.deskFee).toBe(950);
+    expect(elMeniaa?.estimatedDays).toBe('48h - 72h');
 
-    expect(getWilayaFee(58)).toBe(900);
+    expect(getWilayaFee(58)).toBe(1150);
+  });
+
+  it('validates upper boundary Wilaya 68 (Bou Saâda) specifications', () => {
+    const bouSaada = getWilayaByCode(68);
+    expect(bouSaada).toBeDefined();
+    expect(bouSaada?.name).toBe('Bou Saâda');
+    expect(bouSaada?.code).toBe(68);
+    expect(bouSaada?.zone).toBe('hauts-plateaux');
+    expect(bouSaada?.fee).toBe(800);
+    expect(bouSaada?.deskFee).toBe(650);
+    expect(bouSaada?.estimatedDays).toBe('24h');
+
+    expect(getWilayaFee(68)).toBe(800);
   });
 
   // ==========================================
@@ -48,18 +61,18 @@ describe('Tier 2: Boundary & Corner Cases — Algerian Wilaya Limits (wilaya-lim
     expect(alger?.name).toBe('Alger');
     expect(alger?.code).toBe(16);
     expect(alger?.zone).toBe('alger');
-    expect(alger?.fee).toBe(400); // 400 DA Home Delivery
-    expect(alger?.deskFee).toBe(250); // 250 DA Desk Delivery
+    expect(alger?.fee).toBe(700); // 700 DA Home Delivery
+    expect(alger?.deskFee).toBe(550); // 550 DA Desk Delivery
     expect(alger?.estimatedDays).toBe('24h');
 
-    expect(getWilayaFee(16)).toBe(400);
+    expect(getWilayaFee(16)).toBe(700);
   });
 
   // ==========================================
-  // 4. Out-of-Range Wilaya Codes (0, 59, 999, negative, NaN)
+  // 4. Out-of-Range Wilaya Codes (0, 69, 70, 999, negative)
   // ==========================================
-  it('correctly handles out-of-range codes (0, 59, 999, negative) by returning undefined and defaulting fee', () => {
-    const invalidCodes = [0, 59, 60, 100, 999, -1, -50];
+  it('correctly handles out-of-range codes (0, 69, 70, 999, negative) by returning undefined and defaulting fee', () => {
+    const invalidCodes = [0, 69, 70, 100, 999, -1, -50];
 
     for (const code of invalidCodes) {
       expect(getWilayaByCode(code)).toBeUndefined();
@@ -71,8 +84,8 @@ describe('Tier 2: Boundary & Corner Cases — Algerian Wilaya Limits (wilaya-lim
   // ==========================================
   // 5. Desk Delivery Fees vs Home Delivery Fees
   // ==========================================
-  it('verifies desk delivery fees are strictly lower than home delivery fees across all 58 Wilayas', () => {
-    expect(wilayasFixture).toHaveLength(58);
+  it('verifies desk delivery fees are strictly lower than home delivery fees across all 68 Wilayas', () => {
+    expect(wilayasFixture).toHaveLength(68);
 
     for (const wilaya of wilayasFixture) {
       expect(wilaya.deskFee).toBeDefined();
@@ -88,33 +101,33 @@ describe('Tier 2: Boundary & Corner Cases — Algerian Wilaya Limits (wilaya-lim
   it('verifies regional zone consistency across Alger, Centre, Est, Ouest, Hauts-Plateaux, and Sud', () => {
     const sudWilayas = wilayasFixture.filter((w) => w.zone === 'sud');
     const algerWilayas = wilayasFixture.filter((w) => w.zone === 'alger');
-    const centreWilayas = wilayasFixture.filter((w) => w.zone === 'centre');
 
     expect(sudWilayas.length).toBeGreaterThanOrEqual(10);
-    // All southern wilayas have 900 DA home fee
+    // All southern wilayas have valid Yalidine shipping fee (>= 900 DA)
     for (const w of sudWilayas) {
-      expect(w.fee).toBe(900);
+      expect(w.fee).toBeGreaterThanOrEqual(900);
+      expect(w.deskFee).toBeGreaterThanOrEqual(750);
     }
 
-    // Capital Alger has 400 DA home fee
+    // Capital Alger has 700 DA home fee
     expect(algerWilayas).toHaveLength(1);
-    expect(algerWilayas[0].fee).toBe(400);
+    expect(algerWilayas[0].fee).toBe(700);
 
-    // Blida, Boumerdès, Tipaza in centre have 500 DA fee
+    // Blida, Boumerdès, Tipaza in centre have 800 DA fee
     const closeCenter = wilayasFixture.filter((w) => [9, 35, 42].includes(w.code));
     for (const w of closeCenter) {
-      expect(w.fee).toBe(500);
+      expect(w.fee).toBe(800);
     }
   });
 
   // ==========================================
   // 7. Store Settings Wilaya Shipping Fees Mapping
   // ==========================================
-  it('verifies store settings contain all 58 Wilayas in active state with valid fees', () => {
+  it('verifies store settings contain all 68 Wilayas in active state with valid fees', () => {
     const { wilayaShippingFees } = settingsFixture;
-    expect(Object.keys(wilayaShippingFees)).toHaveLength(58);
+    expect(Object.keys(wilayaShippingFees)).toHaveLength(68);
 
-    for (let code = 1; code <= 58; code++) {
+    for (let code = 1; code <= 68; code++) {
       const config = wilayaShippingFees[code];
       expect(config).toBeDefined();
       expect(config.active).toBe(true);

@@ -102,7 +102,7 @@ describe('E2E Test Suite 05: RTL Mirroring, Directional Icons & Typography Integ
         { language: 'ar' }
       );
 
-      const dialog = screen.getByRole('dialog', { name: /navigation/i });
+      const dialog = screen.getByRole('dialog', { name: /navigation|قائمة التنقل/i });
       const drawerPanel = dialog.querySelector('.start-0');
       expect(drawerPanel).not.toBeNull();
       expect(drawerPanel?.className).toContain('start-0');

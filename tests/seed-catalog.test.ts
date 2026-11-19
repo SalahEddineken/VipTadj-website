@@ -68,12 +68,12 @@ describe('Seed Catalog Dataset Integrity', () => {
     });
   });
 
-  it('configures default store settings with all 58 Algerian wilayas', () => {
+  it('configures default store settings with all 68 Algerian wilayas', () => {
     expect(DEFAULT_STORE_SETTINGS.wilayaShippingFees).toBeDefined();
     const wilayaKeys = Object.keys(DEFAULT_STORE_SETTINGS.wilayaShippingFees);
-    expect(wilayaKeys.length).toBe(58);
+    expect(wilayaKeys.length).toBe(68);
     // Wilaya 16 (Algiers) check
-    expect(DEFAULT_STORE_SETTINGS.wilayaShippingFees[16].homeFee).toBe(400);
-    expect(DEFAULT_STORE_SETTINGS.wilayaShippingFees[16].deskFee).toBe(250);
+    expect(DEFAULT_STORE_SETTINGS.wilayaShippingFees[16].homeFee).toBe(700);
+    expect(DEFAULT_STORE_SETTINGS.wilayaShippingFees[16].deskFee).toBe(550);
   });
 });

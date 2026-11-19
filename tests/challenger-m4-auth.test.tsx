@@ -961,7 +961,7 @@ describe('Challenger M4 Adversarial Security & Stress Test Suite', () => {
       expect(noCompareCase.valid).toBe(true);
     });
 
-    it('6.4 58 Wilaya Delivery Settings partial update preserves all 58 wilayas', () => {
+    it('6.4 68 Wilaya Delivery Settings partial update preserves all 68 wilayas', () => {
       const initialWilayaFees: Record<number, { homeFee: number; deskFee: number; active: boolean }> = {};
       for (const w of ALGERIAN_58_WILAYAS) {
         initialWilayaFees[w.code] = {
@@ -970,7 +970,7 @@ describe('Challenger M4 Adversarial Security & Stress Test Suite', () => {
           active: true,
         };
       }
-      expect(Object.keys(initialWilayaFees).length).toBe(58);
+      expect(Object.keys(initialWilayaFees).length).toBe(68);
 
       // Merchant updates only Wilaya 16 (Alger)
       const updateInput = {
@@ -992,17 +992,17 @@ describe('Challenger M4 Adversarial Security & Stress Test Suite', () => {
         ...(parseResult.data?.wilayaShippingFees || {}),
       };
 
-      // All 58 wilayas must still be preserved
-      expect(Object.keys(mergedFees).length).toBe(58);
+      // All 68 wilayas must still be preserved
+      expect(Object.keys(mergedFees).length).toBe(68);
       // Wilaya 16 is updated
       expect(mergedFees[16].homeFee).toBe(350);
       expect(mergedFees[16].deskFee).toBe(150);
       // Wilaya 31 (Oran) and Wilaya 25 (Constantine) are completely preserved
       expect(mergedFees[31].homeFee).toBe(initialWilayaFees[31].homeFee);
       expect(mergedFees[25].deskFee).toBe(initialWilayaFees[25].deskFee);
-      // Wilaya 58 (El Menia) is completely preserved
-      expect(mergedFees[58]).toBeDefined();
-      expect(mergedFees[58].homeFee).toBe(initialWilayaFees[58].homeFee);
+      // Wilaya 68 (Bou Saâda) is completely preserved
+      expect(mergedFees[68]).toBeDefined();
+      expect(mergedFees[68].homeFee).toBe(initialWilayaFees[68].homeFee);
     });
   });
 });

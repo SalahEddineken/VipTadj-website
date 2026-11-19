@@ -8,6 +8,8 @@ import { OrderTable } from '@/components/admin/OrderTable';
 import { OrderStatusTransitionModal } from '@/components/admin/OrderStatusTransitionModal';
 import { ShoppingBag, CheckCircle, AlertCircle, Sparkles } from 'lucide-react';
 import { useLanguage } from '@/lib/context/language-context';
+import { getWilayaByCode } from '@/lib/data/wilayas';
+import { findCommune } from '@/lib/data/communes';
 
 interface OrdersManagementClientProps {
   initialOrders: Order[];
@@ -82,8 +84,19 @@ export function OrdersManagementClient({
           const matchNumber = order.orderNumber?.toLowerCase().includes(q) ?? false;
           const matchName = order.customer?.fullName?.toLowerCase().includes(q) ?? false;
           const matchPhone = order.customer?.phone?.includes(q) ?? false;
-          const matchWilaya = (order.customer?.wilaya || '').toLowerCase().includes(q);
-          const matchCommune = (order.customer?.commune || '').toLowerCase().includes(q);
+          const wilayaObj = order.customer?.wilayaCode ? getWilayaByCode(order.customer.wilayaCode) : undefined;
+          const communeObj =
+            order.customer?.wilayaCode && order.customer?.commune
+              ? findCommune(order.customer.wilayaCode, order.customer.commune)
+              : undefined;
+          const matchWilaya =
+            (order.customer?.wilaya || '').toLowerCase().includes(q) ||
+            (wilayaObj?.name || '').toLowerCase().includes(q) ||
+            (wilayaObj?.nameAr || '').toLowerCase().includes(q);
+          const matchCommune =
+            (order.customer?.commune || '').toLowerCase().includes(q) ||
+            (communeObj?.name || '').toLowerCase().includes(q) ||
+            (communeObj?.nameAr || '').toLowerCase().includes(q);
           if (!matchNumber && !matchName && !matchPhone && !matchWilaya && !matchCommune) {
             return false;
           }
@@ -129,7 +142,12 @@ export function OrdersManagementClient({
     );
     setNotification({
       type: 'success',
-      message: `Statut de la commande ${updatedOrder.orderNumber} mis à jour vers "${updatedOrder.status}".`,
+      message: t(
+        'admin.orders.status_updated_toast',
+        'Statut de la commande {orderNumber} mis à jour vers "{status}".'
+      )
+        .replace('{orderNumber}', updatedOrder.orderNumber)
+        .replace('{status}', t(`status.${updatedOrder.status}`, updatedOrder.status)),
     });
     setTimeout(() => {
       setNotification(null);
@@ -150,20 +168,20 @@ export function OrdersManagementClient({
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="font-cinzel text-2xl sm:text-3xl font-bold text-ivory tracking-wider">
+            <h1 className="font-cinzel text-2xl sm:text-3xl font-bold text-obsidian-950 tracking-wider">
               {t('admin.orders.title', 'Gestion des Commandes')}
             </h1>
-            <span className="px-2.5 py-0.5 rounded-full bg-gold-500/15 text-gold-400 font-mono text-xs font-bold border border-gold-500/30">
+            <span className="px-2.5 py-0.5 rounded-full bg-gold-50 text-gold-700 font-mono text-xs font-bold border border-gold-500/40">
               {orders.length}
             </span>
           </div>
-          <p className="text-xs sm:text-sm text-obsidian-200 mt-1">
+          <p className="text-xs sm:text-sm text-obsidian-500 mt-1">
             {t('admin.orders.subtitle', 'Gestion du cycle de confirmation téléphonique, expédition Yalidine et encaissement COD.')}
           </p>
         </div>
 
         {counts.pending > 0 && (
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-medium">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs font-medium">
             <span className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
               <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500" />
@@ -178,25 +196,25 @@ export function OrdersManagementClient({
       {/* Toast Notification */}
       {notification && (
         <div
-          className={`p-4 rounded-xl text-xs flex items-center justify-between border shadow-lg transition-all ${
+          className={`p-4 rounded-xl text-xs flex items-center justify-between border shadow-sm transition-all ${
             notification.type === 'success'
-              ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-300'
-              : 'bg-rose-500/15 border-rose-500/30 text-rose-300'
+              ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+              : 'bg-rose-50 border-rose-200 text-rose-800'
           }`}
         >
           <div className="flex items-center gap-2.5">
             {notification.type === 'success' ? (
-              <CheckCircle className="w-4 h-4 text-emerald-400" />
+              <CheckCircle className="w-4 h-4 text-emerald-600" />
             ) : (
-              <AlertCircle className="w-4 h-4 text-rose-400" />
+              <AlertCircle className="w-4 h-4 text-rose-600" />
             )}
             <span>{notification.message}</span>
           </div>
           <button
             onClick={() => setNotification(null)}
-            className="text-obsidian-400 hover:text-ivory text-xs underline"
+            className="text-obsidian-500 hover:text-obsidian-950 text-xs underline"
           >
-            Fermer
+            {t('common.close', 'Fermer')}
           </button>
         </div>
       )}

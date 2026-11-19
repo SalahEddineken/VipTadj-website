@@ -378,17 +378,18 @@ describe('CHALLENGER M6-2: Adversarial Empirical Verification Suite', () => {
   });
 
   // =========================================================================
-  // 4. 58 Wilaya Partial Settings PUT Updates (Deep Merge)
+  // 4. 68 Wilaya Partial Settings PUT Updates (Deep Merge)
   // =========================================================================
-  describe('4. 58 Wilayas Partial Deep-Merge Configuration Integrity', () => {
-    it('4.1 partial PUT /api/settings updates only specified wilayas and preserves other 57 intact', async () => {
+  describe('4. 68 Wilayas Partial Deep-Merge Configuration Integrity', () => {
+    it('4.1 partial PUT /api/settings updates only specified wilayas and preserves other 67 intact', async () => {
       const store = getDataStore();
       const initialSettings = await store.getSettings();
-      expect(Object.keys(initialSettings.wilayaShippingFees).length).toBe(58);
+      expect(Object.keys(initialSettings.wilayaShippingFees).length).toBe(68);
 
       const adrarOriginalHomeFee = initialSettings.wilayaShippingFees[1].homeFee;
       const constantineOriginalHomeFee = initialSettings.wilayaShippingFees[25].homeFee;
       const inGuezzamOriginalHomeFee = initialSettings.wilayaShippingFees[58].homeFee;
+      const bouSaadaOriginalHomeFee = initialSettings.wilayaShippingFees[68].homeFee;
 
       // Update Wilaya 16 (Alger) and Wilaya 31 (Oran) only
       const req = new NextRequest('http://localhost:3000/api/settings', {
@@ -406,8 +407,8 @@ describe('CHALLENGER M6-2: Adversarial Empirical Verification Suite', () => {
       expect(res.status).toBe(200);
 
       const refreshed = await store.getSettings();
-      // Total count of wilayas MUST still be 58
-      expect(Object.keys(refreshed.wilayaShippingFees).length).toBe(58);
+      // Total count of wilayas MUST still be 68
+      expect(Object.keys(refreshed.wilayaShippingFees).length).toBe(68);
 
       // Targeted wilayas updated
       expect(refreshed.wilayaShippingFees[16].homeFee).toBe(450);
@@ -420,6 +421,7 @@ describe('CHALLENGER M6-2: Adversarial Empirical Verification Suite', () => {
       expect(refreshed.wilayaShippingFees[1].homeFee).toBe(adrarOriginalHomeFee);
       expect(refreshed.wilayaShippingFees[25].homeFee).toBe(constantineOriginalHomeFee);
       expect(refreshed.wilayaShippingFees[58].homeFee).toBe(inGuezzamOriginalHomeFee);
+      expect(refreshed.wilayaShippingFees[68].homeFee).toBe(bouSaadaOriginalHomeFee);
     });
 
     it('4.2 invalid settings payload with negative shipping fee or threshold is rejected with HTTP 400', async () => {

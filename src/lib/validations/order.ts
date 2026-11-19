@@ -5,6 +5,15 @@
 
 import { z } from 'zod';
 import { VALID_ORDER_STATUSES } from '@/lib/utils/orderStateMachine';
+import { SupportedLanguage } from '@/lib/i18n/types';
+import { getTranslation, formatTranslation } from '@/lib/i18n/locales';
+
+export interface StructuredValidationError {
+  errorCode: string;
+  errorKey: string;
+  errorParams?: Record<string, string | number>;
+  message: string;
+}
 
 export const updateOrderStatusSchema = z
   .object({
@@ -44,3 +53,89 @@ export const updateOrderStatusSchema = z
   });
 
 export type UpdateOrderStatusPayload = z.infer<typeof updateOrderStatusSchema>;
+
+export function getOrderStatusValidationError(
+  issue: z.ZodIssue,
+  language: SupportedLanguage = 'fr'
+): StructuredValidationError {
+  const field = issue.path[0] ? String(issue.path[0]) : '';
+
+  if (field === 'status') {
+    const isMissing =
+      issue.code === 'invalid_type' && (issue as { received?: string }).received === 'undefined';
+    const errorCode = isMissing ? 'ORDER_STATUS_REQUIRED' : 'ORDER_STATUS_INVALID';
+    const errorKey = isMissing
+      ? 'validation.order.status_required'
+      : 'validation.order.status_invalid';
+    return {
+      errorCode,
+      errorKey,
+      message: getTranslation(language, errorKey, issue.message),
+    };
+  }
+
+  if (field === 'note') {
+    if (issue.code === 'too_big') {
+      const errorParams = { max: 1000 };
+      const errorKey = 'validation.order.note_max';
+      return {
+        errorCode: 'ORDER_NOTE_TOO_LONG',
+        errorKey,
+        errorParams,
+        message: formatTranslation(getTranslation(language, errorKey, issue.message), errorParams),
+      };
+    }
+    const errorKey = 'validation.order.cancel_note_required';
+    return {
+      errorCode: 'ORDER_CANCEL_NOTE_REQUIRED',
+      errorKey,
+      message: getTranslation(language, errorKey, issue.message),
+    };
+  }
+
+  if (field === 'updatedBy') {
+    const errorParams = { max: 150 };
+    const errorKey = 'validation.order.updated_by_max';
+    return {
+      errorCode: 'ORDER_UPDATED_BY_TOO_LONG',
+      errorKey,
+      errorParams,
+      message: formatTranslation(getTranslation(language, errorKey, issue.message), errorParams),
+    };
+  }
+
+  const errorKey = 'validation.order.status_invalid';
+  return {
+    errorCode: 'ORDER_STATUS_INVALID',
+    errorKey,
+    message: getTranslation(language, errorKey, issue.message),
+  };
+}
+
+export function validateOrderStatusPayload(
+  data: unknown,
+  language: SupportedLanguage = 'fr'
+): {
+  valid: boolean;
+  error?: string;
+  errorCode?: string;
+  errorKey?: string;
+  errorParams?: Record<string, string | number>;
+  issues?: z.ZodIssue[];
+  data?: UpdateOrderStatusPayload;
+} {
+  const result = updateOrderStatusSchema.safeParse(data);
+  if (!result.success) {
+    const firstIssue = result.error.issues[0];
+    const mapped = getOrderStatusValidationError(firstIssue, language);
+    return {
+      valid: false,
+      error: mapped.message,
+      errorCode: mapped.errorCode,
+      errorKey: mapped.errorKey,
+      errorParams: mapped.errorParams,
+      issues: result.error.issues,
+    };
+  }
+  return { valid: true, data: result.data };
+}

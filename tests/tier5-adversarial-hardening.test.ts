@@ -722,7 +722,7 @@ describe('VIP TADJ — Tier 5 Adversarial Coverage Hardening (F-VERIF-02)', () =
       expect(calculateDeliveryFee(10000, 58, 0)).toBe(0);
     });
 
-    it('C.5 58 Wilaya partial deep merge in PUT /api/settings preserves other 57 wilayas intact', async () => {
+    it('C.5 68 Wilaya partial deep merge in PUT /api/settings preserves other 67 wilayas intact', async () => {
       const store = getDataStore();
       const req = new NextRequest('http://localhost:3000/api/settings', {
         method: 'PUT',
@@ -742,7 +742,7 @@ describe('VIP TADJ — Tier 5 Adversarial Coverage Hardening (F-VERIF-02)', () =
       expect(settings.wilayaShippingFees[31].deskFee).toBe(280);
       expect(settings.wilayaShippingFees[16].homeFee).toBe(400); // Alger preserved
       expect(settings.wilayaShippingFees[1].homeFee).toBe(900); // Adrar preserved
-      expect(Object.keys(settings.wilayaShippingFees).length).toBe(58);
+      expect(Object.keys(settings.wilayaShippingFees).length).toBe(68);
     });
 
     it('C.6 Stop Desk vs Home delivery tariff calculation applies appropriate discounted rate', () => {
