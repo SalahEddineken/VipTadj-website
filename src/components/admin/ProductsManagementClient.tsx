@@ -26,6 +26,7 @@ import {
   getLocalizedSubcategory,
   getLocalizedSize,
 } from '@/lib/i18n/catalog-translations';
+import { normalizeProductSizes } from '@/lib/utils/catalogUtils';
 
 export interface ProductsManagementClientProps {
   initialProducts: Product[];
@@ -33,7 +34,7 @@ export interface ProductsManagementClientProps {
 
 export function ProductsManagementClient({ initialProducts }: ProductsManagementClientProps) {
   const { language, t } = useLanguage();
-  const [products, setProducts] = useState<Product[]>(initialProducts);
+  const [products, setProducts] = useState<Product[]>(() => initialProducts.map(normalizeProductSizes));
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<'all' | ProductCategoryType>('all');
   const [stockFilter, setStockFilter] = useState<'all' | 'in-stock' | 'low-stock' | 'out-of-stock'>('all');

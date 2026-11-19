@@ -15,6 +15,16 @@ export interface SizeSelectorProps {
   onOpenSizeGuide?: () => void;
 }
 
+const ITALIAN_SIZES = new Set(['48', '50', '52', '54', '56']);
+const ITALIAN_TO_STANDARD: Record<string, string> = {
+  '48': 'S',
+  '50': 'M',
+  '52': 'L',
+  '54': 'XL',
+  '56': 'XXL',
+};
+const STANDARD_SIZES_ORDER = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL'];
+
 export function SizeSelector({
   sizes = [],
   selectedSize,
@@ -26,12 +36,39 @@ export function SizeSelector({
 }: SizeSelectorProps) {
   const { t, language } = useLanguage();
 
-  if (!sizes || sizes.length === 0) return null;
+  const normalizedSizes = React.useMemo(() => {
+    if (!sizes || sizes.length === 0) return [];
+    const hasItalian = sizes.some((s) => ITALIAN_SIZES.has(s));
+    if (!hasItalian) return sizes;
+
+    const existingStandard = sizes.filter((s) => !ITALIAN_SIZES.has(s));
+    let result: string[];
+    if (existingStandard.length > 0) {
+      result = existingStandard;
+    } else {
+      result = Array.from(new Set(sizes.map((s) => ITALIAN_TO_STANDARD[s] || s)));
+    }
+
+    return result.sort((a, b) => {
+      const idxA = STANDARD_SIZES_ORDER.indexOf(a);
+      const idxB = STANDARD_SIZES_ORDER.indexOf(b);
+      if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+      if (idxA !== -1) return -1;
+      if (idxB !== -1) return 1;
+      return a.localeCompare(b);
+    });
+  }, [sizes]);
+
+  if (!normalizedSizes || normalizedSizes.length === 0) return null;
 
   const isSizeAvailable = (size: string) => {
     if (!inStock) return false;
     if (sizeInventory && Object.keys(sizeInventory).length > 0) {
-      return (sizeInventory[size] ?? 0) > 0;
+      const direct = sizeInventory[size] ?? 0;
+      if (direct > 0) return true;
+      const reverseItalian = Object.entries(ITALIAN_TO_STANDARD).find(([_, std]) => std === size)?.[0];
+      if (reverseItalian && (sizeInventory[reverseItalian] ?? 0) > 0) return true;
+      return false;
     }
     return true;
   };
@@ -55,7 +92,7 @@ export function SizeSelector({
       </div>
 
       <div className="flex flex-wrap gap-2">
-        {sizes.map((size) => {
+        {normalizedSizes.map((size) => {
           const available = isSizeAvailable(size);
           const isSelected = selectedSize === size;
 

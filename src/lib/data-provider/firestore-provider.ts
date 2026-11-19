@@ -39,6 +39,7 @@ import {
 } from '@/lib/i18n/catalog-translations';
 import { getWilayaByCode } from '@/lib/data/wilayas';
 import { findCommune } from '@/lib/data/communes';
+import { normalizeProductSizes } from '@/lib/utils/catalogUtils';
 
 function normalizeProviderSearch(text: string): string {
   return text
@@ -210,7 +211,7 @@ export class FirestoreDataProvider implements IDataStore {
       });
     }
 
-    return items;
+    return items.map(normalizeProductSizes);
   }
 
   async getProductBySlug(slug: string): Promise<Product | null> {
@@ -219,7 +220,7 @@ export class FirestoreDataProvider implements IDataStore {
     const snap = await getDocs(q);
     if (snap.empty) return null;
     const docSnap = snap.docs[0];
-    return { ...sanitizeDoc<Product>(docSnap.data()), id: docSnap.id };
+    return normalizeProductSizes({ ...sanitizeDoc<Product>(docSnap.data()), id: docSnap.id });
   }
 
   async getProductById(id: string): Promise<Product | null> {
@@ -227,7 +228,7 @@ export class FirestoreDataProvider implements IDataStore {
     const docRef = doc(db, 'products', id);
     const snap = await getDoc(docRef);
     if (!snap.exists()) return null;
-    return { ...sanitizeDoc<Product>(snap.data()), id: snap.id };
+    return normalizeProductSizes({ ...sanitizeDoc<Product>(snap.data()), id: snap.id });
   }
 
   async createProduct(data: CreateProductInput): Promise<Product> {

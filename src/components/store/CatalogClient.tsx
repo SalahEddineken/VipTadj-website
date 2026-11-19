@@ -11,6 +11,7 @@ import {
   isProductVisibleInShop,
   CatalogSortOption,
   resolveCategoryId,
+  normalizeProductSizes,
 } from '@/lib/utils/catalogUtils';
 import { SearchBar } from './SearchBar';
 import { CatalogSortDropdown } from './CatalogSortDropdown';
@@ -200,18 +201,22 @@ function CatalogClientInner({
     updateUrlParams(resetState);
   };
 
+  const cleanInitialProducts = useMemo(() => {
+    return initialProducts.map(normalizeProductSizes);
+  }, [initialProducts]);
+
   // Filter products pure client-side
   const filteredProducts = useMemo(() => {
-    return filterProducts(initialProducts, filters, language);
-  }, [initialProducts, filters, language]);
+    return filterProducts(cleanInitialProducts, filters, language);
+  }, [cleanInitialProducts, filters, language]);
 
   // Compute available sizes across the current category (visible active products only)
   const availableSizes = useMemo(() => {
     const sizeSet = new Set<string>();
     const pool =
       filters.category === 'all'
-        ? initialProducts.filter(isProductVisibleInShop)
-        : initialProducts.filter(
+        ? cleanInitialProducts.filter(isProductVisibleInShop)
+        : cleanInitialProducts.filter(
           (p) =>
             isProductVisibleInShop(p) &&
             (p.categoryId === resolveCategoryId(filters.category) ||
@@ -223,9 +228,11 @@ function CatalogClientInner({
       }
     });
     return Array.from(sizeSet);
-  }, [initialProducts, filters.category]);
+  }, [cleanInitialProducts, filters.category]);
 
-  const qvProduct = quickViewProduct ? getLocalizedProduct(quickViewProduct, language) : null;
+  const qvProduct = quickViewProduct
+    ? normalizeProductSizes(getLocalizedProduct(quickViewProduct, language))
+    : null;
 
   return (
     <div id="catalog-content" className="luxury-container py-8 md:py-12">
@@ -436,13 +443,13 @@ function CatalogClientInner({
                 <p className="text-xs text-neutral-600 line-clamp-3 leading-relaxed font-sans text-start">
                   {qvProduct.description}
                 </p>
-                {Array.isArray(quickViewProduct.sizes) && (
+                {Array.isArray(qvProduct.sizes) && (
                   <div>
                     <span className="text-xs uppercase tracking-wider text-sand-800 font-medium block mb-2 text-start">
                       {t('catalog.quick_view.sizes', 'Tailles disponibles :')}
                     </span>
                     <div className="flex flex-wrap gap-1.5">
-                      {quickViewProduct.sizes.map((s) => (
+                      {qvProduct.sizes.map((s) => (
                         <span
                           key={s}
                           className="px-2.5 py-1 text-xs border border-sand-300 bg-white"

@@ -330,3 +330,80 @@ export function filterProducts(
 
   return result;
 }
+
+const ITALIAN_SIZES = new Set(['48', '50', '52', '54', '56']);
+const ITALIAN_TO_STANDARD: Record<string, string> = {
+  '48': 'S',
+  '50': 'M',
+  '52': 'L',
+  '54': 'XL',
+  '56': 'XXL',
+};
+const STANDARD_SIZES_ORDER = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL'];
+
+export function normalizeProductSizes<T extends Partial<Product>>(product: T): T {
+  if (!product) return product;
+
+  const categoryId = product.categoryId;
+  const isClothing = categoryId === 'clothing' || (!categoryId && product.categorySlug === 'vetements');
+
+  if (!isClothing) {
+    return product;
+  }
+
+  const rawSizes = Array.isArray(product.sizes) ? product.sizes : [];
+  const rawInventory =
+    product.sizeInventory && typeof product.sizeInventory === 'object'
+      ? { ...product.sizeInventory }
+      : undefined;
+
+  const hasItalian =
+    rawSizes.some((s) => ITALIAN_SIZES.has(s)) ||
+    (rawInventory && Object.keys(rawInventory).some((k) => ITALIAN_SIZES.has(k)));
+
+  if (!hasItalian && rawSizes.length > 0) {
+    return product;
+  }
+
+  const existingStandard = rawSizes.filter((s) => !ITALIAN_SIZES.has(s));
+
+  let cleanSizes: string[];
+  if (existingStandard.length > 0) {
+    cleanSizes = existingStandard;
+  } else if (rawSizes.length > 0) {
+    cleanSizes = Array.from(new Set(rawSizes.map((s) => ITALIAN_TO_STANDARD[s] || s)));
+  } else {
+    cleanSizes = ['S', 'M', 'L', 'XL', 'XXL'];
+  }
+
+  cleanSizes.sort((a, b) => {
+    const idxA = STANDARD_SIZES_ORDER.indexOf(a);
+    const idxB = STANDARD_SIZES_ORDER.indexOf(b);
+    if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+    if (idxA !== -1) return -1;
+    if (idxB !== -1) return 1;
+    return a.localeCompare(b);
+  });
+
+  let cleanInventory = rawInventory;
+  if (rawInventory) {
+    cleanInventory = {};
+    for (const [k, v] of Object.entries(rawInventory)) {
+      if (!ITALIAN_SIZES.has(k)) {
+        cleanInventory[k] = v;
+      }
+    }
+    for (const [k, v] of Object.entries(rawInventory)) {
+      const mapped = ITALIAN_TO_STANDARD[k];
+      if (mapped) {
+        cleanInventory[mapped] = (cleanInventory[mapped] ?? 0) + v;
+      }
+    }
+  }
+
+  return {
+    ...product,
+    sizes: cleanSizes,
+    ...(cleanInventory ? { sizeInventory: cleanInventory } : {}),
+  };
+}

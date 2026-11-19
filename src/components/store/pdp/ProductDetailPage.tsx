@@ -12,6 +12,7 @@ import { TrustPillarsBar } from './TrustPillarsBar';
 import { SizeGuideModal } from './SizeGuideModal';
 import { useLanguage } from '@/lib/context/language-context';
 import { getLocalizedProduct } from '@/lib/i18n/catalog-translations';
+import { normalizeProductSizes } from '@/lib/utils/catalogUtils';
 
 export interface ProductDetailPageProps {
   product: Product;
@@ -19,7 +20,7 @@ export interface ProductDetailPageProps {
 
 export function ProductDetailPage({ product }: ProductDetailPageProps) {
   const { language } = useLanguage();
-  const localizedProduct = getLocalizedProduct(product, language);
+  const localizedProduct = normalizeProductSizes(getLocalizedProduct(product, language));
 
   // If product only has 1 size (e.g. 'Unique' or 'Taille Unique'), select it by default
   const defaultSize =
@@ -96,7 +97,7 @@ export function ProductDetailPage({ product }: ProductDetailPageProps) {
 
             {/* Add to Cart & Express Direct Checkout */}
             <AddToCartSection
-              product={product}
+              product={localizedProduct}
               selectedSize={selectedSize}
               selectedColor={selectedColor}
               onValidateSize={handleValidateSize}
