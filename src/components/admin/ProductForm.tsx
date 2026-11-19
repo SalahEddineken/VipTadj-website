@@ -652,56 +652,6 @@ export function ProductForm({ mode, initialData }: ProductFormProps) {
           </div>
           {errors.slug && <p className="text-xs text-rose-600">{errors.slug}</p>}
         </div>
-
-        {/* Subtitle & SKU */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-1.5">
-            <label className="block text-xs font-semibold text-obsidian-700 uppercase tracking-wider">
-              {t('admin.product_form.label_subtitle', 'Sous-titre / Exclusivité')}
-            </label>
-            <input
-              type="text"
-              value={subtitle}
-              onChange={(e) => setSubtitle(e.target.value)}
-              placeholder={t('admin.product_form.ph_subtitle', 'Ex : Édition Limitée Haute Façon')}
-              className="w-full px-4 py-2.5 rounded-lg bg-white border border-obsidian-200 text-obsidian-950 text-sm focus:outline-none focus:ring-1 focus:ring-gold-500"
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="block text-xs font-semibold text-obsidian-700 uppercase tracking-wider">
-              {t('admin.product_form.label_sku', 'Référence SKU')}
-            </label>
-            <input
-              type="text"
-              value={sku}
-              onChange={(e) => setSku(e.target.value)}
-              placeholder={t('admin.product_form.ph_sku', 'Ex : VT-VEST-001')}
-              className="w-full px-4 py-2.5 rounded-lg bg-white border border-obsidian-200 text-obsidian-950 text-sm font-mono focus:outline-none focus:ring-1 focus:ring-gold-500"
-            />
-          </div>
-        </div>
-
-        {/* Description */}
-        <div className="space-y-1.5">
-          <label className="block text-xs font-semibold text-obsidian-700 uppercase tracking-wider">
-            {t('admin.product_form.label_description', 'Description Détaillée *')}
-          </label>
-          <textarea
-            rows={4}
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder={t(
-              'admin.product_form.ph_description',
-              "Rédigez une description éditoriale haut de gamme décrivant la matière, la confection, et l'allure..."
-            )}
-            className={cn(
-              'w-full px-4 py-2.5 rounded-lg bg-white border text-obsidian-950 text-sm focus:outline-none focus:ring-1 focus:ring-gold-500 leading-relaxed',
-              errors.description ? 'border-rose-500 ring-1 ring-rose-500' : 'border-obsidian-200'
-            )}
-          />
-          {errors.description && <p className="text-xs text-rose-600">{errors.description}</p>}
-        </div>
       </div>
 
       {/* SECTION 2: Catégorisation Dynamique */}
@@ -759,27 +709,6 @@ export function ProductForm({ mode, initialData }: ProductFormProps) {
             );
           })}
         </div>
-
-        {/* Subcategory Dropdown */}
-        <div className="space-y-1.5">
-          <label className="block text-xs font-semibold text-obsidian-700 uppercase tracking-wider">
-            {t('admin.product_form.label_subcategory', 'Sous-Catégorie Spécifique *')}
-          </label>
-          <select
-            value={subcategory}
-            onChange={(e) => setSubcategory(e.target.value)}
-            className="w-full px-4 py-2.5 rounded-lg bg-white border border-obsidian-200 text-obsidian-950 text-sm focus:outline-none focus:ring-1 focus:ring-gold-500"
-          >
-            {localizedSubs.map((sub) => (
-              <option key={sub.id} value={sub.id}>
-                {sub.label}
-              </option>
-            ))}
-            {subcategory && !hasCurrentSub && (
-              <option value={subcategory}>{getLocalizedSubcategory(subcategory, language)}</option>
-            )}
-          </select>
-        </div>
       </div>
 
       {/* SECTION 3: Tarification en Dinars Algériens (DZD / DA) */}
@@ -788,7 +717,7 @@ export function ProductForm({ mode, initialData }: ProductFormProps) {
           {t('admin.product_form.sec3', '3. Tarification en Dinars Algériens (DZD)')}
         </h2>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {/* Selling Price */}
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
@@ -844,28 +773,6 @@ export function ProductForm({ mode, initialData }: ProductFormProps) {
             />
             {errors.compareAtPrice && (
               <p className="text-xs text-rose-600">{errors.compareAtPrice}</p>
-            )}
-          </div>
-
-          {/* Cost Price */}
-          <div className="space-y-1.5">
-            <label className="block text-xs font-semibold text-obsidian-700 uppercase tracking-wider">
-              {t('admin.product_form.label_cost_price', 'Coût de Revient (Interne)')}
-            </label>
-            <input
-              type="number"
-              min={0}
-              step={1}
-              value={costPrice}
-              onChange={(e) => setCostPrice(e.target.value === '' ? '' : parseInt(e.target.value, 10))}
-              placeholder={t('admin.product_form.ph_cost_price', 'Ex : 22000')}
-              className={cn(
-                'w-full px-4 py-2.5 rounded-lg bg-white border text-obsidian-950 text-sm font-mono focus:outline-none focus:ring-1 focus:ring-gold-500',
-                errors.costPrice ? 'border-rose-500 ring-1 ring-rose-500' : 'border-obsidian-200'
-              )}
-            />
-            {errors.costPrice && (
-              <p className="text-xs text-rose-600">{errors.costPrice}</p>
             )}
           </div>
         </div>

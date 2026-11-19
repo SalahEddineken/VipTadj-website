@@ -233,7 +233,7 @@ describe('Tier 5 Adversarial — Admin Portal, API, Validations, Media & Parity 
     // AdminMediaUpload URL tab rejection
     const onChangeSpy = vi.fn();
     const { container } = renderWithProviders(
-      <AdminMediaUpload images={[]} onChange={onChangeSpy} category="clothing" />,
+      <AdminMediaUpload images={[]} onChange={onChangeSpy} category="clothing" showLegacyTabs />,
       { language: 'ar', includeAdmin: true }
     );
     const urlTabBtn = within(container).getByRole('button', {
@@ -273,12 +273,12 @@ describe('Tier 5 Adversarial — Admin Portal, API, Validations, Media & Parity 
   });
 
   // =========================================================================
-  // 10. ProductForm costPrice UX + POST / PATCH /api/products parity
+  // 10. ProductForm costPrice omitted from UI + POST / PATCH /api/products parity
   // =========================================================================
-  it('shows field-level costPrice error in ProductForm and enforces POST/PATCH parity with specific errorKey', async () => {
+  it('omits costPrice input from ProductForm UI and enforces POST/PATCH API parity with specific errorKey', async () => {
     const baseProd = SEED_PRODUCTS[0];
 
-    // 1. ProductForm costPrice = 0 renders visible error message & rose border
+    // 1. ProductForm does not render costPrice input (uncluttered 2-column pricing UI)
     const { container } = renderWithProviders(
       <ProductForm mode="edit" initialData={{ ...baseProd, costPrice: 1000 }} />,
       { language: 'ar', includeAdmin: true }
@@ -286,16 +286,7 @@ describe('Tier 5 Adversarial — Admin Portal, API, Validations, Media & Parity 
     const costInput = container.querySelector(
       `input[placeholder="${ar['admin.product_form.ph_cost_price']}"]`
     ) as HTMLInputElement;
-    expect(costInput).toBeTruthy();
-    fireEvent.change(costInput, { target: { value: '0' } });
-
-    const submitBtn = container.querySelector('button[type="submit"]') as HTMLButtonElement;
-    fireEvent.click(submitBtn);
-
-    await waitFor(() => {
-      expect(container.textContent).toContain(ar['validation.product.cost_price_positive']);
-    });
-    expect(costInput.className).toContain('border-rose-500');
+    expect(costInput).toBeNull();
 
     // 2. POST and PATCH both reject costPrice: null and costPrice: -10 with field-specific errorKey
     const validBody = {
