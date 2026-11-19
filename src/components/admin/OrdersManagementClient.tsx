@@ -3,13 +3,28 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Order, OrderStatus } from '@/types';
-import { OrderFilters } from '@/components/admin/OrderFilters';
+import { OrderFilters, OrderDateFilter } from '@/components/admin/OrderFilters';
 import { OrderTable } from '@/components/admin/OrderTable';
 import { OrderStatusTransitionModal } from '@/components/admin/OrderStatusTransitionModal';
 import { ShoppingBag, CheckCircle, AlertCircle, Sparkles } from 'lucide-react';
 import { useLanguage } from '@/lib/context/language-context';
 import { getWilayaByCode } from '@/lib/data/wilayas';
 import { findCommune } from '@/lib/data/communes';
+
+function isSameCalendarDay(d1: Date, d2: Date): boolean {
+  return (
+    d1.getFullYear() === d2.getFullYear() &&
+    d1.getMonth() === d2.getMonth() &&
+    d1.getDate() === d2.getDate()
+  );
+}
+
+function isSameCalendarMonth(d1: Date, d2: Date): boolean {
+  return (
+    d1.getFullYear() === d2.getFullYear() &&
+    d1.getMonth() === d2.getMonth()
+  );
+}
 
 interface OrdersManagementClientProps {
   initialOrders: Order[];
@@ -33,6 +48,7 @@ export function OrdersManagementClient({
 
   const [orders, setOrders] = useState<Order[]>(initialOrders);
   const [activeStatus, setActiveStatus] = useState<'all' | OrderStatus>(defaultTab);
+  const [dateFilter, setDateFilter] = useState<OrderDateFilter>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [wilayaFilter, setWilayaFilter] = useState<number | 'all'>('all');
   const [dateSort, setDateSort] = useState<'newest' | 'oldest'>('newest');
@@ -50,23 +66,55 @@ export function OrdersManagementClient({
     message: string;
   } | null>(null);
 
-  // Compute live tab counts
+  // Compute live date range counts (today / this month / all)
+  const dateCounts = useMemo<Record<OrderDateFilter, number>>(() => {
+    const now = new Date();
+    let today = 0;
+    let thisMonth = 0;
+    for (const o of orders) {
+      if (activeStatus !== 'all' && o.status !== activeStatus) continue;
+      const d = new Date(o.createdAt);
+      if (isSameCalendarMonth(d, now)) {
+        thisMonth += 1;
+        if (isSameCalendarDay(d, now)) {
+          today += 1;
+        }
+      }
+    }
+    const totalForScope = activeStatus === 'all'
+      ? orders.length
+      : orders.filter((o) => o.status === activeStatus).length;
+    return {
+      all: totalForScope,
+      today,
+      this_month: thisMonth,
+    };
+  }, [orders, activeStatus]);
+
+  // Compute live tab counts (respecting active dateFilter)
   const counts = useMemo(() => {
     const res: Record<'all' | OrderStatus, number> = {
-      all: orders.length,
+      all: 0,
       pending: 0,
       confirmed: 0,
       shipped: 0,
       delivered: 0,
       cancelled: 0,
     };
+    const now = new Date();
     for (const o of orders) {
+      if (dateFilter !== 'all') {
+        const d = new Date(o.createdAt);
+        if (dateFilter === 'today' && !isSameCalendarDay(d, now)) continue;
+        if (dateFilter === 'this_month' && !isSameCalendarMonth(d, now)) continue;
+      }
+      res.all += 1;
       if (res[o.status] !== undefined) {
         res[o.status] += 1;
       }
     }
     return res;
-  }, [orders]);
+  }, [orders, dateFilter]);
 
   // Multi-field filtered orders
   const filteredOrders = useMemo(() => {
@@ -75,10 +123,18 @@ export function OrdersManagementClient({
         // 1. Status Filter
         if (activeStatus !== 'all' && order.status !== activeStatus) return false;
 
-        // 2. Wilaya Filter
+        // 2. Date Filter
+        if (dateFilter !== 'all') {
+          const d = new Date(order.createdAt);
+          const now = new Date();
+          if (dateFilter === 'today' && !isSameCalendarDay(d, now)) return false;
+          if (dateFilter === 'this_month' && !isSameCalendarMonth(d, now)) return false;
+        }
+
+        // 3. Wilaya Filter
         if (wilayaFilter !== 'all' && order.customer.wilayaCode !== wilayaFilter) return false;
 
-        // 3. Multi-field Search Token
+        // 4. Multi-field Search Token
         if (searchQuery.trim()) {
           const q = searchQuery.toLowerCase().trim();
           const matchNumber = order.orderNumber?.toLowerCase().includes(q) ?? false;
@@ -108,12 +164,17 @@ export function OrdersManagementClient({
         const timeB = new Date(b.createdAt).getTime();
         return dateSort === 'newest' ? timeB - timeA : timeA - timeB;
       });
-  }, [orders, activeStatus, wilayaFilter, searchQuery, dateSort]);
+  }, [orders, activeStatus, dateFilter, wilayaFilter, searchQuery, dateSort]);
 
-  const isFiltered = activeStatus !== 'all' || wilayaFilter !== 'all' || Boolean(searchQuery.trim());
+  const isFiltered =
+    activeStatus !== 'all' ||
+    dateFilter !== 'all' ||
+    wilayaFilter !== 'all' ||
+    Boolean(searchQuery.trim());
 
   const handleResetFilters = () => {
     setActiveStatus('all');
+    setDateFilter('all');
     setWilayaFilter('all');
     setSearchQuery('');
     setDateSort('newest');
@@ -224,6 +285,9 @@ export function OrdersManagementClient({
         activeStatus={activeStatus}
         onStatusChange={setActiveStatus}
         counts={counts}
+        dateFilter={dateFilter}
+        onDateFilterChange={setDateFilter}
+        dateCounts={dateCounts}
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
         wilayaFilter={wilayaFilter}

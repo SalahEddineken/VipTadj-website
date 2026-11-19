@@ -3,14 +3,19 @@
 import React from 'react';
 import { OrderStatus } from '@/types';
 import { ALGERIAN_68_WILAYAS } from '@/lib/data/wilayas';
-import { Search, X, RotateCw, Filter, ArrowUpDown } from 'lucide-react';
+import { Search, X, RotateCw, Filter, ArrowUpDown, Calendar } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
 import { useLanguage } from '@/lib/context/language-context';
+
+export type OrderDateFilter = 'all' | 'today' | 'this_month';
 
 export interface OrderFiltersProps {
   activeStatus: 'all' | OrderStatus;
   onStatusChange: (status: 'all' | OrderStatus) => void;
   counts: Record<'all' | OrderStatus, number>;
+  dateFilter?: OrderDateFilter;
+  onDateFilterChange?: (filter: OrderDateFilter) => void;
+  dateCounts?: Record<OrderDateFilter, number>;
   searchQuery: string;
   onSearchChange: (query: string) => void;
   wilayaFilter: number | 'all';
@@ -27,6 +32,9 @@ export function OrderFilters({
   activeStatus,
   onStatusChange,
   counts,
+  dateFilter = 'all',
+  onDateFilterChange,
+  dateCounts,
   searchQuery,
   onSearchChange,
   wilayaFilter,
@@ -86,43 +94,106 @@ export function OrderFilters({
     },
   ];
 
+  const dateTabs: Array<{
+    id: OrderDateFilter;
+    label: string;
+    count: number;
+  }> = [
+    {
+      id: 'today',
+      label: t('admin.orders.filter_today', "Aujourd'hui"),
+      count: dateCounts?.today ?? 0,
+    },
+    {
+      id: 'this_month',
+      label: t('admin.orders.filter_this_month', 'Ce mois-ci'),
+      count: dateCounts?.this_month ?? 0,
+    },
+    {
+      id: 'all',
+      label: t('admin.orders.filter_all_time', 'Toutes'),
+      count: dateCounts?.all ?? counts.all,
+    },
+  ];
+
   return (
     <div className="space-y-4">
-      {/* Horizontal Status Pill Tabs */}
-      <div className="flex items-center gap-1.5 overflow-x-auto p-1.5 rounded-sm bg-white border border-obsidian-200 shadow-luxury-subtle scrollbar-none">
-        {tabs.map((tab) => {
-          const isActive = activeStatus === tab.id;
-          return (
-            <button
-              key={tab.id}
-              onClick={() => onStatusChange(tab.id)}
-              className={cn(
-                'flex items-center gap-2 px-3.5 py-2 min-h-[40px] rounded-sm text-xs font-medium whitespace-nowrap transition-all duration-200 select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500',
-                isActive
-                  ? 'bg-gold-50 text-gold-800 border border-gold-500/40 shadow-sm font-semibold'
-                  : 'text-obsidian-600 hover:text-obsidian-950 hover:bg-ivory-100'
-              )}
-            >
-              {tab.pulse && !isActive && (
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping motion-reduce:animate-none absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500" />
-                </span>
-              )}
-              <span>{tab.label}</span>
-              <span
+      {/* Top Tabs Bar: Status Tabs & Date Filter Tabs */}
+      <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-3">
+        {/* Horizontal Status Pill Tabs */}
+        <div className="flex items-center gap-1.5 overflow-x-auto p-1.5 rounded-sm bg-white border border-obsidian-200 shadow-luxury-subtle scrollbar-none">
+          {tabs.map((tab) => {
+            const isActive = activeStatus === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => onStatusChange(tab.id)}
                 className={cn(
-                  'px-2 py-0.5 rounded-full text-xs font-bold border transition-colors',
+                  'flex items-center gap-2 px-3.5 py-2 min-h-[40px] rounded-sm text-xs font-medium whitespace-nowrap transition-all duration-200 select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500',
                   isActive
-                    ? 'bg-gold-100 text-gold-800 border-gold-500/40'
-                    : tab.badgeStyle
+                    ? 'bg-gold-50 text-gold-800 border border-gold-500/40 shadow-sm font-semibold'
+                    : 'text-obsidian-600 hover:text-obsidian-950 hover:bg-ivory-100'
                 )}
               >
-                {tab.count}
-              </span>
-            </button>
-          );
-        })}
+                {tab.pulse && !isActive && (
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping motion-reduce:animate-none absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500" />
+                  </span>
+                )}
+                <span>{tab.label}</span>
+                <span
+                  className={cn(
+                    'px-2 py-0.5 rounded-full text-xs font-bold border transition-colors',
+                    isActive
+                      ? 'bg-gold-100 text-gold-800 border-gold-500/40'
+                      : tab.badgeStyle
+                  )}
+                >
+                  {tab.count}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Date Filter Tabs (Today / This Month / All) */}
+        <div className="flex items-center gap-1.5 overflow-x-auto p-1.5 rounded-sm bg-white border border-obsidian-200 shadow-luxury-subtle self-start xl:self-auto shrink-0 scrollbar-none">
+          <div className="flex items-center gap-1.5 px-2 text-obsidian-500 text-xs font-medium">
+            <Calendar className="w-4 h-4 text-gold-600 shrink-0" />
+            <span className="hidden sm:inline text-[11px] font-semibold uppercase tracking-wider text-obsidian-700">
+              {t('admin.orders.date_filter_label', 'Période :')}
+            </span>
+          </div>
+          {dateTabs.map((dTab) => {
+            const isActive = dateFilter === dTab.id;
+            return (
+              <button
+                key={dTab.id}
+                type="button"
+                onClick={() => onDateFilterChange?.(dTab.id)}
+                className={cn(
+                  'flex items-center gap-1.5 px-3 py-1.5 min-h-[36px] rounded-sm text-xs whitespace-nowrap transition-all duration-200 select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500',
+                  isActive
+                    ? 'bg-gold-50 text-gold-800 border border-gold-500/40 shadow-sm font-semibold'
+                    : 'text-obsidian-600 hover:text-obsidian-950 hover:bg-ivory-100 font-medium'
+                )}
+              >
+                <span>{dTab.label}</span>
+                <span
+                  className={cn(
+                    'px-1.5 py-0.5 rounded-full text-xs font-bold border transition-colors',
+                    isActive
+                      ? 'bg-gold-100 text-gold-800 border-gold-500/40'
+                      : 'bg-obsidian-100 text-obsidian-700 border-obsidian-200'
+                  )}
+                >
+                  {dTab.count}
+                </span>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* Multi-Field Search & Filter Controls Bar */}
