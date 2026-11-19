@@ -94,21 +94,6 @@ describe('Tier 5 Adversarial — Storefront, Data, Context & i18n Hardening', ()
     assertZeroFrenchOrEnglishLeakage(pdp.container, { requireCurrency: true });
     pdp.unmount();
 
-    // QuickView on CatalogClient
-    const catalog = renderStorefrontWithProviders(
-      <CatalogClient initialProducts={[belt]} />,
-      { language: 'ar' }
-    );
-    const qvButtons = within(catalog.container).getAllByRole('button', {
-      name: new RegExp(ar['catalog.quick_view']),
-    });
-    fireEvent.click(qvButtons[0]);
-    const dialog = await within(catalog.container).findByRole('dialog');
-    expect(dialog.textContent).toContain('85 سم');
-    expect(dialog.textContent).not.toMatch(/\b85\s*cm\b/i);
-    assertZeroFrenchOrEnglishLeakage(dialog, { requireCurrency: true });
-    catalog.unmount();
-
     // CartPage, CartDrawer, CheckoutPage, OrderSuccessView
     const beltCartItem = createMockCartItem({
       productId: belt.id,
@@ -290,30 +275,13 @@ describe('Tier 5 Adversarial — Storefront, Data, Context & i18n Hardening', ()
   });
 
   // =========================================================================
-  // 6. CatalogClient QuickView accessibility & 0-results copy
+  // 6. CatalogClient 0-results copy
   // =========================================================================
-  it('renders QuickView modal with accessible dialog label in AR and handles 0-results copy without singular label', async () => {
+  it('handles 0-results copy without singular label in AR', async () => {
     const { container } = renderStorefrontWithProviders(
       <CatalogClient initialProducts={SEED_PRODUCTS.slice(0, 2)} />,
       { language: 'ar' }
     );
-
-    const qvButtons = within(container).getAllByRole('button', {
-      name: new RegExp(ar['catalog.quick_view']),
-    });
-    fireEvent.click(qvButtons[0]);
-
-    const dialog = await within(container).findByRole('dialog');
-    expect(dialog.getAttribute('aria-modal')).toBe('true');
-    expect(dialog.getAttribute('aria-label')).toBeTruthy();
-    expect(dialog.getAttribute('aria-labelledby')).toBe('quick-view-modal-title');
-    assertZeroFrenchOrEnglishLeakage(dialog, { requireCurrency: true });
-
-    // Close QuickView via Escape and search for non-existent query to verify 0-results copy
-    fireEvent.keyDown(window, { key: 'Escape' });
-    await waitFor(() => {
-      expect(within(container).queryByRole('dialog')).toBeNull();
-    });
 
     const searchInput = within(container).getByPlaceholderText(ar['catalog.search.placeholder']);
     fireEvent.change(searchInput, { target: { value: 'منتج-غير-موجود-999' } });

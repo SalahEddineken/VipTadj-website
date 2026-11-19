@@ -149,9 +149,9 @@ describe('E2E 07 — Complete Customer Storefront Arabic (ar) Localization', () 
   });
 
   // =========================================================================
-  // TIER 1B: Catalog, Search, Filters, Badges, QuickView & ZeroResults
+  // TIER 1B: Catalog, Search, Filters, Badges & ZeroResults
   // =========================================================================
-  describe('Tier 1B: Catalog, Arabic Search, Filters & QuickView in AR', () => {
+  describe('Tier 1B: Catalog, Arabic Search, Filters in AR', () => {
     it('renders CatalogBanner and CategoryBanner for clothing, shoes, and accessories in AR', () => {
       const { container } = renderStorefrontWithProviders(
         <>
@@ -181,7 +181,7 @@ describe('E2E 07 — Complete Customer Storefront Arabic (ar) Localization', () 
       assertZeroFrenchOrEnglishLeakage(container);
     });
 
-    it('renders CatalogClient with all 30 SEED_PRODUCTS, Arabic search filtering, ActiveFilterBadges, and QuickView in AR', async () => {
+    it('renders CatalogClient with all 30 SEED_PRODUCTS, Arabic search filtering, and ActiveFilterBadges in AR', async () => {
       const { container } = renderStorefrontWithProviders(
         <CatalogClient initialProducts={SEED_PRODUCTS} />,
         {

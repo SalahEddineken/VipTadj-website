@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { SlidersHorizontal, X } from 'lucide-react';
+import { SlidersHorizontal } from 'lucide-react';
 import { Product } from '@/types';
 import {
   CatalogFilterState,
@@ -19,16 +19,7 @@ import { ActiveFilterBadges } from './ActiveFilterBadges';
 import { CatalogFilterSidebar } from './CatalogFilterSidebar';
 import { ProductGrid } from './ProductGrid';
 import { ZeroResults } from './ZeroResults';
-import { formatDZD } from '@/lib/utils/formatDZD';
-import { normalizeImageUrl } from '@/lib/media/url-normalizer';
 import { useLanguage } from '@/lib/context/language-context';
-import {
-  getLocalizedProduct,
-  getLocalizedCategoryName,
-  getLocalizedSubcategory,
-  getLocalizedSize,
-} from '@/lib/i18n/catalog-translations';
-import Link from 'next/link';
 
 export interface CatalogClientProps {
   initialProducts: Product[];
@@ -74,7 +65,6 @@ function CatalogClientInner({
 
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
   const [isDesktopFilterOpen, setIsDesktopFilterOpen] = useState(true);
-  const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
 
   const categories = useMemo(
     () => [
@@ -172,18 +162,6 @@ function CatalogClientInner({
     window.history.replaceState(null, '', newPath);
   };
 
-  // Handle ESC key for Quick View modal
-  useEffect(() => {
-    if (!quickViewProduct) return;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        setQuickViewProduct(null);
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [quickViewProduct]);
-
   const handleFilterChange = (updates: Partial<CatalogFilterState>) => {
     setFilters((prev) => {
       const next = { ...prev, ...updates };
@@ -229,10 +207,6 @@ function CatalogClientInner({
     });
     return Array.from(sizeSet);
   }, [cleanInitialProducts, filters.category]);
-
-  const qvProduct = quickViewProduct
-    ? normalizeProductSizes(getLocalizedProduct(quickViewProduct, language))
-    : null;
 
   return (
     <div id="catalog-content" className="luxury-container py-8 md:py-12">
@@ -375,7 +349,6 @@ function CatalogClientInner({
           {filteredProducts.length > 0 ? (
             <ProductGrid
               products={filteredProducts}
-              onQuickView={(p) => setQuickViewProduct(p)}
               columns={isDesktopFilterOpen ? 3 : 4}
             />
           ) : (
@@ -386,94 +359,6 @@ function CatalogClientInner({
           )}
         </div>
       </div>
-
-      {/* Quick View Modal */}
-      {quickViewProduct && qvProduct && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-obsidian-950/80 backdrop-blur-sm animate-in fade-in duration-200"
-          role="dialog"
-          aria-modal="true"
-          aria-label={`${t('catalog.quick_view', 'Aperçu Rapide')} - ${qvProduct.title}`}
-          aria-labelledby="quick-view-modal-title"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) {
-              setQuickViewProduct(null);
-            }
-          }}
-        >
-          <div className="bg-ivory max-w-3xl w-full border border-sand-300 shadow-2xl relative p-6 md:p-8 max-h-[90vh] overflow-y-auto">
-            <button
-              type="button"
-              onClick={() => setQuickViewProduct(null)}
-              className="absolute top-4 end-4 min-w-[44px] min-h-[44px] flex items-center justify-center p-2.5 text-obsidian-700 hover:text-gold-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 rounded"
-              aria-label={t('catalog.quick_view.close_aria', 'Fermer')}
-            >
-              <X className="w-5 h-5" />
-            </button>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-              <div className="aspect-[3/4] bg-sand-100 overflow-hidden">
-                <img
-                  src={normalizeImageUrl(
-                    quickViewProduct.images?.[0]?.url || '',
-                    { width: 800, quality: 85, fallbackCategory: quickViewProduct.categoryId, language }
-                  )}
-                  alt={qvProduct.title}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <div className="space-y-4">
-                <p className="text-xs uppercase tracking-[0.2em] text-sand-800 font-sans text-start">
-                  {(quickViewProduct.categorySlug ? getLocalizedCategoryName(quickViewProduct.categorySlug, language) : null) || quickViewProduct.categorySlug}
-                  {' • '}
-                  {(quickViewProduct.subcategory ? getLocalizedSubcategory(quickViewProduct.subcategory, language) : null) || quickViewProduct.subcategory}
-                </p>
-                <h3 id="quick-view-modal-title" className="luxury-serif-title text-2xl text-obsidian-950 text-start">
-                  {qvProduct.title}
-                </h3>
-                <div className="flex items-baseline gap-3">
-                  <span className="text-xl font-serif font-bold text-obsidian-950">
-                    {formatDZD(quickViewProduct.price, { locale: language })}
-                  </span>
-                  {quickViewProduct.compareAtPrice && (
-                    <span className="text-sm line-through text-neutral-500 font-sans">
-                      {formatDZD(quickViewProduct.compareAtPrice, { locale: language })}
-                    </span>
-                  )}
-                </div>
-                <p className="text-xs text-neutral-600 line-clamp-3 leading-relaxed font-sans text-start">
-                  {qvProduct.description}
-                </p>
-                {Array.isArray(qvProduct.sizes) && (
-                  <div>
-                    <span className="text-xs uppercase tracking-wider text-sand-800 font-medium block mb-2 text-start">
-                      {t('catalog.quick_view.sizes', 'Tailles disponibles :')}
-                    </span>
-                    <div className="flex flex-wrap gap-1.5">
-                      {qvProduct.sizes.map((s) => (
-                        <span
-                          key={s}
-                          className="px-2.5 py-1 text-xs border border-sand-300 bg-white"
-                        >
-                          {getLocalizedSize(s, language)}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                <div className="pt-4 flex flex-col gap-2">
-                  <Link
-                    href={`/catalog/${quickViewProduct.categorySlug || 'clothing'}/${quickViewProduct.slug}`}
-                    onClick={() => setQuickViewProduct(null)}
-                    className="btn-luxury-gold text-center text-xs uppercase tracking-[0.2em] py-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500"
-                  >
-                    {t('catalog.quick_view.view_full', 'Voir la Fiche Complète')}
-                  </Link>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

@@ -2,8 +2,6 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
-import { Eye } from 'lucide-react';
 import { Product } from '@/types';
 import { formatDZD } from '@/lib/utils/formatDZD';
 import { normalizeImageUrl } from '@/lib/media/url-normalizer';
@@ -17,11 +15,10 @@ import {
 
 export interface ProductCardProps {
   product: Product;
-  onQuickView?: (product: Product) => void;
   priority?: boolean;
 }
 
-export function ProductCard({ product, onQuickView, priority = false }: ProductCardProps) {
+export function ProductCard({ product, priority = false }: ProductCardProps) {
   const [isHovered, setIsHovered] = useState(false);
   const [activeColor, setActiveColor] = useState<string | null>(null);
   const { language, t } = useLanguage();
@@ -129,23 +126,6 @@ export function ProductCard({ product, onQuickView, priority = false }: ProductC
             </span>
           ) : null}
         </div>
-
-        {/* Quick View Button on Hover & Keyboard Focus */}
-        {onQuickView && (
-          <div className="absolute inset-x-3 bottom-3 hidden lg:flex justify-center opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity duration-200 z-10">
-            <button
-              type="button"
-              onClick={(e) => {
-                e.preventDefault();
-                onQuickView(product);
-              }}
-              className="w-full bg-ivory/95 hover:bg-white text-obsidian-950 py-2.5 px-4 text-xs tracking-[0.2em] uppercase font-semibold border border-sand-300 shadow-md backdrop-blur-sm transition-colors flex items-center justify-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500"
-            >
-              <Eye className="w-3.5 h-3.5" />
-              <span>{t('catalog.quick_view', 'Aperçu Rapide')}</span>
-            </button>
-          </div>
-        )}
       </div>
 
       {/* Product Details */}
@@ -182,7 +162,7 @@ export function ProductCard({ product, onQuickView, priority = false }: ProductC
           {Array.isArray(product.colors) && product.colors.length > 0 && (
             <div className="flex items-center gap-2 pt-1">
               <span className="text-xs uppercase tracking-wider text-sand-800 font-sans font-medium">
-                {t('catalog.quick_view.color_label', 'Coloris :')}
+                {t('product.color_label', 'Coloris :')}
               </span>
               <div className="flex items-center gap-1.5">
                 {product.colors.map((c) => {
@@ -199,7 +179,7 @@ export function ProductCard({ product, onQuickView, priority = false }: ProductC
                       }}
                       onMouseEnter={() => setActiveColor(c.name)}
                       className="w-7 h-7 flex items-center justify-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 transition-transform"
-                      aria-label={`${t('catalog.quick_view.color_label', 'Coloris :')} ${localizedColorName}`}
+                      aria-label={`${t('product.color_label', 'Coloris :')} ${localizedColorName}`}
                       title={localizedColorName}
                     >
                       <span
