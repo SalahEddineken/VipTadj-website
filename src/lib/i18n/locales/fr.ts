@@ -423,7 +423,6 @@ export const fr: Record<string, string> = {
   'checkout.field.phone': 'Téléphone mobile',
   'checkout.field.phone2': 'Numéro secondaire (optionnel)',
   'checkout.field.phone2_ph': 'Autre numéro de contact',
-  'checkout.field.phone_hint': '',
   'checkout.field.phone_ph': '05XX XX XX XX',
   'checkout.field.wilaya': 'Wilaya de livraison',
   'checkout.field.wilaya_search': 'Rechercher une wilaya...',

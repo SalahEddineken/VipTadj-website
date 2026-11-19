@@ -1062,6 +1062,24 @@ export default function AdminSettingsPage() {
 
           {/* Toggle Switch */}
           <div className="flex items-center gap-3 self-end sm:self-auto">
+            <button
+              type="button"
+              role="switch"
+              aria-checked={featuredEnabled}
+              onClick={() => setFeaturedEnabled(!featuredEnabled)}
+              dir="ltr"
+              className={cn(
+                'relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500',
+                featuredEnabled ? 'bg-gold-500' : 'bg-obsidian-200'
+              )}
+            >
+              <span
+                className={cn(
+                  'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out',
+                  featuredEnabled ? 'translate-x-5' : 'translate-x-0'
+                )}
+              />
+            </button>
             <span className="text-xs font-medium text-obsidian-700">
               {featuredEnabled ? (
                 <span className="text-emerald-700 font-semibold">{t('common.active', 'Actif')}</span>
@@ -1069,107 +1087,30 @@ export default function AdminSettingsPage() {
                 <span className="text-obsidian-400">{t('common.inactive', 'Désactivé')}</span>
               )}
             </span>
-            <button
-              type="button"
-              role="switch"
-              aria-checked={featuredEnabled}
-              onClick={() => setFeaturedEnabled(!featuredEnabled)}
-              className={cn(
-                'relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-gold-500',
-                featuredEnabled ? 'bg-gold-500' : 'bg-obsidian-200'
-              )}
-            >
-              <span
-                className={cn(
-                  'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out',
-                  featuredEnabled ? 'translate-x-5' : 'translate-x-0'
-                )}
-              />
-            </button>
-          </div>
-        </div>
-
-        {/* Multilingual Titles */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-obsidian-800 flex items-center justify-between">
-              <span>{t('admin.settings.featured_title_ar', 'Titre de la section en Arabe (ex: تشكيلاتنا المختارة)')}</span>
-              <span className="text-[10px] text-gold-700 font-bold px-1.5 py-0.5 bg-gold-50 border border-gold-200 rounded">AR (عربي)</span>
-            </label>
-            <input
-              type="text"
-              dir="rtl"
-              value={featuredTitleAr}
-              onChange={(e) => setFeaturedTitleAr(e.target.value)}
-              placeholder="تشكيلاتنا المختارة"
-              className="w-full px-3 py-2 rounded-sm bg-white border border-obsidian-200 text-obsidian-950 text-xs focus:outline-none focus:border-gold-500 focus-visible:ring-2 focus-visible:ring-gold-500 text-right font-serif"
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-obsidian-800 flex items-center justify-between">
-              <span>{t('admin.settings.featured_title_fr', 'Titre de la section en Français')}</span>
-              <span className="text-[10px] text-obsidian-600 font-bold px-1.5 py-0.5 bg-obsidian-50 border border-obsidian-200 rounded">FR</span>
-            </label>
-            <input
-              type="text"
-              value={featuredTitleFr}
-              onChange={(e) => setFeaturedTitleFr(e.target.value)}
-              placeholder={language === 'ar' ? '' : 'Créations Emblématiques'}
-              className="w-full px-3 py-2 rounded-sm bg-white border border-obsidian-200 text-obsidian-950 text-xs focus:outline-none focus:border-gold-500 focus-visible:ring-2 focus-visible:ring-gold-500 font-serif"
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-obsidian-800 flex items-center justify-between">
-              <span>{t('admin.settings.featured_title_en', 'Titre de la section en Anglais')}</span>
-              <span className="text-[10px] text-obsidian-600 font-bold px-1.5 py-0.5 bg-obsidian-50 border border-obsidian-200 rounded">EN</span>
-            </label>
-            <input
-              type="text"
-              value={featuredTitleEn}
-              onChange={(e) => setFeaturedTitleEn(e.target.value)}
-              placeholder={language === 'ar' ? '' : 'Signature Creations'}
-              className="w-full px-3 py-2 rounded-sm bg-white border border-obsidian-200 text-obsidian-950 text-xs focus:outline-none focus:border-gold-500 focus-visible:ring-2 focus-visible:ring-gold-500 font-serif"
-            />
           </div>
         </div>
 
         {/* Selected Products Area */}
-        <div className="space-y-3 pt-2 border-t border-obsidian-100">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-            <div>
-              <h3 className="text-xs font-bold uppercase tracking-wider text-obsidian-900 flex items-center gap-2">
-                <span>{t('admin.settings.featured_selected_title', 'Articles Sélectionnés en Vedette')}</span>
-                <span className="px-2 py-0.5 rounded-full bg-gold-100 text-gold-900 text-[11px] font-sans font-bold tabular-nums">
-                  {selectedFeaturedProductIds.length}
-                </span>
-              </h3>
-              <p className="text-[11px] text-obsidian-500 mt-0.5">
-                {t('admin.settings.featured_selected_hint', 'Utilisez les flèches pour changer l\'ordre d\'affichage. Recommandé : 4 articles pour une ligne parfaite.')}
-              </p>
-            </div>
-
-            <div className="flex items-center gap-2">
+        <div className="space-y-3">
+          <div className="flex items-center justify-end gap-2">
+            <button
+              type="button"
+              onClick={handleResetFeaturedToDefault}
+              className="px-2.5 py-1.5 rounded bg-white border border-obsidian-200 text-[11px] text-obsidian-700 hover:text-gold-700 hover:border-gold-400 transition-colors flex items-center gap-1"
+            >
+              <RotateCcw className="w-3 h-3" />
+              <span>{t('admin.settings.featured_restore_default', 'Rétablir défaut (4)')}</span>
+            </button>
+            {selectedFeaturedProductIds.length > 0 && (
               <button
                 type="button"
-                onClick={handleResetFeaturedToDefault}
-                className="px-2.5 py-1.5 rounded bg-white border border-obsidian-200 text-[11px] text-obsidian-700 hover:text-gold-700 hover:border-gold-400 transition-colors flex items-center gap-1"
+                onClick={() => setSelectedFeaturedProductIds([])}
+                className="px-2.5 py-1.5 rounded bg-white border border-rose-200 text-[11px] text-rose-700 hover:bg-rose-50 transition-colors flex items-center gap-1"
               >
-                <RotateCcw className="w-3 h-3" />
-                <span>{t('admin.settings.featured_restore_default', 'Rétablir défaut (4)')}</span>
+                <Trash2 className="w-3 h-3" />
+                <span>{t('admin.settings.featured_clear_all', 'Vider la sélection')}</span>
               </button>
-              {selectedFeaturedProductIds.length > 0 && (
-                <button
-                  type="button"
-                  onClick={() => setSelectedFeaturedProductIds([])}
-                  className="px-2.5 py-1.5 rounded bg-white border border-rose-200 text-[11px] text-rose-700 hover:bg-rose-50 transition-colors flex items-center gap-1"
-                >
-                  <Trash2 className="w-3 h-3" />
-                  <span>{t('admin.settings.featured_clear_all', 'Vider la sélection')}</span>
-                </button>
-              )}
-            </div>
+            )}
           </div>
 
           {selectedFeaturedProductObjects.length === 0 ? (

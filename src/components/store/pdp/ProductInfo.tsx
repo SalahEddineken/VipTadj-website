@@ -3,7 +3,6 @@
 import React from 'react';
 import { Product } from '@/types';
 import { formatDZD } from '@/lib/utils/formatDZD';
-import { ShieldCheck } from 'lucide-react';
 import { useLanguage } from '@/lib/context/language-context';
 import {
   getLocalizedCategoryName,
@@ -64,12 +63,6 @@ export function ProductInfo({ product }: ProductInfoProps) {
             </span>
           </>
         )}
-      </div>
-
-      {/* COD Notice */}
-      <div className="flex items-center gap-2 pt-2 text-xs text-neutral-600 font-sans">
-        <ShieldCheck className="w-4 h-4 text-gold-700 flex-shrink-0" />
-        <span>{t('pdp.cod_notice', 'Paiement en espèces à la livraison (COD) • Aucun paiement en ligne requis')}</span>
       </div>
     </div>
   );
