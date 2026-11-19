@@ -11,7 +11,19 @@ import {
   StoreSettings,
   SeedResult,
   CancellationReason,
+  CustomerShippingInfo,
+  OrderItem,
 } from '@/types';
+
+export interface UpdateOrderData {
+  items?: OrderItem[];
+  customer?: Partial<CustomerShippingInfo>;
+  deliveryFee?: number;
+  discount?: number;
+  adminNotes?: string;
+  note?: string;
+  updatedBy?: string;
+}
 
 export interface IDataStore {
   readonly mode: 'firestore' | 'mock';
@@ -41,6 +53,7 @@ export interface IDataStore {
     logistics?: { courier?: string; trackingCode?: string }
   ): Promise<Order>;
   deleteOrder(id: string): Promise<boolean>;
+  updateOrder(id: string, data: UpdateOrderData): Promise<Order>;
 
   // Settings
   getSettings(): Promise<StoreSettings>;

@@ -7,6 +7,7 @@ import { Order, OrderStatus } from '@/types';
 import { OrderStatusBadge } from '@/components/admin/OrderStatusBadge';
 import { OrderItemsTable } from '@/components/admin/OrderItemsTable';
 import { OrderStatusTransitionModal } from '@/components/admin/OrderStatusTransitionModal';
+import { OrderEditModal } from '@/components/admin/OrderEditModal';
 import { useLanguage } from '@/lib/context/language-context';
 import { getWilayaByCode } from '@/lib/data/wilayas';
 import { findCommune } from '@/lib/data/communes';
@@ -55,6 +56,7 @@ export function OrderDetailClient({ initialOrder }: OrderDetailClientProps) {
   const [order, setOrder] = useState<Order>(initialOrder);
   const [copiedPhone, setCopiedPhone] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [modalTargetStatus, setModalTargetStatus] = useState<OrderStatus | undefined>(undefined);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -210,6 +212,7 @@ export function OrderDetailClient({ initialOrder }: OrderDetailClientProps) {
             discount={order.discount}
             total={order.total}
             wilayaName={localizedWilaya}
+            onEditItems={() => setIsEditModalOpen(true)}
           />
 
           {/* Chronological Audit History Trail */}
@@ -543,6 +546,14 @@ export function OrderDetailClient({ initialOrder }: OrderDetailClientProps) {
         onClose={() => setIsModalOpen(false)}
         order={order}
         initialTargetStatus={modalTargetStatus}
+        onSuccess={handleModalSuccess}
+      />
+
+      {/* Order Items Edit Modal */}
+      <OrderEditModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        order={order}
         onSuccess={handleModalSuccess}
       />
     </div>

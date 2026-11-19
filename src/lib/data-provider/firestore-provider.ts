@@ -30,7 +30,7 @@ import {
   OrderStatusHistoryItem,
 } from '@/types';
 import { VALID_ORDER_STATUSES } from '@/lib/utils/orderStateMachine';
-import { IDataStore } from './interface';
+import { IDataStore, UpdateOrderData } from './interface';
 import { getDb } from '@/lib/firebase/client';
 import { initialProducts, initialCategories, initialSettings } from '@/lib/seed/seed-data';
 import {
@@ -566,6 +566,63 @@ export class FirestoreDataProvider implements IDataStore {
     }
 
     return false;
+  }
+
+  async updateOrder(id: string, data: UpdateOrderData): Promise<Order> {
+    const db = this.getDatabase();
+    let docRef = doc(db, 'orders', id);
+    let snap = await getDoc(docRef);
+
+    if (!snap.exists()) {
+      // Fallback: search by orderNumber
+      const q = query(collection(db, 'orders'), where('orderNumber', '==', id), fsLimit(1));
+      const querySnap = await getDocs(q);
+      if (querySnap.empty) {
+        throw new Error(`Order with ID "${id}" not found.`);
+      }
+      docRef = querySnap.docs[0].ref;
+      snap = querySnap.docs[0];
+    }
+
+    const orderData = sanitizeDoc<Order>(snap.data());
+    const now = new Date().toISOString();
+
+    const items = data.items || orderData.items;
+    const subtotal = items.reduce((acc, item) => acc + item.price * item.quantity, 0);
+    const deliveryFee = data.deliveryFee !== undefined ? data.deliveryFee : orderData.deliveryFee;
+    const discount = data.discount !== undefined ? data.discount : (orderData.discount || 0);
+    const total = subtotal + deliveryFee - discount;
+
+    const customer = data.customer ? { ...orderData.customer, ...data.customer } : orderData.customer;
+
+    const historyEntry: OrderStatusHistoryItem = {
+      status: orderData.status,
+      timestamp: now,
+      note: data.note || "Mise à jour des articles de la commande par l'administrateur",
+      updatedBy: data.updatedBy || 'Admin',
+    };
+
+    const updatedHistory = [...(orderData.statusHistory || []), historyEntry];
+
+    const updates = removeUndefined({
+      items,
+      subtotal,
+      deliveryFee,
+      discount,
+      total,
+      customer,
+      adminNotes: data.adminNotes !== undefined ? data.adminNotes : orderData.adminNotes,
+      statusHistory: updatedHistory,
+      updatedAt: now,
+    });
+
+    await updateDoc(docRef, updates);
+
+    return {
+      ...orderData,
+      id: docRef.id,
+      ...updates,
+    };
   }
 
   // ================= SETTINGS =================

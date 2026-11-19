@@ -13,7 +13,7 @@ import {
   CancellationReason,
   OrderStatusHistoryItem,
 } from '@/types';
-import { IDataStore } from './interface';
+import { IDataStore, UpdateOrderData } from './interface';
 import { initialProducts, initialCategories, initialSettings } from '@/lib/seed/seed-data';
 import {
   PRODUCT_TRANSLATIONS,
@@ -632,6 +632,49 @@ export class MockSeedDataProvider implements IDataStore {
     this.orders.splice(index, 1);
     savePersistedOrders(this.orders);
     return true;
+  }
+
+  async updateOrder(id: string, data: UpdateOrderData): Promise<Order> {
+    this.init();
+    const index = this.orders.findIndex((o) => o.id === id || o.orderNumber === id);
+    if (index === -1) {
+      throw new Error(`Order with ID "${id}" not found.`);
+    }
+
+    const order = this.orders[index];
+    const now = new Date().toISOString();
+
+    const items = data.items || order.items;
+    const subtotal = items.reduce((acc, item) => acc + item.price * item.quantity, 0);
+    const deliveryFee = data.deliveryFee !== undefined ? data.deliveryFee : order.deliveryFee;
+    const discount = data.discount !== undefined ? data.discount : (order.discount || 0);
+    const total = subtotal + deliveryFee - discount;
+
+    const customer = data.customer ? { ...order.customer, ...data.customer } : order.customer;
+
+    const historyEntry: OrderStatusHistoryItem = {
+      status: order.status,
+      timestamp: now,
+      note: data.note || "Mise à jour des articles de la commande par l'administrateur",
+      updatedBy: data.updatedBy || 'Admin',
+    };
+
+    const updated: Order = {
+      ...order,
+      items,
+      subtotal,
+      deliveryFee,
+      discount,
+      total,
+      customer,
+      adminNotes: data.adminNotes !== undefined ? data.adminNotes : order.adminNotes,
+      statusHistory: [...(order.statusHistory || []), historyEntry],
+      updatedAt: now,
+    };
+
+    this.orders[index] = updated;
+    savePersistedOrders(this.orders);
+    return clone(updated);
   }
 
   // ================= SETTINGS =================

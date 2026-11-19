@@ -9,7 +9,7 @@ import { normalizeImageUrl } from '@/lib/media/url-normalizer';
 import { useLanguage } from '@/lib/context/language-context';
 import { getLocalizedProduct, getLocalizedColor, getLocalizedSize } from '@/lib/i18n/catalog-translations';
 import { ALGERIAN_68_WILAYAS } from '@/lib/data/wilayas';
-import { ShoppingBag, Tag, ExternalLink } from 'lucide-react';
+import { ShoppingBag, Tag, ExternalLink, Pencil } from 'lucide-react';
 
 export interface OrderItemsTableProps {
   items: OrderItem[];
@@ -18,6 +18,7 @@ export interface OrderItemsTableProps {
   discount?: number;
   total: number;
   wilayaName?: string;
+  onEditItems?: () => void;
 }
 
 export function OrderItemsTable({
@@ -27,6 +28,7 @@ export function OrderItemsTable({
   discount = 0,
   total,
   wilayaName,
+  onEditItems,
 }: OrderItemsTableProps) {
   const { language, t } = useLanguage();
   const totalPieces = items.reduce((sum, item) => sum + item.quantity, 0);
@@ -45,16 +47,28 @@ export function OrderItemsTable({
     <div className="space-y-6">
       {/* Items Section */}
       <div className="rounded-sm bg-white border border-obsidian-200 p-5 sm:p-6 shadow-luxury-subtle">
-        <div className="flex items-center justify-between pb-4 border-b border-obsidian-200 mb-4">
+        <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-obsidian-200 mb-4">
           <div className="flex items-center gap-2">
             <ShoppingBag className="w-5 h-5 text-gold-600" />
             <h3 className="font-cinzel text-base sm:text-lg font-bold text-obsidian-950">
               {t('admin.order_detail.items_title', 'Articles Commandés ({count})').replace('{count}', String(items.length))}
             </h3>
           </div>
-          <span className="text-xs text-obsidian-500">
-            {t('admin.order_detail.pieces_total', '{count} pièce(s) au total').replace('{count}', String(totalPieces))}
-          </span>
+          <div className="flex items-center gap-3">
+            <span className="text-xs text-obsidian-500">
+              {t('admin.order_detail.pieces_total', '{count} pièce(s) au total').replace('{count}', String(totalPieces))}
+            </span>
+            {onEditItems && (
+              <button
+                type="button"
+                onClick={onEditItems}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-sm bg-gold-50 border border-gold-500/40 text-gold-800 hover:bg-gold-100 text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500"
+              >
+                <Pencil className="w-3.5 h-3.5 text-gold-700" />
+                <span>{t('admin.order_detail.btn_edit_items', 'Modifier les articles')}</span>
+              </button>
+            )}
+          </div>
         </div>
 
         <div className="overflow-x-auto">
