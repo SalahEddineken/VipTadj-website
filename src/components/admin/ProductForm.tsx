@@ -401,7 +401,8 @@ export function ProductForm({ mode, initialData }: ProductFormProps) {
         ? { shortDescriptionEn: initialData.shortDescriptionEn }
         : {}),
       price: price === '' ? 0 : Number(price),
-      compareAtPrice: compareAtPrice === '' ? undefined : Number(compareAtPrice),
+      compareAtPrice:
+        compareAtPrice === '' || Number(compareAtPrice) <= 0 ? null : Number(compareAtPrice),
       costPrice: costPrice === '' ? undefined : Number(costPrice),
       categoryId,
       categorySlug: CATEGORY_SLUG_MAP[categoryId],
@@ -759,7 +760,7 @@ export function ProductForm({ mode, initialData }: ProductFormProps) {
             </div>
             <input
               type="number"
-              min={1}
+              min={0}
               step={1}
               value={compareAtPrice}
               onChange={(e) =>

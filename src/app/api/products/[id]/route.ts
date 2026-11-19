@@ -50,7 +50,7 @@ const partialProductSchema = z
     subtitle: z.string().optional(),
     subtitleAr: z.string().optional(),
     subtitleEn: z.string().optional(),
-    description: z.string().min(10, 'La description doit contenir au moins 10 caractères.'),
+    description: z.string().optional().default(''),
     descriptionAr: z.string().optional(),
     descriptionEn: z.string().optional(),
     shortDescription: z.string().optional(),
@@ -76,7 +76,7 @@ const partialProductSchema = z
       required_error: 'La catégorie est obligatoire.',
     }),
     categorySlug: z.string().min(1),
-    subcategory: z.string().min(1, 'La sous-catégorie est obligatoire.'),
+    subcategory: z.string().optional().default(''),
     images: z.array(productImageSchema).min(1, 'Au moins une image est requise.'),
     sizes: z.array(z.string()),
     sizeInventory: z.record(z.string(), z.coerce.number().int().min(0)),
@@ -209,6 +209,10 @@ async function handleUpdate(req: NextRequest, id: string) {
         errorCode: 'INVALID_PRODUCT_DATA',
         errorKey: 'api.error.invalid_product_data',
       });
+    }
+
+    if (body.compareAtPrice === 0 || body.compareAtPrice === '0' || body.compareAtPrice === '') {
+      body.compareAtPrice = null;
     }
 
     if (isInvalidNumericInput(body.price)) {

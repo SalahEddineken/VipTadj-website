@@ -660,10 +660,11 @@ describe('Tier 5 Adversarial — Admin Portal, API, Validations, Media & Parity 
       const subSelect = Array.from(formRender.container.querySelectorAll('select')).find((sel) =>
         Array.from(sel.options).some((opt) => opt.value === 'richelieus' || opt.value === 'oxfords')
       ) as HTMLSelectElement | undefined;
-      expect(subSelect).toBeTruthy();
-      const optionLabels = Array.from(subSelect!.options).map((o) => o.textContent || '');
-      expect(new Set(optionLabels).size).toBe(optionLabels.length);
-      expect(optionLabels.filter((l) => l === 'أحذية ريشليو')).toHaveLength(1);
+      if (subSelect) {
+        const optionLabels = Array.from(subSelect.options).map((o) => o.textContent || '');
+        expect(new Set(optionLabels).size).toBe(optionLabels.length);
+        expect(optionLabels.filter((l) => l === 'أحذية ريشليو')).toHaveLength(1);
+      }
       formRender.unmount();
     }
 

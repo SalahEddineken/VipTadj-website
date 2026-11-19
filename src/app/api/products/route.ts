@@ -147,6 +147,10 @@ export async function POST(req: NextRequest) {
       });
     }
 
+    if (body.compareAtPrice === 0 || body.compareAtPrice === '0' || body.compareAtPrice === '') {
+      body.compareAtPrice = null;
+    }
+
     if (isInvalidNumericInput(body.price)) {
       return buildApiErrorResponse(lang, {
         status: 400,
