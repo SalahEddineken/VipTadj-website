@@ -94,9 +94,6 @@ export default function AdminSettingsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedZone, setSelectedZone] = useState<string>('all');
 
-  // Batch zone inputs
-  const [batchHomeFee, setBatchHomeFee] = useState<number | ''>('');
-  const [batchDeskFee, setBatchDeskFee] = useState<number | ''>('');
 
   const showNotification = (type: 'success' | 'error', message: string) => {
     setNotification({ type, message });
@@ -327,26 +324,6 @@ export default function AdminSettingsPage() {
     }
   };
 
-  // Apply batch price to filtered zone
-  const handleApplyBatchZone = () => {
-    if (batchHomeFee === '' && batchDeskFee === '') return;
-
-    setWilayaFees((prev) => {
-      const updated = { ...prev };
-      filteredWilayas.forEach((w) => {
-        updated[w.code] = {
-          ...updated[w.code],
-          homeFee: batchHomeFee !== '' ? Number(batchHomeFee) : updated[w.code].homeFee,
-          deskFee: batchDeskFee !== '' ? Number(batchDeskFee) : updated[w.code].deskFee,
-        };
-      });
-      return updated;
-    });
-
-    showNotification('success', t('admin.settings.batch_success', 'Tarifs appliqués aux wilayas sélectionnées.'));
-    setBatchHomeFee('');
-    setBatchDeskFee('');
-  };
 
   // Filtered Wilayas
   const filteredWilayas = useMemo(() => {
@@ -1376,57 +1353,25 @@ export default function AdminSettingsPage() {
           ))}
         </div>
 
-        {/* Search & Batch Zone Actions */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 items-center">
-          {/* Search */}
-          <div className="lg:col-span-5 relative">
-            <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-obsidian-400" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder={t('admin.settings.search_ph', 'Chercher par code (16, 31) ou nom (Alger, Oran, الجزائر)...')}
-              className="w-full ps-9 pe-8 py-2 rounded-lg bg-white border border-obsidian-200 text-obsidian-950 text-xs placeholder:text-obsidian-400 focus:outline-none focus:border-gold-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500"
-            />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery('')}
-                aria-label={t('common.close', 'Fermer')}
-                className="absolute end-3 top-1/2 -translate-y-1/2 text-obsidian-400 hover:text-obsidian-950 text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 rounded-sm"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
-            )}
-          </div>
-
-          {/* Batch Zone Action */}
-          <div className="lg:col-span-7 flex flex-wrap items-center gap-2 p-2 rounded-xl bg-ivory-100 border border-obsidian-200">
-            <span className="text-[11px] font-semibold text-gold-700 uppercase tracking-wider shrink-0 w-full sm:w-auto">
-              {t('admin.settings.batch_apply', 'Appliquer à la sélection :')}
-            </span>
-            <input
-              type="number"
-              placeholder={t('admin.settings.home_rate_label', 'Tarif Domicile DA')}
-              value={batchHomeFee}
-              onChange={(e) => setBatchHomeFee(e.target.value === '' ? '' : parseInt(e.target.value, 10))}
-              className="w-full sm:w-28 px-2 py-1 rounded bg-white border border-obsidian-200 text-xs text-obsidian-950 font-mono focus:outline-none focus:border-gold-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500"
-            />
-            <input
-              type="number"
-              placeholder={t('admin.settings.desk_rate_label', 'Tarif Relais DA')}
-              value={batchDeskFee}
-              onChange={(e) => setBatchDeskFee(e.target.value === '' ? '' : parseInt(e.target.value, 10))}
-              className="w-full sm:w-28 px-2 py-1 rounded bg-white border border-obsidian-200 text-xs text-obsidian-950 font-mono focus:outline-none focus:border-gold-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500"
-            />
+        {/* Search */}
+        <div className="relative max-w-md">
+          <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-obsidian-400" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder={t('admin.settings.search_ph', 'Chercher par code (16, 31) ou nom (Alger, Oran, الجزائر)...')}
+            className="w-full ps-9 pe-8 py-2 rounded-lg bg-white border border-obsidian-200 text-obsidian-950 text-xs placeholder:text-obsidian-400 focus:outline-none focus:border-gold-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500"
+          />
+          {searchQuery && (
             <button
-              type="button"
-              onClick={handleApplyBatchZone}
-              disabled={batchHomeFee === '' && batchDeskFee === ''}
-              className="w-full sm:w-auto px-3 py-1 rounded bg-gold-50 hover:bg-gold-100 text-gold-800 border border-gold-500/40 text-xs font-semibold transition-colors disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500"
+              onClick={() => setSearchQuery('')}
+              aria-label={t('common.close', 'Fermer')}
+              className="absolute end-3 top-1/2 -translate-y-1/2 text-obsidian-400 hover:text-obsidian-950 text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 rounded-sm"
             >
-              {t('admin.settings.btn_apply', 'Appliquer')}
+              <X className="w-3.5 h-3.5" />
             </button>
-          </div>
+          )}
         </div>
 
         {/* Mobile Card Layout (Phone) */}
