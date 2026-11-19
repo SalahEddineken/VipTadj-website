@@ -17,6 +17,7 @@ import {
   PackageCheck,
   Building2,
   Home,
+  Trash2,
 } from 'lucide-react';
 import { getDataStore } from '@/lib/data-provider';
 import { Order, Product } from '@/types';
@@ -105,6 +106,28 @@ export default function AdminDashboardPage() {
       loadData(),
       refreshPendingCount?.(),
     ]);
+  };
+
+  const handleDeleteOrder = async (orderId: string, orderNumber: string) => {
+    const confirmMsg = t(
+      'admin.orders.confirm_delete',
+      `Êtes-vous sûr de vouloir supprimer la commande ${orderNumber} ? Cette action est irréversible.`
+    ).replace('{orderNumber}', orderNumber);
+
+    if (!window.confirm(confirmMsg)) return;
+
+    try {
+      const res = await fetch(`/api/orders/${orderId}`, { method: 'DELETE' });
+      if (res.ok) {
+        setOrders((prev) => prev.filter((o) => o.id !== orderId));
+        refreshPendingCount?.();
+      } else {
+        const data = await res.json().catch(() => ({}));
+        alert(data.message || t('admin.orders.delete_error', 'Erreur lors de la suppression de la commande.'));
+      }
+    } catch (err: any) {
+      alert(err.message || t('admin.orders.delete_error', 'Erreur lors de la suppression de la commande.'));
+    }
   };
 
   const kpis: DashboardKPIs = useMemo(
@@ -431,12 +454,23 @@ export default function AdminDashboardPage() {
                           </span>
                         </td>
                         <td className="py-3 text-end">
-                          <Link
-                            href={`/admin/orders/${order.id}`}
-                            className="text-xs text-gold-700 hover:text-gold-800 font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500"
-                          >
-                            {t('admin.orders.action.details', 'Détails')}
-                          </Link>
+                          <div className="flex items-center justify-end gap-2">
+                            <Link
+                              href={`/admin/orders/${order.id}`}
+                              className="text-xs text-gold-700 hover:text-gold-800 font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500"
+                            >
+                              {t('admin.orders.action.details', 'Détails')}
+                            </Link>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteOrder(order.id, order.orderNumber)}
+                              className="p-1 rounded text-rose-500 hover:text-rose-700 hover:bg-rose-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500"
+                              title={t('admin.orders.action_delete_title', 'Supprimer cette commande')}
+                              aria-label={t('admin.orders.action_delete_title', 'Supprimer cette commande')}
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -495,13 +529,24 @@ export default function AdminDashboardPage() {
                         <div className="font-serif font-bold text-gold-700 text-sm">
                           {formatDZD(order.total, { locale: language })}
                         </div>
-                        <Link
-                          href={`/admin/orders/${order.id}`}
-                          className="text-xs text-gold-700 hover:text-gold-800 font-semibold inline-flex items-center gap-0.5 mt-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500"
-                        >
-                          <span>{t('admin.orders.action.details', 'Détails')}</span>
-                          <ChevronRight className="w-3.5 h-3.5 rtl:rotate-180" />
-                        </Link>
+                        <div className="flex items-center justify-end gap-2 mt-1">
+                          <Link
+                            href={`/admin/orders/${order.id}`}
+                            className="text-xs text-gold-700 hover:text-gold-800 font-semibold inline-flex items-center gap-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500"
+                          >
+                            <span>{t('admin.orders.action.details', 'Détails')}</span>
+                            <ChevronRight className="w-3.5 h-3.5 rtl:rotate-180" />
+                          </Link>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteOrder(order.id, order.orderNumber)}
+                            className="p-1 rounded text-rose-500 hover:text-rose-700 hover:bg-rose-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500"
+                            title={t('admin.orders.action_delete_title', 'Supprimer cette commande')}
+                            aria-label={t('admin.orders.action_delete_title', 'Supprimer cette commande')}
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>

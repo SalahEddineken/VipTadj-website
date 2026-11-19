@@ -23,6 +23,7 @@ import {
   XCircle,
   Building2,
   Home,
+  Trash2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
 import { useLanguage } from '@/lib/context/language-context';
@@ -30,6 +31,7 @@ import { useLanguage } from '@/lib/context/language-context';
 export interface OrderTableProps {
   orders: Order[];
   onOpenStatusModal?: (order: Order, defaultTarget?: OrderStatus) => void;
+  onDeleteOrder?: (order: Order) => void;
   onResetFilters?: () => void;
   isFiltered?: boolean;
 }
@@ -37,6 +39,7 @@ export interface OrderTableProps {
 export function OrderTable({
   orders,
   onOpenStatusModal,
+  onDeleteOrder,
   onResetFilters,
   isFiltered,
 }: OrderTableProps) {
@@ -282,6 +285,19 @@ export function OrderTable({
                       >
                         <MessageCircle className="w-4 h-4" />
                       </a>
+
+                      {/* Delete Order Action */}
+                      {onDeleteOrder && (
+                        <button
+                          type="button"
+                          onClick={() => onDeleteOrder(order)}
+                          className="p-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-sm bg-rose-50 border border-rose-200 text-rose-600 hover:bg-rose-100 hover:text-rose-800 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500"
+                          title={t('admin.orders.action_delete_title', 'Supprimer cette commande')}
+                          aria-label={t('admin.orders.action_delete_title', 'Supprimer cette commande')}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
 
                       {/* Status Transition Trigger Modal */}
                       {onOpenStatusModal && order.status !== 'delivered' && order.status !== 'cancelled' && (

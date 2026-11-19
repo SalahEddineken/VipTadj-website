@@ -623,6 +623,17 @@ export class MockSeedDataProvider implements IDataStore {
     return clone(updated);
   }
 
+  async deleteOrder(id: string): Promise<boolean> {
+    this.init();
+    const index = this.orders.findIndex((o) => o.id === id || o.orderNumber === id);
+    if (index === -1) {
+      return false;
+    }
+    this.orders.splice(index, 1);
+    savePersistedOrders(this.orders);
+    return true;
+  }
+
   // ================= SETTINGS =================
 
   async getSettings(): Promise<StoreSettings> {

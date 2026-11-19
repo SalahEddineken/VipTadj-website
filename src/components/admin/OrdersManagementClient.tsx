@@ -230,6 +230,41 @@ export function OrdersManagementClient({
     });
   };
 
+  const handleDeleteOrder = async (order: Order) => {
+    const confirmMsg = t(
+      'admin.orders.confirm_delete',
+      `Êtes-vous sûr de vouloir supprimer la commande ${order.orderNumber} ? Cette action est irréversible.`
+    ).replace('{orderNumber}', order.orderNumber);
+
+    if (!window.confirm(confirmMsg)) return;
+
+    try {
+      const res = await fetch(`/api/orders/${order.id}`, { method: 'DELETE' });
+      if (res.ok) {
+        setOrders((prev) => prev.filter((o) => o.id !== order.id));
+        setNotification({
+          type: 'success',
+          message: t('admin.orders.delete_success', 'Commande supprimée avec succès.'),
+        });
+      } else {
+        const data = await res.json().catch(() => ({}));
+        setNotification({
+          type: 'error',
+          message: data.message || t('admin.orders.delete_error', 'Erreur lors de la suppression de la commande.'),
+        });
+      }
+    } catch (err: any) {
+      setNotification({
+        type: 'error',
+        message: err.message || t('admin.orders.delete_error', 'Erreur lors de la suppression de la commande.'),
+      });
+    }
+
+    setTimeout(() => {
+      setNotification(null);
+    }, 4500);
+  };
+
   return (
     <div className="space-y-6">
       {/* Page Header */}
@@ -311,6 +346,7 @@ export function OrdersManagementClient({
       <OrderTable
         orders={filteredOrders}
         onOpenStatusModal={handleOpenStatusModal}
+        onDeleteOrder={handleDeleteOrder}
         onResetFilters={handleResetFilters}
         isFiltered={isFiltered}
       />

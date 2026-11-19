@@ -40,6 +40,7 @@ export interface IDataStore {
     cancellationReason?: CancellationReason | string,
     logistics?: { courier?: string; trackingCode?: string }
   ): Promise<Order>;
+  deleteOrder(id: string): Promise<boolean>;
 
   // Settings
   getSettings(): Promise<StoreSettings>;

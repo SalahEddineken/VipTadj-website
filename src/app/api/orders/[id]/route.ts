@@ -61,3 +61,47 @@ export async function PATCH(
 ) {
   return handleStatusPatch(req, context);
 }
+
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  const lang = resolveApiLanguage(req);
+
+  try {
+    const orderId = params.id;
+    if (!orderId) {
+      return buildApiErrorResponse(lang, {
+        status: 400,
+        errorCode: 'ORDER_INVALID_PAYLOAD',
+        errorKey: 'api.error.order_invalid_payload',
+        frFallback: "Identifiant de commande manquant dans l'URL.",
+      });
+    }
+
+    const store = getDataStore();
+    const deleted = await store.deleteOrder(orderId);
+
+    if (!deleted) {
+      return buildApiErrorResponse(lang, {
+        status: 404,
+        errorCode: 'ORDER_NOT_FOUND',
+        errorKey: 'api.error.order_not_found',
+        frFallback: `Commande introuvable pour la référence "${orderId}".`,
+      });
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: 'Commande supprimée avec succès.',
+    });
+  } catch (error: any) {
+    console.error('[API /api/orders/[id] DELETE Error]:', error);
+    return buildApiErrorResponse(lang, {
+      status: 500,
+      errorCode: 'INTERNAL_ERROR',
+      errorKey: 'api.error.internal',
+      frFallback: error?.message || 'Erreur lors de la suppression de la commande.',
+    });
+  }
+}

@@ -41,6 +41,7 @@ import {
   ExternalLink,
   PackageCheck,
   ShieldCheck,
+  Trash2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
 
@@ -55,6 +56,7 @@ export function OrderDetailClient({ initialOrder }: OrderDetailClientProps) {
   const [copiedPhone, setCopiedPhone] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalTargetStatus, setModalTargetStatus] = useState<OrderStatus | undefined>(undefined);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const isTerminal = isTerminalStatus(order.status);
 
@@ -91,6 +93,30 @@ export function OrderDetailClient({ initialOrder }: OrderDetailClientProps) {
   const handleModalSuccess = (updatedOrder: Order) => {
     setOrder(updatedOrder);
     router.refresh();
+  };
+
+  const handleDeleteOrder = async () => {
+    const confirmMsg = t(
+      'admin.orders.confirm_delete',
+      `Êtes-vous sûr de vouloir supprimer la commande ${order.orderNumber} ? Cette action est irréversible.`
+    ).replace('{orderNumber}', order.orderNumber);
+
+    if (!window.confirm(confirmMsg)) return;
+
+    setIsDeleting(true);
+    try {
+      const res = await fetch(`/api/orders/${order.id}`, { method: 'DELETE' });
+      if (res.ok) {
+        router.push('/admin/orders');
+      } else {
+        const data = await res.json().catch(() => ({}));
+        alert(data.message || t('admin.orders.delete_error', 'Erreur lors de la suppression de la commande.'));
+        setIsDeleting(false);
+      }
+    } catch (err: any) {
+      alert(err.message || t('admin.orders.delete_error', 'Erreur lors de la suppression de la commande.'));
+      setIsDeleting(false);
+    }
   };
 
   const formatTimelineDate = (isoString: string) => {
@@ -334,6 +360,19 @@ export function OrderDetailClient({ initialOrder }: OrderDetailClientProps) {
                 </button>
               </div>
             )}
+
+            {/* Permanent Delete Order Action */}
+            <div className="pt-3 border-t border-obsidian-200">
+              <button
+                type="button"
+                onClick={handleDeleteOrder}
+                disabled={isDeleting}
+                className="w-full py-2 px-3 min-h-[40px] rounded-sm bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 font-semibold text-xs transition-colors flex items-center justify-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 disabled:opacity-50"
+              >
+                <Trash2 className="w-4 h-4 text-rose-600" />
+                <span>{t('admin.order_detail.btn_delete_order', 'Supprimer définitivement la commande')}</span>
+              </button>
+            </div>
           </div>
 
           {/* Customer Shipping Dossier Card */}

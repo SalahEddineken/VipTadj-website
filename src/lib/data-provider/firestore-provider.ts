@@ -547,6 +547,27 @@ export class FirestoreDataProvider implements IDataStore {
     };
   }
 
+  async deleteOrder(id: string): Promise<boolean> {
+    const db = this.getDatabase();
+    const docRef = doc(db, 'orders', id);
+    const snap = await getDoc(docRef);
+
+    if (snap.exists()) {
+      await deleteDoc(docRef);
+      return true;
+    }
+
+    // Fallback: search by orderNumber
+    const q = query(collection(db, 'orders'), where('orderNumber', '==', id), fsLimit(1));
+    const querySnap = await getDocs(q);
+    if (!querySnap.empty) {
+      await deleteDoc(querySnap.docs[0].ref);
+      return true;
+    }
+
+    return false;
+  }
+
   // ================= SETTINGS =================
 
   async getSettings(): Promise<StoreSettings> {

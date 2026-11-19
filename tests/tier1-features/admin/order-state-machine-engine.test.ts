@@ -97,4 +97,43 @@ describe('Order State Machine & Audit History Engine (F-ORD-03)', () => {
     expect(codes).toContain('customer_unreachable');
     expect(codes).toContain('out_of_stock');
   });
+
+  it('supports deleteOrder via MockSeedDataProvider with true/false return values', async () => {
+    const { MockSeedDataProvider } = await import('@/lib/data-provider/mock-provider');
+    const store = new MockSeedDataProvider();
+    const created = await store.createOrder({
+      customer: {
+        fullName: 'Test Delete',
+        phone: '0550123456',
+        wilaya: 'Alger',
+        wilayaCode: 16,
+        commune: 'Hydra',
+        address: 'Rue 1',
+        deliveryType: 'home',
+      },
+      items: [
+        {
+          productId: 'prod-suit-01',
+          title: 'Veste Test',
+          slug: 'veste-test',
+          price: 10000,
+          quantity: 1,
+          selectedSize: 'L',
+        },
+      ],
+      deliveryFee: 400,
+      paymentMethod: 'cod',
+    });
+
+    expect(await store.getOrderById(created.id)).toBeDefined();
+
+    const deleted = await store.deleteOrder(created.id);
+    expect(deleted).toBe(true);
+
+    expect(await store.getOrderById(created.id)).toBeNull();
+
+    // Deleting again or non-existent returns false
+    const deletedAgain = await store.deleteOrder(created.id);
+    expect(deletedAgain).toBe(false);
+  });
 });
