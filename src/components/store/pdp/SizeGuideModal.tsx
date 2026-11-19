@@ -94,18 +94,18 @@ export function SizeGuideModal({ isOpen, onClose, category }: SizeGuideModalProp
               <table className="w-full text-xs text-start font-sans border border-sand-200">
                 <thead className="bg-sand-100 text-obsidian-950 uppercase tracking-wider text-xs">
                   <tr>
-                    <th className="py-2.5 px-3 border-b border-sand-200 text-start">{t('pdp.size_guide.th_size_eu', 'Taille EU')}</th>
+                    <th className="py-2.5 px-3 border-b border-sand-200 text-start">{t('pdp.size_guide.th_size_standard', 'Taille')}</th>
                     <th className="py-2.5 px-3 border-b border-sand-200 text-start">{t('pdp.size_guide.th_chest_cm', 'Tour Poitrine (cm)')}</th>
                     <th className="py-2.5 px-3 border-b border-sand-200 text-start">{t('pdp.size_guide.th_waist_cm', 'Tour Taille (cm)')}</th>
                     <th className="py-2.5 px-3 border-b border-sand-200 text-start">{t('pdp.size_guide.th_jacket_length_cm', 'Longueur Veste (cm)')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-sand-200 text-neutral-700 tabular-nums">
-                  <tr><td className="py-2 px-3 font-semibold text-obsidian-950">48</td><td className="py-2 px-3">94 - 97</td><td className="py-2 px-3">82 - 85</td><td className="py-2 px-3">74</td></tr>
-                  <tr><td className="py-2 px-3 font-semibold text-obsidian-950">50</td><td className="py-2 px-3">98 - 101</td><td className="py-2 px-3">86 - 89</td><td className="py-2 px-3">75</td></tr>
-                  <tr><td className="py-2 px-3 font-semibold text-obsidian-950">52</td><td className="py-2 px-3">102 - 105</td><td className="py-2 px-3">90 - 94</td><td className="py-2 px-3">76</td></tr>
-                  <tr><td className="py-2 px-3 font-semibold text-obsidian-950">54</td><td className="py-2 px-3">106 - 109</td><td className="py-2 px-3">95 - 99</td><td className="py-2 px-3">77</td></tr>
-                  <tr><td className="py-2 px-3 font-semibold text-obsidian-950">56</td><td className="py-2 px-3">110 - 113</td><td className="py-2 px-3">100 - 104</td><td className="py-2 px-3">78</td></tr>
+                  <tr><td className="py-2 px-3 font-semibold text-obsidian-950">S</td><td className="py-2 px-3">94 - 97</td><td className="py-2 px-3">82 - 85</td><td className="py-2 px-3">74</td></tr>
+                  <tr><td className="py-2 px-3 font-semibold text-obsidian-950">M</td><td className="py-2 px-3">98 - 101</td><td className="py-2 px-3">86 - 89</td><td className="py-2 px-3">75</td></tr>
+                  <tr><td className="py-2 px-3 font-semibold text-obsidian-950">L</td><td className="py-2 px-3">102 - 105</td><td className="py-2 px-3">90 - 94</td><td className="py-2 px-3">76</td></tr>
+                  <tr><td className="py-2 px-3 font-semibold text-obsidian-950">XL</td><td className="py-2 px-3">106 - 109</td><td className="py-2 px-3">95 - 99</td><td className="py-2 px-3">77</td></tr>
+                  <tr><td className="py-2 px-3 font-semibold text-obsidian-950">XXL</td><td className="py-2 px-3">110 - 113</td><td className="py-2 px-3">100 - 104</td><td className="py-2 px-3">78</td></tr>
                 </tbody>
               </table>
             </div>

@@ -17,7 +17,8 @@ export function ProductAccordions({
 }: ProductAccordionsProps) {
   const { t, language } = useLanguage();
   const localizedProduct = getLocalizedProduct(product, language);
-  const [openSection, setOpenSection] = useState<string | null>('desc');
+  const hasDescription = Boolean(localizedProduct.description && localizedProduct.description.trim());
+  const [openSection, setOpenSection] = useState<string | null>(hasDescription ? 'desc' : 'sizes');
 
   const toggle = (section: string) => {
     setOpenSection((prev) => (prev === section ? null : section));
@@ -28,52 +29,54 @@ export function ProductAccordions({
   return (
     <div className="divide-y divide-sand-200 border-b border-sand-200 text-xs font-sans">
       {/* 1. Description & Coupe */}
-      <div className="py-4">
-        <button
-          type="button"
-          onClick={() => toggle('desc')}
-          aria-expanded={openSection === 'desc'}
-          aria-controls="accordion-desc"
-          className="w-full flex items-center justify-between text-start font-serif uppercase tracking-wider text-sm text-obsidian-950 font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 rounded py-1"
-        >
-          <span>{t('pdp.accordion.description', 'Description & Coupe Sartoriale')}</span>
-          <ChevronDown
-            className={`w-4 h-4 text-gold-700 transition-transform duration-300 ${
-              openSection === 'desc' ? 'rotate-180' : ''
-            }`}
-          />
-        </button>
+      {hasDescription && (
+        <div className="py-4">
+          <button
+            type="button"
+            onClick={() => toggle('desc')}
+            aria-expanded={openSection === 'desc'}
+            aria-controls="accordion-desc"
+            className="w-full flex items-center justify-between text-start font-serif uppercase tracking-wider text-sm text-obsidian-950 font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 rounded py-1"
+          >
+            <span>{t('pdp.accordion.description', 'Description & Coupe Sartoriale')}</span>
+            <ChevronDown
+              className={`w-4 h-4 text-gold-700 transition-transform duration-300 ${
+                openSection === 'desc' ? 'rotate-180' : ''
+              }`}
+            />
+          </button>
 
-        <div
-          id="accordion-desc"
-          role="region"
-          aria-labelledby="accordion-desc"
-          className={`grid transition-all duration-300 ease-in-out ${
-            openSection === 'desc' ? 'grid-rows-[1fr] opacity-100 pt-3 pb-1' : 'grid-rows-[0fr] opacity-0'
-          }`}
-        >
-          <div className="overflow-hidden space-y-3 text-neutral-600 leading-relaxed font-sans text-xs">
-            <p className="whitespace-pre-line">{localizedProduct.description}</p>
-            {localizedProduct.materials && (
-              <p>
-                <strong className="text-obsidian-950">{t('pdp.accordion.materials', 'Matières & Tissage :')}</strong>{' '}
-                {localizedProduct.materials}
-              </p>
-            )}
-            {localizedProduct.fit && (
-              <p>
-                <strong className="text-obsidian-950">{t('pdp.accordion.fit', 'Coupe :')}</strong>{' '}
-                {getLocalizedFit(localizedProduct.fit, language)}
-              </p>
-            )}
-            <ul className="list-disc list-inside space-y-1 text-neutral-600 pt-1">
-              <li>{t('pdp.accordion.desc_bullet1', 'Confection haut de gamme respectant les règles traditionnelles du sur-mesure.')}</li>
-              <li>{t('pdp.accordion.desc_bullet2', 'Finitions soignées à la main et contrôle de qualité avant toute expédition.')}</li>
-              <li>{t('pdp.accordion.desc_bullet3', "Tissus et cuirs nobles certifiés d'origine italienne et espagnole.")}</li>
-            </ul>
+          <div
+            id="accordion-desc"
+            role="region"
+            aria-labelledby="accordion-desc"
+            className={`grid transition-all duration-300 ease-in-out ${
+              openSection === 'desc' ? 'grid-rows-[1fr] opacity-100 pt-3 pb-1' : 'grid-rows-[0fr] opacity-0'
+            }`}
+          >
+            <div className="overflow-hidden space-y-3 text-neutral-600 leading-relaxed font-sans text-xs">
+              <p className="whitespace-pre-line">{localizedProduct.description}</p>
+              {localizedProduct.materials && (
+                <p>
+                  <strong className="text-obsidian-950">{t('pdp.accordion.materials', 'Matières & Tissage :')}</strong>{' '}
+                  {localizedProduct.materials}
+                </p>
+              )}
+              {localizedProduct.fit && (
+                <p>
+                  <strong className="text-obsidian-950">{t('pdp.accordion.fit', 'Coupe :')}</strong>{' '}
+                  {getLocalizedFit(localizedProduct.fit, language)}
+                </p>
+              )}
+              <ul className="list-disc list-inside space-y-1 text-neutral-600 pt-1">
+                <li>{t('pdp.accordion.desc_bullet1', 'Confection haut de gamme respectant les règles traditionnelles du sur-mesure.')}</li>
+                <li>{t('pdp.accordion.desc_bullet2', 'Finitions soignées à la main et contrôle de qualité avant toute expédition.')}</li>
+                <li>{t('pdp.accordion.desc_bullet3', "Tissus et cuirs nobles certifiés d'origine italienne et espagnole.")}</li>
+              </ul>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* 2. Guide des Tailles & Mesures */}
       <div className="py-4">

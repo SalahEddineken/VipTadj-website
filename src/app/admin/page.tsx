@@ -15,6 +15,8 @@ import {
   ArrowUpRight,
   ChevronRight,
   PackageCheck,
+  Building2,
+  Home,
 } from 'lucide-react';
 import { getDataStore } from '@/lib/data-provider';
 import { Order, Product } from '@/types';
@@ -390,7 +392,22 @@ export default function AdminDashboardPage() {
                             <span dir="ltr" className="inline-block tabular-nums">{order.customer.phone}</span>
                           </div>
                         </td>
-                        <td className="py-3 text-obsidian-600">{getLocalizedWilayaName(order.customer.wilayaCode, order.customer.wilaya)}</td>
+                        <td className="py-3 text-obsidian-600">
+                          <div>{getLocalizedWilayaName(order.customer.wilayaCode, order.customer.wilaya)}</div>
+                          <div className="pt-0.5">
+                            {order.customer.deliveryType === 'desk' ? (
+                              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-sm bg-blue-50 border border-blue-200 text-blue-700 text-[10px] font-medium">
+                                <Building2 className="w-2.5 h-2.5 text-blue-600 shrink-0" />
+                                <span>{t('admin.orders.delivery_desk', 'Stop Desk (المكتب)')}</span>
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-sm bg-amber-50 border border-amber-200 text-amber-800 text-[10px] font-medium">
+                                <Home className="w-2.5 h-2.5 text-amber-600 shrink-0" />
+                                <span>{t('admin.orders.delivery_home', 'توصيل للمنزل')}</span>
+                              </span>
+                            )}
+                          </div>
+                        </td>
                         <td className="py-3 font-semibold text-obsidian-950 font-serif">
                           {formatDZD(order.total, { locale: language })}
                         </td>
@@ -459,6 +476,19 @@ export default function AdminDashboardPage() {
                         <div className="text-obsidian-950 font-medium">{order.customer.fullName}</div>
                         <div className="text-xs text-obsidian-500 font-sans tabular-nums mt-0.5">
                           <span dir="ltr" className="inline-block">{order.customer.phone}</span> • {getLocalizedWilayaName(order.customer.wilayaCode, order.customer.wilaya)}
+                        </div>
+                        <div className="pt-1">
+                          {order.customer.deliveryType === 'desk' ? (
+                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-sm bg-blue-50 border border-blue-200 text-blue-700 text-[10px] font-medium">
+                              <Building2 className="w-2.5 h-2.5 text-blue-600 shrink-0" />
+                              <span>{t('admin.orders.delivery_desk', 'Stop Desk (المكتب)')}</span>
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-sm bg-amber-50 border border-amber-200 text-amber-800 text-[10px] font-medium">
+                              <Home className="w-2.5 h-2.5 text-amber-600 shrink-0" />
+                              <span>{t('admin.orders.delivery_home', 'توصيل للمنزل')}</span>
+                            </span>
+                          )}
                         </div>
                       </div>
                       <div className="text-end shrink-0">

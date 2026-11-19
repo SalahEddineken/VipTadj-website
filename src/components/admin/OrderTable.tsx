@@ -21,6 +21,8 @@ import {
   Truck,
   CheckCircle,
   XCircle,
+  Building2,
+  Home,
 } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
 import { useLanguage } from '@/lib/context/language-context';
@@ -172,6 +174,25 @@ export function OrderTable({
                         <span className="truncate max-w-[260px] md:max-w-[180px]">
                           {order.customer.wilayaCode} - {localizedWilaya} ({localizedCommune})
                         </span>
+                      </div>
+                      {/* Delivery Mode Badge (Stop Desk vs Home) */}
+                      <div className="pt-0.5 flex items-center gap-1.5 flex-wrap">
+                        {order.customer.deliveryType === 'desk' ? (
+                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-sm bg-blue-50 border border-blue-200 text-blue-700 text-xs font-medium">
+                            <Building2 className="w-3 h-3 text-blue-600 shrink-0" />
+                            <span>{t('admin.orders.delivery_desk', 'Stop Desk (المكتب)')}</span>
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-sm bg-amber-50 border border-amber-200 text-amber-800 text-xs font-medium">
+                            <Home className="w-3 h-3 text-amber-600 shrink-0" />
+                            <span>{t('admin.orders.delivery_home', 'توصيل للمنزل')}</span>
+                          </span>
+                        )}
+                        {order.customer.address && order.customer.deliveryType !== 'desk' && (
+                          <span className="text-xs text-obsidian-500 truncate max-w-[180px]" title={order.customer.address}>
+                            {order.customer.address}
+                          </span>
+                        )}
                       </div>
                     </div>
                   </td>

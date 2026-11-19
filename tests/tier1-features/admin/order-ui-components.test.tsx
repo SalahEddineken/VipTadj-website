@@ -66,13 +66,13 @@ describe('Admin Orders UI Components (F-ORD-01 & F-ORD-02)', () => {
         />
       );
 
-      expect(screen.getByText('Toutes')).toBeDefined();
+      expect(screen.getAllByText('Toutes')[0]).toBeDefined();
       expect(screen.getByText('En attente')).toBeDefined();
       expect(screen.getByText('Confirmées')).toBeDefined();
       expect(screen.getByText('Expédiées')).toBeDefined();
       expect(screen.getByText('Livrées')).toBeDefined();
       expect(screen.getByText('Annulées')).toBeDefined();
-      expect(screen.getByText('10')).toBeDefined();
+      expect(screen.getAllByText('10')[0]).toBeDefined();
       expect(screen.getByText('3')).toBeDefined();
     });
 
@@ -170,6 +170,25 @@ describe('Admin Orders UI Components (F-ORD-01 & F-ORD-02)', () => {
       render(<OrderTable orders={[]} isFiltered={true} onResetFilters={vi.fn()} />);
       expect(screen.getByText('Aucune commande trouvée')).toBeDefined();
       expect(screen.getByText('Réinitialiser les filtres')).toBeDefined();
+    });
+
+    it('renders delivery mode badge (Stop Desk vs Home)', () => {
+      const deskOrder: Order = {
+        ...sampleOrder,
+        id: 'desk-order-1',
+        customer: { ...sampleOrder.customer, deliveryType: 'desk' },
+      };
+      const homeOrder: Order = {
+        ...sampleOrder,
+        id: 'home-order-1',
+        customer: { ...sampleOrder.customer, deliveryType: 'home' },
+      };
+
+      const { rerender } = render(<OrderTable orders={[deskOrder]} />);
+      expect(screen.getByText('Point Relais / Stop Desk')).toBeDefined();
+
+      rerender(<OrderTable orders={[homeOrder]} />);
+      expect(screen.getByText('À Domicile')).toBeDefined();
     });
   });
 

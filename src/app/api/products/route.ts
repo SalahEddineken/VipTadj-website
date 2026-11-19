@@ -147,7 +147,7 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    if (body.compareAtPrice === 0 || body.compareAtPrice === '0' || body.compareAtPrice === '') {
+    if (body.compareAtPrice === 0 || body.compareAtPrice === '0') {
       body.compareAtPrice = null;
     }
 

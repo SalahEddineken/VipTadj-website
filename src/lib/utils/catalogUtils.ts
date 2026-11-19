@@ -144,7 +144,7 @@ export const SUBCATEGORIES_BY_CATEGORY: Record<string, { id: string; label: stri
 };
 
 export const STANDARD_SIZES: Record<string, string[]> = {
-  clothing: ['48', '50', '52', '54', '56'],
+  clothing: ['S', 'M', 'L', 'XL', 'XXL'],
   shoes: ['39', '40', '41', '42', '43', '44', '45'],
   accessories: ['Taille Unique'],
 };

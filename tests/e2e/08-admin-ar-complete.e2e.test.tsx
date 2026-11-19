@@ -397,6 +397,7 @@ describe('E2E 08 — Complete Admin Portal Arabic (ar) Localization & Context Au
           images={SEED_PRODUCTS[0].images}
           onChange={vi.fn()}
           category="clothing"
+          showLegacyTabs
         />,
         { language: 'ar', includeAdmin: true }
       );

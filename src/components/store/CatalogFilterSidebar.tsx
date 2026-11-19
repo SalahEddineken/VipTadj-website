@@ -52,7 +52,7 @@ export function CatalogFilterSidebar({
       ? STANDARD_SIZES.shoes
       : resolvedCategory === 'clothing'
       ? STANDARD_SIZES.clothing
-      : ['48', '50', '52', '54', '56', '39', '40', '41', '42', '43', '44', '45'];
+      : [...STANDARD_SIZES.clothing, ...STANDARD_SIZES.shoes];
 
   const toggleSize = (size: string) => {
     const isSelected = filters.selectedSizes.includes(size);

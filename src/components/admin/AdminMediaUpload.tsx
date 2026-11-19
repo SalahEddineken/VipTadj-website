@@ -34,6 +34,7 @@ export interface AdminMediaUploadProps {
   disabled?: boolean;
   category?: ProductCategoryType;
   error?: string;
+  showLegacyTabs?: boolean;
 }
 
 export function AdminMediaUpload({
@@ -43,6 +44,7 @@ export function AdminMediaUpload({
   disabled = false,
   category = 'clothing',
   error,
+  showLegacyTabs = false,
 }: AdminMediaUploadProps) {
   const { language, t } = useLanguage();
   const driveGuideSteps = getGoogleDriveUploadGuide(language);
@@ -377,71 +379,73 @@ export function AdminMediaUpload({
         </div>
       )}
 
-      {/* Tabs */}
-      <div className="flex flex-wrap items-center gap-2 border-b border-obsidian-200 pb-2">
-        <button
-          type="button"
-          onClick={() => setActiveTab('upload')}
-          className={cn(
-            'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors',
-            activeTab === 'upload'
-              ? 'bg-gold-500 text-obsidian-950 font-semibold'
-              : 'text-obsidian-600 hover:text-obsidian-950 hover:bg-ivory-100'
-          )}
-        >
-          <UploadCloud className="w-3.5 h-3.5" />
-          <span>{t('admin.media.tab_upload', "Téléverser depuis l'appareil")}</span>
-        </button>
+      {/* Tabs (optional / legacy) */}
+      {showLegacyTabs && (
+        <div className="flex flex-wrap items-center gap-2 border-b border-obsidian-200 pb-2">
+          <button
+            type="button"
+            onClick={() => setActiveTab('upload')}
+            className={cn(
+              'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors',
+              activeTab === 'upload'
+                ? 'bg-gold-500 text-obsidian-950 font-semibold'
+                : 'text-obsidian-600 hover:text-obsidian-950 hover:bg-ivory-100'
+            )}
+          >
+            <UploadCloud className="w-3.5 h-3.5" />
+            <span>{t('admin.media.tab_upload', "Téléverser depuis l'appareil")}</span>
+          </button>
 
-        <button
-          type="button"
-          onClick={() => setActiveTab('url')}
-          className={cn(
-            'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors',
-            activeTab === 'url'
-              ? 'bg-gold-500 text-obsidian-950 font-semibold'
-              : 'text-obsidian-600 hover:text-obsidian-950 hover:bg-ivory-100'
-          )}
-        >
-          <LinkIcon className="w-3.5 h-3.5" />
-          <span>{t('admin.media.tab_url', 'Coller un lien (Drive / CDN)')}</span>
-        </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('url')}
+            className={cn(
+              'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors',
+              activeTab === 'url'
+                ? 'bg-gold-500 text-obsidian-950 font-semibold'
+                : 'text-obsidian-600 hover:text-obsidian-950 hover:bg-ivory-100'
+            )}
+          >
+            <LinkIcon className="w-3.5 h-3.5" />
+            <span>{t('admin.media.tab_url', 'Coller un lien (Drive / CDN)')}</span>
+          </button>
 
-        <button
-          type="button"
-          onClick={() => setActiveTab('library')}
-          className={cn(
-            'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors',
-            activeTab === 'library'
-              ? 'bg-gold-500 text-obsidian-950 font-semibold'
-              : 'text-obsidian-600 hover:text-obsidian-950 hover:bg-ivory-100'
-          )}
-        >
-          <Sparkles className="w-3.5 h-3.5" />
-          <span>
-            {formatTranslation(t('admin.media.tab_library', 'Bibliothèque Prestige ({count})'), {
-              count: CURATED_MENSWEAR_ASSETS.length,
-            })}
-          </span>
-        </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('library')}
+            className={cn(
+              'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors',
+              activeTab === 'library'
+                ? 'bg-gold-500 text-obsidian-950 font-semibold'
+                : 'text-obsidian-600 hover:text-obsidian-950 hover:bg-ivory-100'
+            )}
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>
+              {formatTranslation(t('admin.media.tab_library', 'Bibliothèque Prestige ({count})'), {
+                count: CURATED_MENSWEAR_ASSETS.length,
+              })}
+            </span>
+          </button>
 
-        <button
-          type="button"
-          onClick={() => setActiveTab('guide')}
-          className={cn(
-            'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ms-auto',
-            activeTab === 'guide'
-              ? 'bg-gold-50 text-gold-800 border border-gold-500/40'
-              : 'text-obsidian-500 hover:text-gold-700'
-          )}
-        >
-          <HelpCircle className="w-3.5 h-3.5" />
-          <span>{t('admin.media.tab_guide', 'Guide Google Drive')}</span>
-        </button>
-      </div>
+          <button
+            type="button"
+            onClick={() => setActiveTab('guide')}
+            className={cn(
+              'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ms-auto',
+              activeTab === 'guide'
+                ? 'bg-gold-50 text-gold-800 border border-gold-500/40'
+                : 'text-obsidian-500 hover:text-gold-700'
+            )}
+          >
+            <HelpCircle className="w-3.5 h-3.5" />
+            <span>{t('admin.media.tab_guide', 'Guide Google Drive')}</span>
+          </button>
+        </div>
+      )}
 
-      {/* Tab 1: Upload (with Drag & Drop + Camera) */}
-      {activeTab === 'upload' && (
+      {/* Upload Zone (with Drag & Drop + Camera) */}
+      {(!showLegacyTabs || activeTab === 'upload') && (
         <div
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
@@ -510,7 +514,7 @@ export function AdminMediaUpload({
       )}
 
       {/* Tab 2: URL / Google Drive */}
-      {activeTab === 'url' && (
+      {showLegacyTabs && activeTab === 'url' && (
         <div className="p-4 rounded-xl bg-ivory-100 border border-obsidian-200 space-y-3">
           <div className="space-y-1">
             <label className="block text-xs font-medium text-obsidian-700">
@@ -553,7 +557,7 @@ export function AdminMediaUpload({
       )}
 
       {/* Tab 3: Curated Library */}
-      {activeTab === 'library' && (
+      {showLegacyTabs && activeTab === 'library' && (
         <div className="p-4 rounded-xl bg-ivory-100 border border-obsidian-200 space-y-3">
           <div className="flex items-center gap-2">
             {(['all', 'clothing', 'shoes', 'accessories'] as const).map((cat) => (
@@ -615,7 +619,7 @@ export function AdminMediaUpload({
       )}
 
       {/* Tab 4: Guide Google Drive */}
-      {activeTab === 'guide' && (
+      {showLegacyTabs && activeTab === 'guide' && (
         <div className="p-4 rounded-xl bg-ivory-100 border border-obsidian-200 space-y-3 text-xs">
           <div className="flex items-center justify-between border-b border-obsidian-200 pb-2">
             <h4 className="font-semibold text-gold-700 font-cinzel">

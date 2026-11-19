@@ -54,8 +54,8 @@ export interface Product {
   subcategory: string;           // e.g. "costumes", "blazers", "chemises", "richelieu", "mocassins", "montres"
   images: ProductImage[];
   primaryImage?: string;         // Fast accessor to primary cover image URL
-  sizes: string[];               // e.g. ["48", "50", "52", "54"] or ["39", "40", "41", "42"]
-  sizeInventory?: Record<string, number>; // Size-to-stock mapping: { "48": 4, "50": 2, "52": 0 }
+  sizes: string[];               // e.g. ["S", "M", "L", "XL", "XXL"] or ["39", "40", "41", "42"]
+  sizeInventory?: Record<string, number>; // Size-to-stock mapping: { "S": 4, "M": 2, "L": 0 }
   colors?: ProductColor[];
   materials?: string;            // e.g. "100% Laine Vierge Lanificio Cerruti Super 130s"
   materialsAr?: string;

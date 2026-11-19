@@ -211,7 +211,7 @@ async function handleUpdate(req: NextRequest, id: string) {
       });
     }
 
-    if (body.compareAtPrice === 0 || body.compareAtPrice === '0' || body.compareAtPrice === '') {
+    if (body.compareAtPrice === 0 || body.compareAtPrice === '0') {
       body.compareAtPrice = null;
     }
 

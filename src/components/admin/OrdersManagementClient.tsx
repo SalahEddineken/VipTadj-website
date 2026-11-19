@@ -153,7 +153,14 @@ export function OrdersManagementClient({
             (order.customer?.commune || '').toLowerCase().includes(q) ||
             (communeObj?.name || '').toLowerCase().includes(q) ||
             (communeObj?.nameAr || '').toLowerCase().includes(q);
-          if (!matchNumber && !matchName && !matchPhone && !matchWilaya && !matchCommune) {
+          const isDesk = order.customer?.deliveryType === 'desk';
+          const matchDelivery =
+            (q === 'desk' || q === 'stop desk' || q === 'stopdesk' || q === 'مكتب')
+              ? isDesk
+              : (q === 'home' || q === 'domicile' || q === 'منزل')
+              ? !isDesk
+              : false;
+          if (!matchNumber && !matchName && !matchPhone && !matchWilaya && !matchCommune && !matchDelivery) {
             return false;
           }
         }

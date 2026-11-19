@@ -202,7 +202,7 @@ export class MockSeedDataProvider implements IDataStore {
             slug: 'veste-saharienne-elegante-coton-lin',
             price: 38500,
             quantity: 1,
-            selectedSize: '50',
+            selectedSize: 'L',
             image: 'https://images.unsplash.com/photo-1591047139829-d91aecb6caea',
           },
         ],

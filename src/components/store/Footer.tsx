@@ -119,7 +119,7 @@ export function Footer() {
             <ul className="space-y-2 text-xs text-neutral-300">
               <li className="flex items-center gap-2">
                 <Truck className="w-3.5 h-3.5 text-sand-400 flex-shrink-0" />
-                <span>{t('footer.shipping', 'Expédition 58 wilayas')}</span>
+                <span>{t('footer.shipping', 'Expédition 68 wilayas')}</span>
               </li>
               <li className="flex items-center gap-2">
                 <ShieldCheck className="w-3.5 h-3.5 text-sand-400 flex-shrink-0" />

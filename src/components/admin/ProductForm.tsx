@@ -74,7 +74,6 @@ function normalizeSubcategoryForCategory(
 
 // Size Presets
 const CLOTHING_STANDARD_SIZES = ['S', 'M', 'L', 'XL', 'XXL'];
-const CLOTHING_TAILOR_SIZES = ['48', '50', '52', '54', '56'];
 const SHOE_SIZES = ['39', '40', '41', '42', '43', '44', '45'];
 
 export function ProductForm({ mode, initialData }: ProductFormProps) {
@@ -114,23 +113,52 @@ export function ProductForm({ mode, initialData }: ProductFormProps) {
 
   // Size Matrix & Stock
   const [sizeInventory, setSizeInventory] = useState<Record<string, number>>(() => {
+    const isClothing = (initialData?.categoryId || 'clothing') === 'clothing';
+    const tailorToStandard: Record<string, string> = {
+      '48': 'S',
+      '50': 'M',
+      '52': 'L',
+      '54': 'XL',
+      '56': 'XXL',
+    };
+
     if (initialData?.sizeInventory && Object.keys(initialData.sizeInventory).length > 0) {
+      if (isClothing) {
+        const raw = { ...initialData.sizeInventory };
+        const hasTailor = Object.keys(raw).some((k) => tailorToStandard[k]);
+        if (hasTailor) {
+          const migrated: Record<string, number> = {};
+          CLOTHING_STANDARD_SIZES.forEach((s) => {
+            if (raw[s] !== undefined) migrated[s] = raw[s];
+          });
+          Object.entries(raw).forEach(([k, qty]) => {
+            const mapped = tailorToStandard[k];
+            if (mapped) {
+              migrated[mapped] = (migrated[mapped] ?? 0) + qty;
+            } else if (!tailorToStandard[k]) {
+              migrated[k] = qty;
+            }
+          });
+          return migrated;
+        }
+      }
       return { ...initialData.sizeInventory };
     }
     // If initialData has sizes but no sizeInventory
     if (initialData?.sizes && initialData.sizes.length > 0) {
+      const cleanedSizes = isClothing
+        ? Array.from(new Set(initialData.sizes.map((s) => tailorToStandard[s] || s)))
+        : initialData.sizes;
       const initMap: Record<string, number> = {};
-      const perSize = Math.max(1, Math.floor((initialData.stockQuantity || 10) / initialData.sizes.length));
-      initialData.sizes.forEach((s) => {
+      const perSize = Math.max(1, Math.floor((initialData.stockQuantity || 10) / cleanedSizes.length));
+      cleanedSizes.forEach((s) => {
         initMap[s] = perSize;
       });
       return initMap;
     }
-    // Default matrix for clothing
-    return { '48': 2, '50': 4, '52': 4, '54': 2, '56': 1 };
+    // Default matrix for clothing (international standard)
+    return { S: 2, M: 4, L: 4, XL: 2, XXL: 1 };
   });
-
-  const [clothingSizeType, setClothingSizeType] = useState<'tailor' | 'standard'>('tailor');
 
   // Images & Colors
   const [images, setImages] = useState<ProductImage[]>(initialData?.images || []);
@@ -257,7 +285,7 @@ export function ProductForm({ mode, initialData }: ProductFormProps) {
     }
     // Set default size matrix for new category
     if (newCat === 'clothing') {
-      setSizeInventory({ '48': 2, '50': 4, '52': 4, '54': 2, '56': 1 });
+      setSizeInventory({ S: 2, M: 4, L: 4, XL: 2, XXL: 1 });
     } else if (newCat === 'shoes') {
       setSizeInventory({ '39': 1, '40': 2, '41': 4, '42': 5, '43': 3, '44': 2, '45': 1 });
     } else {
@@ -810,45 +838,6 @@ export function ProductForm({ mode, initialData }: ProductFormProps) {
             </span>
           </div>
         </div>
-
-        {/* Clothing Toggle (Tailor vs Standard) */}
-        {categoryId === 'clothing' && (
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-obsidian-600">
-              {t('admin.product_form.size_system', 'Système de Tailles :')}
-            </span>
-            <button
-              type="button"
-              onClick={() => {
-                setClothingSizeType('tailor');
-                setSizeInventory({ '48': 2, '50': 4, '52': 4, '54': 2, '56': 1 });
-              }}
-              className={cn(
-                'px-2.5 py-1 rounded text-xs font-medium transition-colors',
-                clothingSizeType === 'tailor'
-                  ? 'bg-gold-500 text-obsidian-950 font-semibold'
-                  : 'text-obsidian-600 hover:bg-ivory-200'
-              )}
-            >
-              {t('admin.product_form.size_system_tailor', 'Tailleur Italien (48 - 56)')}
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setClothingSizeType('standard');
-                setSizeInventory({ S: 2, M: 4, L: 4, XL: 2, XXL: 1 });
-              }}
-              className={cn(
-                'px-2.5 py-1 rounded text-xs font-medium transition-colors',
-                clothingSizeType === 'standard'
-                  ? 'bg-gold-500 text-obsidian-950 font-semibold'
-                  : 'text-obsidian-600 hover:bg-ivory-200'
-              )}
-            >
-              {t('admin.product_form.size_system_standard', 'Standard International (S - XXL)')}
-            </button>
-          </div>
-        )}
 
         {/* Dynamic Size Steppers */}
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
