@@ -3,7 +3,8 @@ import { getDataStore } from '@/lib/data-provider';
 import { isProductVisibleInShop } from '@/lib/utils/catalogUtils';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://viptadj.store';
+  const rawUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://viptadj.store';
+  const baseUrl = rawUrl.trim().replace(/^\uFEFF/, '');
   const now = new Date();
 
   const staticRoutes: MetadataRoute.Sitemap = [

@@ -57,7 +57,8 @@ const LOCALIZED_AUTHORS: Record<SupportedLanguage, string> = {
 
 export async function generateMetadata(): Promise<Metadata> {
   const lang = getServerLanguage();
-  const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://viptadj.store';
+  const rawUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://viptadj.store';
+  const siteUrl = rawUrl.trim().replace(/^\uFEFF/, '');
 
   return {
     metadataBase: new URL(siteUrl),
