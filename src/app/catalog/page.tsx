@@ -10,17 +10,37 @@ import { isProductVisibleInShop } from '@/lib/utils/catalogUtils';
 
 export async function generateMetadata(): Promise<Metadata> {
   const lang = getServerLanguage();
+  const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://viptadj.store';
+  const title = getTranslation(
+    lang,
+    'meta.catalog.title',
+    'Catalogue Complet | VIP TADJ | Prêt-à-Porter Masculin & Souliers'
+  );
+  const description = getTranslation(
+    lang,
+    'meta.catalog.description',
+    "Explorez l'ensemble du vestiaire masculin VIP TADJ : vestes, chemises, pantalons, souliers et accessoires."
+  );
+
   return {
-    title: getTranslation(
-      lang,
-      'meta.catalog.title',
-      'Catalogue Complet | VIP TADJ | Prêt-à-Porter Masculin & Souliers'
-    ),
-    description: getTranslation(
-      lang,
-      'meta.catalog.description',
-      "Explorez l'ensemble du vestiaire masculin VIP TADJ : vestes, chemises, pantalons, souliers et accessoires."
-    ),
+    title,
+    description,
+    alternates: {
+      canonical: `${siteUrl}/catalog`,
+    },
+    openGraph: {
+      title,
+      description,
+      url: `${siteUrl}/catalog`,
+      type: 'website',
+      images: ['/images/logo.png'],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: ['/images/logo.png'],
+    },
   };
 }
 

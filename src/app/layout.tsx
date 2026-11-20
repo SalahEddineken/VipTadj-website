@@ -10,30 +10,40 @@ import { getServerLanguage } from '@/app/_utils/server-lang';
 const LOCALIZED_KEYWORDS: Record<SupportedLanguage, string[]> = {
   fr: [
     'VIP TADJ',
+    'viptadj.store',
     'Mode Homme Algerie',
     'Vêtements Homme Algérie',
-    'Prêt à porter homme',
-    'Blazer Luxe',
-    'Souliers Cuir',
+    'Prêt à porter homme Alger',
+    'Blazer Luxe Homme',
+    'Costumes et Vestes Algerie',
+    'Souliers Cuir Homme',
+    'Sneakers Tendance Algerie',
+    'Boutique Homme Algerie',
     'Paiement a la livraison',
     '68 Wilayas',
   ],
   en: [
     'VIP TADJ',
+    'viptadj.store',
     'Menswear Algeria',
-    'Luxury Men Clothing',
+    'Luxury Men Clothing Algeria',
     'Ready to wear men',
     'Luxury Blazer',
-    'Leather Shoes',
+    'Leather Shoes Men',
+    'Casual Sneakers',
+    'Online Men Fashion Store Algeria',
     'Cash on Delivery',
     '68 Wilayas',
   ],
   ar: [
     'VIP TADJ',
+    'viptadj.store',
     'أزياء رجالية الجزائر',
-    'ملابس رجالية فاخرة',
-    'سترات كلاسيكية',
-    'أحذية جلدية',
+    'ملابس رجالية فاخرة الجزائر',
+    'سترات كلاسيكية رجالية',
+    'أحذية جلدية رجالية',
+    'سنيكرز رجالي كاجوال',
+    'متجر ألبسة رجالية بالجزائر',
     'الدفع عند الاستلام',
     '68 ولاية',
   ],
@@ -47,9 +57,10 @@ const LOCALIZED_AUTHORS: Record<SupportedLanguage, string> = {
 
 export async function generateMetadata(): Promise<Metadata> {
   const lang = getServerLanguage();
+  const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://viptadj.store';
 
   return {
-    metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://viptadj-dz.vercel.app'),
+    metadataBase: new URL(siteUrl),
     title: getTranslation(lang, 'meta.site.title', 'VIP TADJ | Haute Élégance Masculine | Algérie'),
     description: getTranslation(
       lang,
@@ -58,6 +69,19 @@ export async function generateMetadata(): Promise<Metadata> {
     ),
     keywords: LOCALIZED_KEYWORDS[lang] || LOCALIZED_KEYWORDS.ar,
     authors: [{ name: LOCALIZED_AUTHORS[lang] || LOCALIZED_AUTHORS.ar }],
+    alternates: {
+      canonical: '/',
+      languages: {
+        'ar-DZ': '/',
+        'fr-DZ': '/',
+        'en-US': '/',
+      },
+    },
+    icons: {
+      icon: '/images/logo.png',
+      shortcut: '/images/logo.png',
+      apple: '/images/logo.png',
+    },
     openGraph: {
       title: getTranslation(lang, 'meta.og.title', 'VIP TADJ | Haute Élégance Masculine'),
       description: getTranslation(
@@ -65,11 +89,41 @@ export async function generateMetadata(): Promise<Metadata> {
         'meta.og.description',
         "Boutique de prêt-à-porter masculin d'exception en Algérie."
       ),
-      url: 'https://viptadj-dz.vercel.app',
+      url: siteUrl,
       siteName: 'VIP TADJ',
       locale: lang === 'ar' ? 'ar_DZ' : lang === 'fr' ? 'fr_DZ' : 'en_US',
       type: 'website',
+      images: [
+        {
+          url: '/images/logo.png',
+          width: 800,
+          height: 800,
+          alt: 'VIP TADJ | Haute Élégance Masculine',
+        },
+      ],
     },
+    twitter: {
+      card: 'summary_large_image',
+      title: getTranslation(lang, 'meta.og.title', 'VIP TADJ | Haute Élégance Masculine'),
+      description: getTranslation(
+        lang,
+        'meta.og.description',
+        "Boutique de prêt-à-porter masculin d'exception en Algérie."
+      ),
+      images: ['/images/logo.png'],
+    },
+    robots: {
+      index: true,
+      follow: true,
+      googleBot: {
+        index: true,
+        follow: true,
+        'max-video-preview': -1,
+        'max-image-preview': 'large',
+        'max-snippet': -1,
+      },
+    },
+    category: 'shopping',
   };
 }
 
@@ -112,6 +166,45 @@ export default function RootLayout({
         <script
           dangerouslySetInnerHTML={{
             __html: `(function(){try{var l=localStorage.getItem('vip_tadj_lang')||'${initialLanguage}';document.documentElement.lang=l;document.documentElement.dir=(l==='ar'?'rtl':'ltr');}catch(e){}})();`,
+          }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@graph': [
+                {
+                  '@type': 'WebSite',
+                  '@id': 'https://viptadj.store/#website',
+                  url: 'https://viptadj.store',
+                  name: 'VIP TADJ',
+                  description: 'Haute Élégance Masculine en Algérie',
+                  inLanguage: ['ar-DZ', 'fr-DZ', 'en-US'],
+                  potentialAction: {
+                    '@type': 'SearchAction',
+                    target: 'https://viptadj.store/catalog?q={search_term_string}',
+                    'query-input': 'required name=search_term_string',
+                  },
+                },
+                {
+                  '@type': 'Store',
+                  '@id': 'https://viptadj.store/#store',
+                  name: 'VIP TADJ',
+                  url: 'https://viptadj.store',
+                  logo: 'https://viptadj.store/images/logo.png',
+                  image: 'https://viptadj.store/images/logo.png',
+                  description: 'Boutique de prêt-à-porter masculin de luxe en Algérie. Livraison 58 Wilayas avec paiement à la livraison (COD).',
+                  priceRange: '$$',
+                  currenciesAccepted: 'DZD',
+                  paymentAccepted: 'Cash on Delivery',
+                  areaServed: {
+                    '@type': 'Country',
+                    name: 'Algeria',
+                  },
+                },
+              ],
+            }),
           }}
         />
       </head>

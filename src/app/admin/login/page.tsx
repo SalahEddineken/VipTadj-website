@@ -136,20 +136,6 @@ export default function AdminLoginPage() {
                 </>
               )}
             </button>
-
-            {/* Quick Demo Credentials Autofill */}
-            <div className="pt-2 border-t border-obsidian-100 text-center">
-              <button
-                type="button"
-                onClick={() => {
-                  setEmail('admin@viptadj.dz');
-                  setPassword('admin123');
-                }}
-                className="text-xs text-gold-700 hover:text-gold-800 underline transition-colors"
-              >
-                {t('admin.login.demo_use_account', 'Utiliser le compte de démonstration (admin@viptadj.dz)')}
-              </button>
-            </div>
           </form>
         </div>
 

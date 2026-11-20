@@ -20,6 +20,7 @@ export async function generateMetadata({
   params,
 }: CategoryPageProps): Promise<Metadata> {
   const lang = getServerLanguage();
+  const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://viptadj.store';
   const meta = getCategoryMeta(params.category, lang);
   if (!meta) {
     return {
@@ -27,9 +28,28 @@ export async function generateMetadata({
     };
   }
 
+  const title = `${meta.name} | ${getTranslation(lang, 'meta.category.title_suffix', 'VIP TADJ | Haute Couture Masculine')}`;
+  const description = meta.description;
+
   return {
-    title: `${meta.name} | ${getTranslation(lang, 'meta.category.title_suffix', 'VIP TADJ | Haute Couture Masculine')}`,
-    description: meta.description,
+    title,
+    description,
+    alternates: {
+      canonical: `${siteUrl}/catalog/${params.category}`,
+    },
+    openGraph: {
+      title,
+      description,
+      url: `${siteUrl}/catalog/${params.category}`,
+      type: 'website',
+      images: ['/images/logo.png'],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: ['/images/logo.png'],
+    },
   };
 }
 
